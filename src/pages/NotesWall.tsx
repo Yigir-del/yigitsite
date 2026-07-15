@@ -2,26 +2,45 @@ import { useState, useEffect, useMemo } from 'react';
 import { initialNotes, type Note } from '../data/notes';
 
 export default function NotesWall() {
-  const [notes, setNotes] = useState<Note[]>(() => {
-    const saved = localStorage.getItem('yigit_notes');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return initialNotes;
-      }
-    }
-    return initialNotes;
-  });
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const handleAddNote = (e: Event) => {
+    fetch('/api/notes')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setNotes(data);
+        } else {
+          setNotes(initialNotes);
+        }
+      })
+      .catch(() => setNotes(initialNotes))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const handleAddNote = async (e: Event) => {
       const customEvent = e as CustomEvent<Note>;
-      setNotes(prev => {
-        const newNotes = [...prev, customEvent.detail];
-        localStorage.setItem('yigit_notes', JSON.stringify(newNotes));
-        return newNotes;
-      });
+      const newNote = customEvent.detail;
+      
+      // Optimistic update
+      setNotes(prev => [...prev, newNote]);
+      
+      try {
+        await fetch('/api/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: newNote.text,
+            author: newNote.author,
+            date: newNote.date,
+            isAdmin: newNote.isAdmin
+          })
+        });
+      } catch (err) {
+        console.error('Failed to save note to DB', err);
+      }
     };
 
     window.addEventListener('add-note', handleAddNote);
@@ -56,13 +75,17 @@ export default function NotesWall() {
     setIsAdmin(localStorage.getItem('yigit_admin') === 'true');
   }, []);
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // prevent card hover effects or clicks
-    setNotes(prev => {
-      const updated = prev.filter(n => n.id !== id);
-      localStorage.setItem('yigit_notes', JSON.stringify(updated));
-      return updated;
-    });
+    
+    // Optimistic update
+    setNotes(prev => prev.filter(n => n.id !== id));
+    
+    try {
+      await fetch(`/api/notes?id=${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete note', err);
+    }
   };
 
   // Container height grows with the number of notes (roughly 30vh per note + some padding)

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { get, set } from 'idb-keyval';
+import { upload } from '@vercel/blob/client';
 
 interface StudioItem {
   id: string;
@@ -30,52 +30,63 @@ export default function Studio() {
   useEffect(() => {
     setIsAdmin(localStorage.getItem('yigit_admin') === 'true');
     
-    // Load from IndexedDB
-    get('yigit_studio_photos').then((val: StudioItem[]) => {
-      if (val) {
-        // Filter out any old music items if they exist
-        setItems(val.filter(v => v.type !== ('music' as any)));
-      } else {
-        setItems(defaultItems);
-      }
-    });
+    // Fetch from Backend API
+    fetch('/api/photos')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setItems(data);
+        } else {
+          setItems(defaultItems);
+        }
+      })
+      .catch(() => setItems(defaultItems));
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
+    try {
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        clientPayload: newSize,
+      });
       
       const now = new Date();
       const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
       const newItem: StudioItem = {
-        id: Date.now().toString(),
+        id: Date.now().toString(), // temporary id until refresh
         type: 'photo',
-        src: base64,
+        src: newBlob.url,
         alt: newAlt.trim() || 'İsimsiz Eser',
         size: newSize,
         date: formattedDate
       };
 
-      const updated = [newItem, ...items];
-      setItems(updated);
-      set('yigit_studio_photos', updated); // Save to IndexedDB
+      setItems(prev => [newItem, ...prev]);
       
       setNewAlt('');
       if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Fotoğraf yüklenirken bir hata oluştu.');
+    }
   };
 
-  const deleteItem = (id: string, e: React.MouseEvent) => {
+  const deleteItem = async (id: string, src: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = items.filter(p => p.id !== id);
-    setItems(updated);
-    set('yigit_studio_photos', updated);
+    
+    // Optimistic delete
+    setItems(prev => prev.filter(p => p.id !== id));
+    
+    try {
+      await fetch(`/api/photos?id=${id}&url=${encodeURIComponent(src)}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete photo', err);
+    }
   };
   return (
     <section style={{
@@ -205,7 +216,7 @@ export default function Studio() {
           >
             {isAdmin && (
               <button 
-                onClick={(e) => deleteItem(item.id, e)}
+                onClick={(e) => deleteItem(item.id, item.src || '', e)}
                 style={{
                   position: 'absolute', top: '10px', right: '10px',
                   background: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none',
