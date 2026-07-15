@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&family=Caveat&display=swap');
+
+:root {
+  /* Colors */
+  --bg-deep-charcoal: #121417;
+  --bg-dark-navy: #0d131f;
+  --bg-soft-gray: #1e2024;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  
+  --accent-muted-blue: #4b6b8b;
+  --accent-desaturated-cyan: #395c6b;
+  --accent-pale-gray: #cbd5e1;
+  --accent-soft-white: #f8fafc;
+
+  /* Typography */
+  --font-title: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-handwriting: 'Caveat', cursive;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-deep-charcoal);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  position: relative;
+  /* Noise texture fallback or base */
+  background-image: 
+    radial-gradient(circle at top left, rgba(13, 19, 31, 0.8), transparent 50%),
+    radial-gradient(circle at bottom right, rgba(30, 32, 36, 0.5), transparent 50%);
+}
+
+/* Base element styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: clamp(3rem, 8vw, 6rem);
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+p {
+  line-height: 1.6;
+  font-weight: 300;
+  color: var(--text-muted);
+}
+
+.handwriting {
+  font-family: var(--font-handwriting);
+  font-size: 1.5rem;
+  color: var(--accent-pale-gray);
+  transform: rotate(-2deg);
+}
+
+/* Utility for chaos */
+.flipped {
+  filter: hue-rotate(180deg) invert(0.8) contrast(1.5);
+  transition: filter 1s ease;
+}
+
+.glitch {
+  position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -1px 0 red;
+  animation: glitch-anim-1 2s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: -2px;
+  text-shadow: -1px 0 blue;
+  animation: glitch-anim-2 3s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim-1 {
+  0% { clip-path: inset(20% 0 80% 0); }
+  20% { clip-path: inset(60% 0 10% 0); }
+  40% { clip-path: inset(40% 0 50% 0); }
+  60% { clip-path: inset(80% 0 5% 0); }
+  80% { clip-path: inset(10% 0 70% 0); }
+  100% { clip-path: inset(30% 0 20% 0); }
+}
+
+@keyframes glitch-anim-2 {
+  0% { clip-path: inset(10% 0 60% 0); }
+  20% { clip-path: inset(30% 0 20% 0); }
+  40% { clip-path: inset(70% 0 10% 0); }
+  60% { clip-path: inset(20% 0 50% 0); }
+  80% { clip-path: inset(50% 0 30% 0); }
+  100% { clip-path: inset(5% 0 80% 0); }
+}
+
+#canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+}

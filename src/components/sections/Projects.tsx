@@ -1,0 +1,106 @@
+import { useRef, useEffect } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { projects } from '../../data/projects';
+import { ExternalLink, Calendar, Code, User, ArrowRight } from 'lucide-react';
+
+gsap.registerPlugin(ScrollTrigger);
+
+export default function Projects() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const cards = containerRef.current.querySelectorAll('.project-section');
+      cards.forEach((card) => {
+        gsap.fromTo(card, 
+          { y: 150, opacity: 0 },
+          { 
+            y: 0, opacity: 1, duration: 1.5, ease: 'power3.out',
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 85%',
+            }
+          }
+        );
+      });
+    }
+  }, []);
+
+  return (
+    <section ref={containerRef} style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1000px', margin: '0 auto' }}>
+      <h1 className="glitch" data-text="İnşa Ettiklerim" style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '3rem' }}>İnşa Ettiklerim</h1>
+      <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '5rem', fontSize: '1.2rem' }}>
+        Zamanımı harcadığım karanlık köşeler.
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8rem' }}>
+        {projects.map((p) => (
+          <div key={p.id} className="project-section" style={{ position: 'relative' }}>
+            {/* Cinematic Line */}
+            <div style={{ position: 'absolute', left: '-2rem', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, transparent, var(--accent-muted-blue), transparent)' }}></div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem' }}>
+              <div style={{ flex: '1 1 500px' }}>
+                <h2 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {p.title}
+                  <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color='var(--text-primary)'} onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}>
+                    <ExternalLink size={24} />
+                  </a>
+                </h2>
+                <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><User size={16}/> {p.role}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={16}/> {p.timeline}</span>
+                </div>
+
+                <p style={{ fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '2rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
+                  {p.description}
+                </p>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--accent-pale-gray)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Code size={18}/> Teknolojiler</h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {p.technologies.map(tech => (
+                      <span key={tech} style={{ padding: '0.3rem 0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--accent-pale-gray)', marginBottom: '1rem' }}>Öğrenilen Dersler</h3>
+                  <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', fontStyle: 'italic', borderLeft: '2px solid var(--accent-muted-blue)', paddingLeft: '1rem' }}>
+                    "{p.lessonsLearned}"
+                  </p>
+                </div>
+              </div>
+
+              {/* Cinematic Image/Video */}
+              <div style={{ flex: '1 1 300px', minHeight: '300px', background: 'rgba(20, 20, 20, 0.6)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.03) 50%, transparent 60%)', backgroundSize: '200% 200%', animation: 'shimmer 3s infinite linear' }}></div>
+                
+                {p.images && p.images.length > 0 ? (
+                  <div style={{ width: '100%', height: '100%', padding: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img src={p.images[0]} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 1, borderRadius: '50%', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
+                  </div>
+                ) : (
+                  <div style={{ color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 1 }}>
+                    <ArrowRight size={32} style={{ opacity: 0.5 }} />
+                    <span>Görsel Yükleniyor...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      `}</style>
+    </section>
+  );
+}
