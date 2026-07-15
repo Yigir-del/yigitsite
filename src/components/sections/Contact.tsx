@@ -5,7 +5,7 @@ export default function Contact() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('misafir@oda:~$ ./mesaj_gonder.sh');
 
-  const handleAction = async () => {
+  const handleAction = () => {
     if (identity === 'yigitefe' && message === 'altuntas') {
       localStorage.setItem('yigit_admin', 'true');
       setStatus('root@oda:~$ Yetki doğrulandı. Admin moduna geçildi.');
@@ -14,11 +14,17 @@ export default function Contact() {
         window.location.reload();
       }, 500);
     } else {
-      setStatus('misafir@oda:~$ Mail uygulaması açılıyor...');
+      setStatus('misafir@oda:~$ Mail sayfası açılıyor...');
       
       // Open Gmail in a new browser tab with the message pre-filled
       const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=81altuntas38@gmail.com&su=${encodeURIComponent('YigitSite İletişim Formu')}&body=${encodeURIComponent(message)}`;
-      window.open(gmailUrl, '_blank');
+      const link = document.createElement('a');
+      link.href = gmailUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       setTimeout(() => {
         setIdentity('');
