@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
 export default function Contact() {
-  const [email, setEmail] = useState('');
+  const [identity, setIdentity] = useState('');
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('misafir@oda:~$ ./mesaj_gonder.sh');
 
   const handleAction = async () => {
-    if (email === 'yigitefe' && message === 'altuntas') {
+    if (identity === 'yigitefe' && message === 'altuntas') {
       localStorage.setItem('yigit_admin', 'true');
       setStatus('root@oda:~$ Yetki doğrulandı. Admin moduna geçildi.');
       setTimeout(() => {
@@ -14,29 +14,17 @@ export default function Contact() {
         window.location.reload();
       }, 500);
     } else {
-      setStatus('misafir@oda:~$ Mesaj gönderiliyor... Lütfen bekleyin.');
+      setStatus('misafir@oda:~$ Mail uygulaması açılıyor...');
       
-      try {
-        const res = await fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, message })
-        });
-        
-        if (res.ok) {
-          setStatus('misafir@oda:~$ Mesaj başarıyla iletildi. Teşekkürler!');
-        } else {
-          setStatus('misafir@oda:~$ HATA: Sunucuya ulaşılamadı veya ayar eksik.');
-        }
-      } catch (err) {
-        setStatus('misafir@oda:~$ HATA: Ağ bağlantısı koptu.');
-      }
+      // Open the user's default email client with the message pre-filled
+      const mailtoLink = `mailto:81altuntas38@gmail.com?subject=YigitSite İletişim Formu&body=${encodeURIComponent(message)}`;
+      window.location.href = mailtoLink;
 
       setTimeout(() => {
-        setEmail('');
+        setIdentity('');
         setMessage('');
         setStatus('misafir@oda:~$ ./mesaj_gonder.sh');
-      }, 3000);
+      }, 2000);
     }
   };
 
@@ -64,11 +52,11 @@ export default function Contact() {
       }}>
         <p>{status}</p>
         <div style={{ marginTop: '1rem' }}>
-          <label>E-posta: </label>
+          <label>Kimlik: </label>
           <input 
             type="text" 
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+            value={identity}
+            onChange={e => setIdentity(e.target.value)}
             style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(0, 255, 0, 0.5)', color: '#0f0', outline: 'none', width: '200px' }} 
           />
         </div>
