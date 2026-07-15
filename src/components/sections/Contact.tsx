@@ -5,7 +5,7 @@ export default function Contact() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('misafir@oda:~$ ./mesaj_gonder.sh');
 
-  const handleAction = () => {
+  const handleAction = async () => {
     if (email === 'yigitefe' && message === 'altuntas') {
       localStorage.setItem('yigit_admin', 'true');
       setStatus('root@oda:~$ Yetki doğrulandı. Admin moduna geçildi.');
@@ -14,12 +14,29 @@ export default function Contact() {
         window.location.reload();
       }, 500);
     } else {
-      setStatus('misafir@oda:~$ Mesaj gönderiliyor... Başarılı.');
+      setStatus('misafir@oda:~$ Mesaj gönderiliyor... Lütfen bekleyin.');
+      
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, message })
+        });
+        
+        if (res.ok) {
+          setStatus('misafir@oda:~$ Mesaj başarıyla iletildi. Teşekkürler!');
+        } else {
+          setStatus('misafir@oda:~$ HATA: Sunucuya ulaşılamadı veya ayar eksik.');
+        }
+      } catch (err) {
+        setStatus('misafir@oda:~$ HATA: Ağ bağlantısı koptu.');
+      }
+
       setTimeout(() => {
         setEmail('');
         setMessage('');
         setStatus('misafir@oda:~$ ./mesaj_gonder.sh');
-      }, 2000);
+      }, 3000);
     }
   };
 
