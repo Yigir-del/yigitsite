@@ -8,13 +8,13 @@ export default function NotesWall() {
     fetch('/api/notes')
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setNotes(data);
         } else {
-          setNotes(initialNotes);
+          setNotes([]);
         }
       })
-      .catch(() => setNotes(initialNotes));
+      .catch(() => setNotes([]));
   }, []);
 
   useEffect(() => {

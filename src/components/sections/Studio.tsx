@@ -34,13 +34,13 @@ export default function Studio() {
     fetch('/api/photos')
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setItems(data);
         } else {
-          setItems(defaultItems);
+          setItems([]);
         }
       })
-      .catch(() => setItems(defaultItems));
+      .catch(() => setItems([]));
   }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
