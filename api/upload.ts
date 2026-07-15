@@ -1,6 +1,10 @@
 import { handleUpload } from '@vercel/blob/client';
-import { sql } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const pool = createPool({
+  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -20,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const { size } = JSON.parse(tokenPayload || '{}');
           const date = new Date().toLocaleDateString('tr-TR');
           
-          await sql`
+          await pool.sql`
             INSERT INTO studio_photos (url, size, date)
             VALUES (${blob.url}, ${size || 'medium'}, ${date})
           `;

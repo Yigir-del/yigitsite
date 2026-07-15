@@ -1,10 +1,14 @@
-import { sql } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const pool = createPool({
+  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Create Notes Table
-    await sql`
+    await pool.sql`
       CREATE TABLE IF NOT EXISTS notes (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         text TEXT NOT NULL,
@@ -16,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `;
 
     // Create Studio Photos Table
-    await sql`
+    await pool.sql`
       CREATE TABLE IF NOT EXISTS studio_photos (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         url TEXT NOT NULL,
@@ -32,3 +36,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
+

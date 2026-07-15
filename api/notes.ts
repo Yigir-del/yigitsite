@@ -1,10 +1,14 @@
-import { sql } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const pool = createPool({
+  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     try {
-      const { rows } = await sql`SELECT * FROM notes ORDER BY created_at ASC`;
+      const { rows } = await pool.sql`SELECT * FROM notes ORDER BY created_at ASC`;
       return res.status(200).json(rows);
     } catch (error) {
       console.error('Error fetching notes:', error);
@@ -15,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'POST') {
     try {
       const { text, author, date, isAdmin } = req.body;
-      const { rows } = await sql`
+      const { rows } = await pool.sql`
         INSERT INTO notes (text, author, date, "isAdmin")
         VALUES (${text}, ${author}, ${date}, ${isAdmin || false})
         RETURNING *;
@@ -30,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'DELETE') {
     try {
       const { id } = req.query;
-      await sql`DELETE FROM notes WHERE id = ${id as string}`;
+      await pool.sql`DELETE FROM notes WHERE id = ${id as string}`;
       return res.status(200).json({ message: 'Note deleted' });
     } catch (error) {
       console.error('Error deleting note:', error);

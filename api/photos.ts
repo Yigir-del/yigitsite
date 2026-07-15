@@ -1,11 +1,15 @@
-import { sql } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 import { del } from '@vercel/blob';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const pool = createPool({
+  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     try {
-      const { rows } = await sql`SELECT * FROM studio_photos ORDER BY created_at DESC`;
+      const { rows } = await pool.sql`SELECT * FROM studio_photos ORDER BY created_at DESC`;
       
       // Map to frontend interface format
       const formatted = rows.map(row => ({
@@ -34,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       // Delete from Postgres
       if (id && typeof id === 'string') {
-        await sql`DELETE FROM studio_photos WHERE id = ${id}`;
+        await pool.sql`DELETE FROM studio_photos WHERE id = ${id}`;
       }
       
       return res.status(200).json({ message: 'Photo deleted successfully' });
