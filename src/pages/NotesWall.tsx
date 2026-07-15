@@ -3,7 +3,6 @@ import { initialNotes, type Note } from '../data/notes';
 
 export default function NotesWall() {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/notes')
@@ -15,8 +14,7 @@ export default function NotesWall() {
           setNotes(initialNotes);
         }
       })
-      .catch(() => setNotes(initialNotes))
-      .finally(() => setLoading(false));
+      .catch(() => setNotes(initialNotes));
   }, []);
 
   useEffect(() => {
