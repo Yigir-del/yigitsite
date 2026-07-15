@@ -16,9 +16,9 @@ export default function Contact() {
     } else {
       setStatus('misafir@oda:~$ Mail uygulaması açılıyor...');
       
-      // Open the user's default email client with the message pre-filled
-      const mailtoLink = `mailto:81altuntas38@gmail.com?subject=YigitSite İletişim Formu&body=${encodeURIComponent(message)}`;
-      window.location.href = mailtoLink;
+      // Open Gmail in a new browser tab with the message pre-filled
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=81altuntas38@gmail.com&su=${encodeURIComponent('YigitSite İletişim Formu')}&body=${encodeURIComponent(message)}`;
+      window.open(gmailUrl, '_blank');
 
       setTimeout(() => {
         setIdentity('');
