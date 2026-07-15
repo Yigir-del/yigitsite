@@ -11,12 +11,7 @@ interface StudioItem {
   date?: string;
 }
 
-const defaultItems: StudioItem[] = [
-  { id: "1", type: "photo", src: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop", alt: "Retro Setup", size: "large", date: "10/06/2026" },
-  { id: "2", type: "photo", src: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop", alt: "Circuit Board", size: "small", date: "15/06/2026" },
-  { id: "3", type: "photo", src: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop", alt: "Space", size: "medium", date: "20/06/2026" },
-  { id: "4", type: "photo", src: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop", alt: "Matrix", size: "medium", date: "25/06/2026" },
-];
+// Default items removed
 
 export default function Studio() {
   const [isAdmin, setIsAdmin] = useState(false);

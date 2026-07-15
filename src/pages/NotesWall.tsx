@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { initialNotes, type Note } from '../data/notes';
+import { type Note } from '../data/notes';
 
 export default function NotesWall() {
   const [notes, setNotes] = useState<Note[]>([]);
