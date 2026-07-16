@@ -1,12 +1,31 @@
 import { useState, useEffect, useMemo } from 'react';
 import { type Note } from '../data/notes';
 
+function noteTimestamp(note: Note) {
+  if (note.created_at) {
+    const t = Date.parse(note.created_at);
+    if (!Number.isNaN(t)) return t;
+  }
+
+  // Optimistic client ids use Date.now()
+  const idNum = Number(note.id);
+  if (!Number.isNaN(idNum) && idNum > 1e11) return idNum;
+
+  // Fallback: DD/MM/YYYY
+  if (note.date) {
+    const parts = note.date.split('/').map(Number);
+    if (parts.length === 3 && parts.every((n) => !Number.isNaN(n))) {
+      const [d, m, y] = parts;
+      return new Date(y, m - 1, d).getTime();
+    }
+  }
+
+  return 0;
+}
+
+/** Newest first — latest written note is always index 0 (top of wall). */
 function sortNewestFirst(list: Note[]) {
-  return [...list].sort((a, b) => {
-    const ta = Number(a.id) || 0;
-    const tb = Number(b.id) || 0;
-    return tb - ta;
-  });
+  return [...list].sort((a, b) => noteTimestamp(b) - noteTimestamp(a));
 }
 
 export default function NotesWall() {
@@ -25,12 +44,16 @@ export default function NotesWall() {
   useEffect(() => {
     const handleAddNote = async (e: Event) => {
       const customEvent = e as CustomEvent<Note>;
-      const newNote = customEvent.detail;
-      // Stack: newest on top
-      setNotes((prev) => [newNote, ...prev]);
+      const newNote: Note = {
+        ...customEvent.detail,
+        created_at: customEvent.detail.created_at || new Date().toISOString(),
+      };
+
+      // Immediately put newest on top
+      setNotes((prev) => sortNewestFirst([newNote, ...prev]));
 
       try {
-        await fetch('/api/notes', {
+        const res = await fetch('/api/notes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -40,6 +63,16 @@ export default function NotesWall() {
             isAdmin: newNote.isAdmin,
           }),
         });
+
+        if (res.ok) {
+          const saved = (await res.json()) as Note;
+          setNotes((prev) =>
+            sortNewestFirst([
+              saved,
+              ...prev.filter((n) => n.id !== newNote.id && n.id !== saved.id),
+            ])
+          );
+        }
       } catch (err) {
         console.error('Failed to save note to DB', err);
       }
@@ -51,7 +84,7 @@ export default function NotesWall() {
 
   // Index 0 = newest = highest on the wall (stack)
   const positionedNotes = useMemo(() => {
-    return notes.map((note, index) => {
+    return sortNewestFirst(notes).map((note, index) => {
       const pseudoRandom = Math.sin(index * 12345) * 10000;
       const randomValue = pseudoRandom - Math.floor(pseudoRandom);
 
@@ -62,6 +95,7 @@ export default function NotesWall() {
       const randomValue3 = pseudoRandom3 - Math.floor(pseudoRandom3);
 
       const x = 6 + randomValue * 38;
+      // Newest (index 0) sits just under the title; older notes stack downward
       const y = 16 + index * 20 + randomValue2 * 8;
       const rotation = (randomValue3 - 0.5) * 16;
 
@@ -77,7 +111,7 @@ export default function NotesWall() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+    setNotes((prev) => sortNewestFirst(prev.filter((n) => n.id !== id)));
     try {
       await fetch(`/api/notes?id=${id}`, { method: 'DELETE' });
     } catch (err) {
@@ -156,7 +190,7 @@ export default function NotesWall() {
               boxSizing: 'border-box',
               backdropFilter: 'blur(var(--blur-amount))',
               cursor: 'pointer',
-              zIndex: notes.length - index,
+              zIndex: positionedNotes.length - index,
               transition:
                 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0.3s, background 0.3s, border-color 1.2s ease, box-shadow 0.3s ease',
             }}
@@ -170,7 +204,7 @@ export default function NotesWall() {
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = `rotate(${note.computedRotation}deg) scale(1)`;
-              e.currentTarget.style.zIndex = String(notes.length - index);
+              e.currentTarget.style.zIndex = String(positionedNotes.length - index);
               e.currentTarget.style.background = note.isAdmin
                 ? 'rgba(255, 215, 0, 0.04)'
                 : 'var(--card-bg)';
