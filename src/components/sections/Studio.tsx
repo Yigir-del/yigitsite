@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { upload } from '@vercel/blob/client';
 
 interface StudioItem {
   id: string;
@@ -10,6 +9,8 @@ interface StudioItem {
   size: string;
   date?: string;
 }
+
+const MAX_UPLOAD_BYTES = 4.5 * 1024 * 1024;
 
 export default function Studio() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -59,24 +60,40 @@ export default function Studio() {
   const confirmUpload = async () => {
     if (!pendingFile || isUploading) return;
 
+    if (pendingFile.size > MAX_UPLOAD_BYTES) {
+      alert('Fotoğraf çok büyük (max 4.5MB). Daha küçük bir görsel seç.');
+      return;
+    }
+
     setIsUploading(true);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 45000);
+
     try {
-      const newBlob = await upload(pendingFile.name, pendingFile, {
-        access: 'public',
-        handleUploadUrl: '/api/upload',
-        clientPayload: newSize,
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'content-type': pendingFile.type || 'image/jpeg',
+          'x-filename': encodeURIComponent(pendingFile.name),
+          'x-size': newSize,
+          'x-alt': encodeURIComponent(newAlt.trim() || 'İsimsiz Eser'),
+        },
+        body: pendingFile,
+        signal: controller.signal,
       });
 
-      const now = new Date();
-      const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || `Yükleme başarısız (${res.status})`);
+      }
 
       const newItem: StudioItem = {
-        id: Date.now().toString(),
+        id: String(data.id || Date.now()),
         type: 'photo',
-        src: newBlob.url,
-        alt: newAlt.trim() || 'İsimsiz Eser',
-        size: newSize,
-        date: formattedDate,
+        src: data.src,
+        alt: data.alt || newAlt.trim() || 'İsimsiz Eser',
+        size: data.size || newSize,
+        date: data.date,
       };
 
       setItems((prev) => [newItem, ...prev]);
@@ -84,8 +101,15 @@ export default function Studio() {
       clearPending();
     } catch (err) {
       console.error('Upload failed:', err);
-      alert('Fotoğraf yüklenemedi. JPG, PNG, WebP, AVIF veya HEIC biçiminde tekrar dene.');
+      const message =
+        err instanceof Error && err.name === 'AbortError'
+          ? 'Yükleme zaman aşımına uğradı. Tekrar dene.'
+          : err instanceof Error
+            ? err.message
+            : 'Fotoğraf yüklenemedi.';
+      alert(message);
     } finally {
+      window.clearTimeout(timeoutId);
       setIsUploading(false);
     }
   };
@@ -191,7 +215,7 @@ export default function Studio() {
                   <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>✨</span>
                   <span style={{ display: 'block', fontWeight: 600, color: 'var(--text-main)' }}>Cihazından bir fotoğraf seç</span>
                   <span style={{ display: 'block', marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                    Seçince önce önizleme gelir, onaylarsan siteye yerleşir
+                    Seçince önce önizleme gelir, onaylarsan siteye yerleşir (max 4.5MB)
                   </span>
                 </motion.button>
               ) : (
