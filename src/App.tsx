@@ -44,14 +44,23 @@ function App() {
     return () => window.removeEventListener('world-flip', toggleWorld);
   }, [toggleWorld]);
 
-  // Flip via html class — avoids wrapping Lenis in a permanent transform (which breaks bottom layout)
+  // Flip around current viewport center so edges stay filled with theme (no broken bottom)
   useEffect(() => {
-    document.documentElement.classList.toggle('world-flipped', upsideDown);
-    return () => document.documentElement.classList.remove('world-flipped');
+    const html = document.documentElement;
+    const midY = window.scrollY + window.innerHeight / 2;
+    html.style.transformOrigin = `50% ${midY}px`;
+    html.classList.toggle('world-flipped', upsideDown);
+
+    return () => {
+      html.classList.remove('world-flipped');
+      html.style.transformOrigin = '';
+    };
   }, [upsideDown]);
 
   return (
     <ThemeProvider>
+      {/* Fixed atmosphere — fills viewport under canvas so flip never shows empty/wrong color */}
+      <div className="atmosphere-fill" aria-hidden />
       <Background />
       <ThemeTransition />
       <ThemeSelector />
