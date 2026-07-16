@@ -6,6 +6,7 @@ import ChaosManager from './components/events/ChaosManager';
 import EasterEggs from './components/events/EasterEggs';
 import FlyingPen from './components/events/FlyingPen';
 import FlyingMusic from './components/events/FlyingMusic';
+import FlyingBeggar from './components/events/FlyingBeggar';
 import SocialDrifters from './components/events/SocialDrifters';
 import CustomCursor from './components/ui/CustomCursor';
 import FakeMenu from './components/ui/FakeMenu';
@@ -69,6 +70,7 @@ function App() {
           <EasterEggs />
           <FlyingPen />
           <FlyingMusic />
+          <FlyingBeggar />
           <SocialDrifters />
           <CustomCursor />
           <FakeMenu />

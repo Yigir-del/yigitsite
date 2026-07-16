@@ -9,14 +9,14 @@ export default function Hero() {
       textAlign: 'center',
       padding: '2rem'
     }}>
-      <h1 className="glitch" data-text="Düşüncelerimi biriktiriyorum." style={{ marginBottom: '1rem' }}>
-        Düşüncelerimi biriktiriyorum.
+      <h1 className="glitch" data-text="İzler burada kalır." style={{ marginBottom: '1rem' }}>
+        İzler burada kalır.
       </h1>
       <h2 style={{ color: 'var(--text-muted)' }}>
-        Bazıları bana ait.
+        Bazıları senin olabilir.
       </h2>
       <div className="handwriting" style={{ marginTop: '3rem', opacity: 0.7 }}>
-        (buralarda bir şeyler gizli)
+        (aşağıda bir defter var)
       </div>
     </section>
   );
