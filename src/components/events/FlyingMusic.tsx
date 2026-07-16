@@ -12,11 +12,14 @@ const QUOTES = [
 ];
 
 const MESSAGE_DURATION = 2500;
+const SPOTIFY_SRC =
+  'https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0';
 
 export default function FlyingMusic() {
   const isMobilePerf = useIsMobilePerf();
   const [position, setPosition] = useState(randomOffscreenStart);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [shouldMountPlayer, setShouldMountPlayer] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [searchMessage, setSearchMessage] = useState('');
@@ -60,6 +63,35 @@ export default function FlyingMusic() {
     }, MESSAGE_DURATION);
   }, []);
 
+  const stopMusic = useCallback(() => {
+    setIsExpanded(false);
+    setIsPlaying(false);
+    searchAttemptsRef.current = 0;
+    setSearchAttempts(0);
+    setSearchMessage('');
+    setSearchValue('');
+    // Remount iframe so Spotify actually stops
+    setIframeKey((prev) => prev + 1);
+  }, []);
+
+  const minimizePanel = useCallback(() => {
+    setIsExpanded(false);
+  }, []);
+
+  const openPanel = useCallback(() => {
+    setShouldMountPlayer(true);
+    setIsPlaying(true);
+    setIsExpanded(true);
+  }, []);
+
+  const togglePanel = useCallback(() => {
+    if (isExpanded) {
+      minimizePanel();
+      return;
+    }
+    openPanel();
+  }, [isExpanded, minimizePanel, openPanel]);
+
   const showSassyQuote = useCallback(() => {
     const attempts = searchAttemptsRef.current;
 
@@ -72,19 +104,14 @@ export default function FlyingMusic() {
       const messageId = ++messageIdRef.current;
       scheduleMessageHide(messageId, () => setSearchMessage(''));
     } else {
-      setSearchMessage("Çok zorladın. Müzik falan yok sana! 💥🚪");
+      setSearchMessage('Çok zorladın. Müzik falan yok sana! 💥🚪');
 
       const messageId = ++messageIdRef.current;
       scheduleMessageHide(messageId, () => {
-        setIsOpen(false);
-        searchAttemptsRef.current = 0;
-        setSearchAttempts(0);
-        setSearchMessage('');
-        setSearchValue('');
-        setIframeKey((prev) => prev + 1);
+        stopMusic();
       });
     }
-  }, [scheduleMessageHide]);
+  }, [scheduleMessageHide, stopMusic]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,19 +127,21 @@ export default function FlyingMusic() {
     </svg>
   );
 
+  const showPlayer = shouldMountPlayer && isPlaying;
+
   return (
     <>
       {isMobilePerf ? (
         <button
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          title="Müzik Kutusu"
+          onClick={togglePanel}
+          title={isPlaying ? 'Müzik çalıyor — aç/küçült' : 'Müzik Kutusu'}
           style={{
             position: 'fixed',
             right: '1rem',
             bottom: '4.25rem',
             background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
+            border: isPlaying && !isExpanded ? '1px solid var(--accent-pale-gray)' : '1px solid var(--glass-border)',
             borderRadius: '50%',
             width: '50px',
             height: '50px',
@@ -128,42 +157,42 @@ export default function FlyingMusic() {
           {musicIcon}
         </button>
       ) : (
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        title="Müzik Kutusu"
-        drag
-        dragMomentum={true}
-        whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
-        initial={false}
-        animate={!isOpen ? { x: position.x, y: position.y } : undefined}
-        transition={{ duration: 12, ease: 'easeInOut' }}
-        style={{
-          position: 'fixed',
-          left: isOpen ? undefined : 0,
-          top: isOpen ? undefined : 0,
-          right: isOpen ? '2rem' : undefined,
-          bottom: isOpen ? '2rem' : undefined,
-          background: 'var(--glass-bg)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: '50%',
-          width: '50px',
-          height: '50px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--text-main)',
-          cursor: isOpen ? 'pointer' : 'grab',
-          zIndex: 100,
-          boxShadow: '0 0 15px var(--glow)',
-        }}
-        whileHover={{ scale: 1.1 }}
-      >
-        {musicIcon}
-      </motion.button>
+        <motion.button
+          onClick={togglePanel}
+          title={isPlaying ? 'Müzik çalıyor — aç/küçült' : 'Müzik Kutusu'}
+          drag={!isExpanded}
+          dragMomentum={true}
+          whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
+          initial={false}
+          animate={!isExpanded ? { x: position.x, y: position.y } : { x: 0, y: 0 }}
+          transition={{ duration: isExpanded ? 0.2 : 12, ease: 'easeInOut' }}
+          style={{
+            position: 'fixed',
+            left: isExpanded ? undefined : 0,
+            top: isExpanded ? undefined : 0,
+            right: isExpanded ? '2rem' : undefined,
+            bottom: isExpanded ? '2rem' : undefined,
+            background: 'var(--glass-bg)',
+            border: isPlaying && !isExpanded ? '1px solid var(--accent-pale-gray)' : '1px solid var(--glass-border)',
+            borderRadius: '50%',
+            width: '50px',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-main)',
+            cursor: isExpanded ? 'pointer' : 'grab',
+            zIndex: 100,
+            boxShadow: '0 0 15px var(--glow)',
+          }}
+          whileHover={{ scale: 1.1 }}
+        >
+          {musicIcon}
+        </motion.button>
       )}
 
       <motion.div
-        drag={!isMobilePerf}
+        drag={!isMobilePerf && isExpanded}
         dragConstraints={{
           left: -(typeof window !== 'undefined' ? window.innerWidth - 350 : 1000),
           right: 50,
@@ -175,11 +204,13 @@ export default function FlyingMusic() {
         whileDrag={{ scale: 1.02, cursor: 'grabbing' }}
         initial={false}
         animate={{
-          y: isOpen ? 0 : 20,
-          scale: isOpen ? 1 : 0.9,
-          opacity: isOpen ? 1 : 0,
+          // Off-screen keep-alive when minimized+playing — never display:none / opacity:0 on iframe
+          x: isExpanded ? 0 : 480,
+          y: isExpanded ? 0 : 0,
+          scale: 1,
+          opacity: 1,
         }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position: 'fixed',
           right: '1rem',
@@ -191,18 +222,52 @@ export default function FlyingMusic() {
           padding: '1rem',
           zIndex: 99,
           boxShadow: '0 10px 40px var(--shadow)',
-          pointerEvents: isOpen ? 'auto' : 'none',
-          cursor: isOpen ? 'grab' : 'default',
+          pointerEvents: isExpanded ? 'auto' : 'none',
+          cursor: isExpanded ? 'grab' : 'default',
+          visibility: showPlayer || isExpanded ? 'visible' : 'hidden',
         }}
+        aria-hidden={!isExpanded}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '0.5rem' }}>
           <h4 style={{ margin: 0, color: 'var(--accent-pale-gray)', fontSize: '0.9rem' }}>Senin Frekansın</h4>
-          <button
-            onClick={() => setIsOpen(false)}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}
-          >
-            ✕
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <button
+              type="button"
+              onClick={minimizePanel}
+              title="Küçült — müzik çalmaya devam eder"
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--glass-border)',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                lineHeight: 1,
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+              }}
+            >
+              –
+            </button>
+            <button
+              type="button"
+              onClick={stopMusic}
+              title="Durdur ve kapat"
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--glass-border)',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                lineHeight: 1,
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSearch} style={{ marginBottom: '1rem' }}>
@@ -223,37 +288,26 @@ export default function FlyingMusic() {
                 fontSize: '0.9rem',
               }}
             />
-            <button
-              type="submit"
-              className="btn-domain"
-              style={{ padding: '0 1rem', borderRadius: '8px', fontWeight: 600 }}
-            >
+            <button type="submit" className="btn-domain" style={{ padding: '0 1rem', borderRadius: '8px', fontWeight: 600 }}>
               Ara
             </button>
           </div>
         </form>
 
-        {shouldMountPlayer && (
-        <iframe
-          key={iframeKey}
-          style={{
-            borderRadius: '12px',
-            background: 'transparent',
-            display: isOpen ? 'block' : 'none',
-          }}
-          src="https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0"
-          width="100%"
-          height="152"
-          frameBorder="0"
-          allowFullScreen={false}
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="eager"
-          title="Spotify çalma listesi"
-        />
+        {showPlayer && (
+          <iframe
+            key={iframeKey}
+            style={{ borderRadius: '12px', background: 'transparent', border: 'none' }}
+            src={SPOTIFY_SRC}
+            width="100%"
+            height="152"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="eager"
+            title="Spotify çalma listesi"
+          />
         )}
       </motion.div>
 
-      {/* Lightweight CSS overlay — no Framer scale (was causing jank with WebGL) */}
       {searchMessage && (
         <div
           key={searchMessage}
