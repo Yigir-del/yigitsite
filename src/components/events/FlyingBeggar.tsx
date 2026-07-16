@@ -17,26 +17,55 @@ const TAUNTS = [
   "Sen kral, ben dilenci — sen ver, ben alırım.",
 ];
 
-/** Angry beggar face that drifts around and heckles the king */
+const ROASTS_AT_SAGE = [
+  "Bilge, öğüdün bedava mı? Ben de bedavayım.",
+  "Sus bilge, açken felsefe dinlenmez.",
+  "Sakalın uzun, öğüdün boş.",
+  "Bilge, sen konuş; ben dilenirim. İş bölümü.",
+  "Öğüt yerine bir kuruş versene, bilge.",
+  "Bilgelik karnı doyurmuyor — denedim.",
+  "Hey bilge, kendi aynana bak önce.",
+  "Sen bilge, ben dilenci — en azından dürüstüm.",
+  "Öğüt satıyorsun, müşteri yok.",
+  "Bilge kapat çeneni, krala bakıyorum.",
+];
+
+/** Angry beggar face that drifts around and heckles the king (and sometimes the sage) */
 export default function FlyingBeggar() {
   const [position, setPosition] = useState(randomOffscreenStart);
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const say = (text: string, holdMs = 3200) => {
+    setLine(text);
+    setShowBubble(true);
+    if (hideRef.current) clearTimeout(hideRef.current);
+    hideRef.current = setTimeout(() => setShowBubble(false), holdMs);
+  };
 
   useEffect(() => {
     const enter = setTimeout(() => setPosition(randomOnScreen(0.15)), 200);
     const move = setInterval(() => setPosition(randomOnScreen(0.15)), 9000);
 
     const speak = () => {
-      setLine(TAUNTS[Math.floor(Math.random() * TAUNTS.length)]);
-      setShowBubble(true);
-      if (hideRef.current) clearTimeout(hideRef.current);
-      hideRef.current = setTimeout(() => setShowBubble(false), 3200);
+      say(TAUNTS[Math.floor(Math.random() * TAUNTS.length)]);
     };
 
     const firstSpeak = setTimeout(speak, 2500);
     const speakLoop = setInterval(speak, 7000 + Math.random() * 4000);
+
+    const onSageAdvice = () => {
+      // Sometimes clap back at the sage
+      if (Math.random() > 0.55) return;
+      if (replyRef.current) clearTimeout(replyRef.current);
+      replyRef.current = setTimeout(() => {
+        say(ROASTS_AT_SAGE[Math.floor(Math.random() * ROASTS_AT_SAGE.length)], 3400);
+      }, 1400 + Math.random() * 800);
+    };
+
+    window.addEventListener('sage-advice', onSageAdvice);
 
     return () => {
       clearTimeout(enter);
@@ -44,6 +73,8 @@ export default function FlyingBeggar() {
       clearInterval(move);
       clearInterval(speakLoop);
       if (hideRef.current) clearTimeout(hideRef.current);
+      if (replyRef.current) clearTimeout(replyRef.current);
+      window.removeEventListener('sage-advice', onSageAdvice);
     };
   }, []);
 
@@ -59,7 +90,6 @@ export default function FlyingBeggar() {
         position: 'fixed',
         left: 0,
         top: 0,
-        // Always under other flyers so they can pass over
         zIndex: 40,
         cursor: 'grab',
         display: 'flex',
@@ -70,7 +100,6 @@ export default function FlyingBeggar() {
       }}
       title="Sinirli dilenci"
     >
-      {/* Absolute bubble — does not shift the face when it opens */}
       <div
         style={{
           position: 'absolute',
@@ -133,15 +162,11 @@ export default function FlyingBeggar() {
       >
         <svg width="34" height="34" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="32" cy="30" r="22" fill="#2a2030" stroke="var(--accent-pale-gray)" strokeWidth="2" />
-          {/* angry brows */}
           <path d="M18 22 L28 26" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
           <path d="M46 22 L36 26" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
-          {/* eyes */}
           <circle cx="24" cy="30" r="3" fill="#f8fafc" />
           <circle cx="40" cy="30" r="3" fill="#f8fafc" />
-          {/* frown */}
           <path d="M24 42 Q32 36 40 42" stroke="#f8fafc" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-          {/* tiny tin cup */}
           <path d="M22 52 H42 L40 58 H24 Z" fill="#8a7a60" stroke="#c4b8a0" strokeWidth="1" />
           <ellipse cx="32" cy="52" rx="10" ry="2.5" fill="#a89870" />
         </svg>
