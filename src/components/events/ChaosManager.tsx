@@ -85,6 +85,7 @@ export default function ChaosManager() {
 
       {showPopup && (
         <motion.div
+          className="chaos-popup"
           initial={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
           animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
           style={{
@@ -107,7 +108,9 @@ export default function ChaosManager() {
       )}
 
       {showAchievement && (
-        <div style={{
+        <div
+          className="chaos-achievement"
+          style={{
           position: 'fixed', bottom: '20px', right: '20px',
           background: 'rgba(0,0,0,0.8)', color: '#fff', padding: '1rem', border: '1px solid rgba(255,255,255,0.2)',
           fontFamily: 'monospace', zIndex: 9999, display: 'flex', alignItems: 'center', gap: '1rem',
@@ -122,7 +125,7 @@ export default function ChaosManager() {
       )}
 
       {idleQuote && (
-        <div className="fade-in" style={{
+        <div className="fade-in chaos-idle-quote" style={{
           position: 'fixed', bottom: '10%', left: '50%', transform: 'translateX(-50%)',
           color: 'var(--text-muted)', fontStyle: 'italic', zIndex: 9000,
           pointerEvents: 'none', textShadow: '0 2px 10px rgba(0,0,0,0.5)',

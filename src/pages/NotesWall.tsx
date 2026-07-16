@@ -143,7 +143,7 @@ export default function NotesWall() {
             className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
             style={{
               position: 'absolute',
-              left: `${note.computedX}%`,
+              left: `clamp(0.5rem, ${note.computedX}%, calc(100% - min(300px, calc(100vw - 1rem)) - 0.5rem))`,
               top: `${note.computedY}vh`,
               transform: `rotate(${note.computedRotation}deg)`,
               padding: '2rem',
@@ -152,7 +152,8 @@ export default function NotesWall() {
                 ? '1px solid rgba(255, 215, 0, 0.15)'
                 : '1px solid var(--card-border)',
               borderRadius: '8px',
-              maxWidth: 'min(300px, calc(100vw - 2rem))',
+              maxWidth: 'min(300px, calc(100vw - 1.5rem))',
+              boxSizing: 'border-box',
               backdropFilter: 'blur(var(--blur-amount))',
               cursor: 'pointer',
               zIndex: notes.length - index,

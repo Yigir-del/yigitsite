@@ -159,6 +159,7 @@ export default function FlyingSage() {
                 whiteSpace: 'normal',
                 lineHeight: 1.35,
               }}
+              className="flyer-bubble"
             >
               {line}
             </motion.div>

@@ -45,7 +45,7 @@ export default function Contact() {
     }}>
       <h2 className="glitch" data-text="İletişim" style={{ marginBottom: '3rem' }}>İletişim</h2>
       
-      <div style={{
+      <div className="contact-terminal" style={{
         background: 'rgba(0, 0, 0, 0.5)',
         backdropFilter: 'blur(10px)',
         color: '#0f0',
@@ -54,15 +54,17 @@ export default function Contact() {
         borderRadius: '8px',
         width: '100%',
         maxWidth: '500px',
-        border: '1px solid rgba(0, 255, 0, 0.2)'
+        border: '1px solid rgba(0, 255, 0, 0.2)',
+        boxSizing: 'border-box',
       }}>
-        <p>{status}</p>
+        <p style={{ overflowWrap: 'anywhere' }}>{status}</p>
         <div style={{ marginTop: '1rem' }}>
           <label>Kimlik: </label>
           <input 
             type="text" 
             value={identity}
             onChange={e => setIdentity(e.target.value)}
+            className="contact-id-input"
             style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(0, 255, 0, 0.5)', color: '#0f0', outline: 'none', width: '200px' }} 
           />
         </div>
@@ -71,7 +73,7 @@ export default function Contact() {
           <textarea 
             value={message}
             onChange={e => setMessage(e.target.value)}
-            style={{ background: 'transparent', border: '1px solid rgba(0, 255, 0, 0.5)', color: '#0f0', outline: 'none', minHeight: '100px', marginTop: '0.5rem', padding: '0.5rem' }} 
+            style={{ background: 'transparent', border: '1px solid rgba(0, 255, 0, 0.5)', color: '#0f0', outline: 'none', minHeight: '100px', marginTop: '0.5rem', padding: '0.5rem', width: '100%', boxSizing: 'border-box' }} 
           />
         </div>
         <button 
@@ -86,7 +88,7 @@ export default function Contact() {
 
       <div style={{ marginTop: '4rem', textAlign: 'center' }}>
         <p style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Veya doğrudan bana ulaş:</p>
-        <a href="mailto:81altuntas38@gmail.com" style={{ 
+        <a href="mailto:81altuntas38@gmail.com" className="contact-mail-link" style={{ 
           fontSize: '1.5rem', 
           fontFamily: 'var(--font-title)', 
           color: 'var(--text-primary)', 

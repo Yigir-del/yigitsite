@@ -307,17 +307,16 @@ html.world-flipped body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 6rem 1.5rem 2rem;
+  /* Desktop: keep original spacing */
+  padding: 2rem;
 }
 
 .hero-section__title {
   margin-bottom: 1rem;
-  max-width: 16ch;
 }
 
 .hero-section__sub {
   color: var(--text-muted);
-  max-width: 22ch;
 }
 
 .hero-section__hint {
@@ -475,8 +474,21 @@ html.world-flipped body {
   color: var(--text-main);
 }
 
-/* ─── Mobile / tablet ─── */
+/* ─── Mobile only — desktop rules above stay untouched ─── */
 @media (max-width: 860px) {
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  .app-container,
+  main,
+  .page-container {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   .site-nav {
     padding: 0.85rem 0.85rem 0;
     justify-content: flex-end;
@@ -507,23 +519,37 @@ html.world-flipped body {
   }
 
   h1 {
-    font-size: clamp(2rem, 9vw, 2.85rem);
+    font-size: clamp(1.85rem, 8.5vw, 2.6rem);
+    line-height: 1.15;
+    word-break: break-word;
+    padding-inline: 0.25rem;
   }
 
   h2 {
-    font-size: clamp(1.15rem, 5.5vw, 1.85rem);
+    font-size: clamp(1.1rem, 5vw, 1.7rem);
+    word-break: break-word;
   }
 
   .handwriting {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
   }
 
   .hero-section {
-    padding: 5.5rem 1.25rem 2rem;
+    padding: 5.5rem 1.15rem 2rem;
+  }
+
+  .hero-section__title {
+    max-width: 15ch;
+  }
+
+  .hero-section__sub {
+    max-width: 20ch;
+    padding-inline: 0.5rem;
   }
 
   .hero-section__hint {
-    margin-top: 2rem;
+    margin-top: 1.75rem;
+    padding-inline: 0.75rem;
   }
 
   .about-aside-note {
@@ -531,39 +557,119 @@ html.world-flipped body {
   }
 
   .notes-wall-title {
-    top: 4.5rem !important;
+    top: 4.25rem !important;
+    white-space: normal !important;
+    text-align: center;
+    width: min(92vw, 20ch);
+    font-size: clamp(1.6rem, 7vw, 2.4rem) !important;
+  }
+
+  .note-card {
+    padding: 1.15rem !important;
+    max-width: calc(100vw - 1.5rem) !important;
+    box-sizing: border-box;
+  }
+
+  .note-card p {
+    font-size: 1rem !important;
+    overflow-wrap: anywhere;
   }
 
   .custom-cursor {
     display: none !important;
   }
 
-  .about-section {
-    padding: 5.5rem 1.25rem 3rem !important;
-  }
-
-  .projects-section {
-    padding: 5.5rem 1.25rem 3rem !important;
+  .about-section,
+  .projects-section,
+  .thoughts-section,
+  .contact-section,
+  .studio-section {
+    padding: 5.25rem 1.15rem 2.5rem !important;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
   }
 
   .project-section__line {
     display: none;
   }
 
-  .thoughts-section {
-    padding: 5.5rem 1.25rem 3rem !important;
+  .project-section {
+    max-width: 100%;
   }
 
-  .contact-section {
-    padding: 5.5rem 1.25rem 3rem !important;
+  .project-section img {
+    max-width: 100%;
+    height: auto;
   }
 
-  .studio-section {
-    padding: 5.5rem 1.25rem 3rem !important;
+  .thought-paper {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 0 !important;
+    transform: none !important;
   }
 
   .studio-admin-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .contact-terminal {
+    padding: 1.25rem !important;
+    box-sizing: border-box;
+  }
+
+  .contact-id-input {
+    width: 100% !important;
+    max-width: 100%;
+    display: block;
+    margin-top: 0.35rem;
+  }
+
+  .contact-mail-link {
+    font-size: clamp(0.95rem, 4.2vw, 1.35rem) !important;
+    word-break: break-all;
+    max-width: 100%;
+  }
+
+  .note-modal-box {
+    padding: 1.35rem !important;
+    width: calc(100% - 1.5rem) !important;
+    max-width: 500px;
+    box-sizing: border-box;
+  }
+
+  .chaos-popup {
+    font-size: clamp(1.35rem, 7vw, 2.5rem) !important;
+    white-space: normal !important;
+    max-width: 90vw;
+    padding: 0 0.75rem;
+    line-height: 1.25;
+  }
+
+  .chaos-achievement {
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    bottom: 0.75rem !important;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .chaos-idle-quote {
+    width: min(90vw, 28rem);
+    text-align: center;
+    font-size: 1rem !important;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+  }
+
+  .site-footer {
+    padding: 2.5rem 1.15rem !important;
+  }
+
+  .flyer-bubble {
+    max-width: min(160px, 42vw) !important;
+    font-size: 0.65rem !important;
   }
 }
 
@@ -575,6 +681,10 @@ html.world-flipped body {
   .domain-watermark__name {
     font-size: 0.65rem;
     letter-spacing: 0.1em;
+  }
+
+  .hero-section__title {
+    max-width: 12ch;
   }
 }
 

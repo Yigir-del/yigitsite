@@ -37,7 +37,7 @@ export default function Footer() {
   };
 
   return (
-    <footer style={{
+    <footer className="site-footer" style={{
       padding: '4rem 2rem',
       textAlign: 'center',
       borderTop: '1px solid var(--glass-border)',
@@ -45,7 +45,7 @@ export default function Footer() {
       zIndex: 10,
       transition: 'border-color 1.2s ease',
     }}>
-      <p style={{ opacity: 0.7, marginBottom: '2rem' }}>{quote}</p>
+      <p style={{ opacity: 0.7, marginBottom: '2rem', paddingInline: '0.5rem' }}>{quote}</p>
 
       <div
         onClick={handleClick}

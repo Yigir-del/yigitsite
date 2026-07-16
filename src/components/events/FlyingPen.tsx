@@ -93,14 +93,15 @@ export default function FlyingPen() {
           zIndex: 1000,
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-          <div className="fade-in" style={{
+          <div className="fade-in note-modal-box" style={{
             background: 'var(--bg-main)',
             border: '1px solid var(--accent-muted-blue)',
             borderRadius: '12px',
             padding: '3rem',
             width: '90%',
             maxWidth: '500px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+            boxSizing: 'border-box',
           }}>
             <h2 style={{ marginBottom: '2rem', textAlign: 'center' }}>Bir Not Bırak</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
