@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : 'image/jpeg';
 
     const blob = await put(sanitizeFilename(filename), body, {
-      access: 'public',
+      access: 'private',
       contentType,
       addRandomSuffix: true,
     });
@@ -76,7 +76,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       id: String(row.id),
       type: 'photo',
-      src: row.url,
+      src: `/api/photo?url=${encodeURIComponent(row.url)}`,
+      url: row.url,
       alt,
       size: row.size,
       date: row.date,

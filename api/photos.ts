@@ -15,7 +15,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const formatted = rows.map(row => ({
         id: row.id,
         type: 'photo',
-        src: row.url,
+        src: `/api/photo?url=${encodeURIComponent(row.url)}`,
+        url: row.url,
         size: row.size,
         date: row.date
       }));

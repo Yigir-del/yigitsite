@@ -5,6 +5,7 @@ interface StudioItem {
   id: string;
   type?: 'photo';
   src?: string;
+  url?: string;
   alt?: string;
   size: string;
   date?: string;
@@ -114,12 +115,12 @@ export default function Studio() {
     }
   };
 
-  const deleteItem = async (id: string, src: string, e: React.MouseEvent) => {
+  const deleteItem = async (id: string, blobUrl: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setItems((prev) => prev.filter((p) => p.id !== id));
 
     try {
-      await fetch(`/api/photos?id=${id}&url=${encodeURIComponent(src)}`, { method: 'DELETE' });
+      await fetch(`/api/photos?id=${id}&url=${encodeURIComponent(blobUrl)}`, { method: 'DELETE' });
     } catch (err) {
       console.error('Failed to delete photo', err);
     }
@@ -354,7 +355,7 @@ export default function Studio() {
           >
             {isAdmin && (
               <button
-                onClick={(e) => deleteItem(item.id, item.src || '', e)}
+                onClick={(e) => deleteItem(item.id, item.url || item.src || '', e)}
                 style={{
                   position: 'absolute',
                   top: '10px',
