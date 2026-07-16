@@ -22,6 +22,7 @@ export default function Studio() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [lightbox, setLightbox] = useState<StudioItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -41,6 +42,20 @@ export default function Studio() {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightbox(null);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [lightbox]);
 
   const clearPending = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -323,6 +338,15 @@ export default function Studio() {
         {items.map((item, i) => (
           <motion.div
             key={item.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => setLightbox(item)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setLightbox(item);
+              }
+            }}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -351,6 +375,7 @@ export default function Studio() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              cursor: 'zoom-in',
             }}
           >
             {isAdmin && (
@@ -411,6 +436,7 @@ export default function Studio() {
                 alignItems: 'flex-start',
                 justifyContent: 'flex-end',
                 height: '100%',
+                pointerEvents: 'none',
               }}
             >
               <span style={{ color: '#fff', fontFamily: 'var(--font-title)', fontSize: '1.2rem', letterSpacing: '1px' }}>
@@ -425,6 +451,92 @@ export default function Studio() {
           </motion.div>
         ))}
       </div>
+
+      {lightbox && (
+        <motion.div
+          className="studio-lightbox"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setLightbox(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 2000,
+            background: 'rgba(0, 0, 0, 0.88)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            cursor: 'zoom-out',
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Kapat"
+            onClick={() => setLightbox(null)}
+            style={{
+              position: 'fixed',
+              top: '1.25rem',
+              right: '1.25rem',
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(20,20,25,0.7)',
+              color: '#fff',
+              fontSize: '1.4rem',
+              cursor: 'pointer',
+              zIndex: 2001,
+            }}
+          >
+            ✕
+          </button>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 'min(96vw, 1100px)',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.85rem',
+              cursor: 'default',
+            }}
+          >
+            <img
+              src={lightbox.src}
+              alt={lightbox.alt || 'Fotoğraf'}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '78vh',
+                objectFit: 'contain',
+                borderRadius: '10px',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.65)',
+                filter: 'grayscale(20%) contrast(1.05)',
+              }}
+            />
+            {(lightbox.alt || lightbox.date) && (
+              <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.85)' }}>
+                {lightbox.alt && (
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.1rem', letterSpacing: '1px' }}>
+                    {lightbox.alt}
+                  </div>
+                )}
+                {lightbox.date && (
+                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.25rem', fontStyle: 'italic' }}>
+                    {lightbox.date}
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
     </section>
   );
 }
