@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
+import { useEdgeFlight } from '../../hooks/useEdgeFlight';
 import {
   BEGGAR_OWN,
   BEGGAR_TO_SAGE,
@@ -13,7 +13,11 @@ import {
 
 /** Angry beggar — mostly heckles the king; rarely jabs the sage with a mapped reply */
 export default function FlyingBeggar() {
-  const [position, setPosition] = useState(randomOffscreenStart);
+  const { position, transition } = useEdgeFlight({
+    startDelay: 300,
+    durationMin: 10,
+    durationMax: 15,
+  });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -31,9 +35,6 @@ export default function FlyingBeggar() {
   };
 
   useEffect(() => {
-    const enter = setTimeout(() => setPosition(randomOnScreen(0.15)), 200);
-    const move = setInterval(() => setPosition(randomOnScreen(0.15)), 9000);
-
     const emit = (detail: FlyerSpeakDetail) => {
       window.dispatchEvent(new CustomEvent(FLYER_SPEAK, { detail }));
     };
@@ -74,9 +75,7 @@ export default function FlyingBeggar() {
     window.addEventListener(FLYER_SPEAK, onFlyerSpeak);
 
     return () => {
-      clearTimeout(enter);
       clearTimeout(firstSpeak);
-      clearInterval(move);
       clearInterval(speakLoop);
       if (hideRef.current) clearTimeout(hideRef.current);
       if (replyRef.current) clearTimeout(replyRef.current);
@@ -88,7 +87,7 @@ export default function FlyingBeggar() {
     <motion.div
       initial={false}
       animate={{ x: position.x, y: position.y }}
-      transition={{ duration: 8.5, ease: 'easeInOut' }}
+      transition={transition}
       drag
       dragMomentum
       whileDrag={{ scale: 1.15, cursor: 'grabbing' }}

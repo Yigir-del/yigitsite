@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
+import { useEdgeFlight } from '../../hooks/useEdgeFlight';
 import {
   SAGE_OWN,
   SAGE_TO_BEGGAR,
@@ -13,7 +13,11 @@ import {
 
 /** Wise face — mostly proverbial lines; rarely jabs the beggar with a mapped reply */
 export default function FlyingSage() {
-  const [position, setPosition] = useState(randomOffscreenStart);
+  const { position, transition } = useEdgeFlight({
+    startDelay: 1800,
+    durationMin: 12,
+    durationMax: 17,
+  });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -31,9 +35,6 @@ export default function FlyingSage() {
   };
 
   useEffect(() => {
-    const enter = setTimeout(() => setPosition(randomOnScreen(0.18)), 900);
-    const move = setInterval(() => setPosition(randomOnScreen(0.18)), 11000);
-
     const emit = (detail: FlyerSpeakDetail) => {
       window.dispatchEvent(new CustomEvent(FLYER_SPEAK, { detail }));
     };
@@ -74,9 +75,7 @@ export default function FlyingSage() {
     window.addEventListener(FLYER_SPEAK, onFlyerSpeak);
 
     return () => {
-      clearTimeout(enter);
       clearTimeout(first);
-      clearInterval(move);
       clearInterval(loop);
       if (hideRef.current) clearTimeout(hideRef.current);
       if (replyRef.current) clearTimeout(replyRef.current);
@@ -88,7 +87,7 @@ export default function FlyingSage() {
     <motion.div
       initial={false}
       animate={{ x: position.x, y: position.y }}
-      transition={{ duration: 10, ease: 'easeInOut' }}
+      transition={transition}
       drag
       dragMomentum
       whileDrag={{ scale: 1.12, cursor: 'grabbing' }}
