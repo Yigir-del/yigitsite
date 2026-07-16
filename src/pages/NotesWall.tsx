@@ -1,6 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { type Note } from '../data/notes';
 
+function sortNewestFirst(list: Note[]) {
+  return [...list].sort((a, b) => {
+    const ta = Number(a.id) || 0;
+    const tb = Number(b.id) || 0;
+    return tb - ta;
+  });
+}
+
 export default function NotesWall() {
   const [notes, setNotes] = useState<Note[]>([]);
 
@@ -8,7 +16,7 @@ export default function NotesWall() {
     fetch('/api/notes')
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setNotes(data);
+        if (Array.isArray(data)) setNotes(sortNewestFirst(data));
         else setNotes([]);
       })
       .catch(() => setNotes([]));
@@ -18,7 +26,8 @@ export default function NotesWall() {
     const handleAddNote = async (e: Event) => {
       const customEvent = e as CustomEvent<Note>;
       const newNote = customEvent.detail;
-      setNotes((prev) => [...prev, newNote]);
+      // Stack: newest on top
+      setNotes((prev) => [newNote, ...prev]);
 
       try {
         await fetch('/api/notes', {
@@ -40,6 +49,7 @@ export default function NotesWall() {
     return () => window.removeEventListener('add-note', handleAddNote);
   }, []);
 
+  // Index 0 = newest = highest on the wall (stack)
   const positionedNotes = useMemo(() => {
     return notes.map((note, index) => {
       const pseudoRandom = Math.sin(index * 12345) * 10000;
@@ -52,8 +62,7 @@ export default function NotesWall() {
       const randomValue3 = pseudoRandom3 - Math.floor(pseudoRandom3);
 
       const x = 10 + randomValue * 60;
-      // Denser vertical packing so the wall doesn't create endless empty space
-      const y = 12 + index * 16 + randomValue2 * 10;
+      const y = 14 + index * 18 + randomValue2 * 8;
       const rotation = (randomValue3 - 0.5) * 20;
 
       return { ...note, computedX: x, computedY: y, computedRotation: rotation };
@@ -76,11 +85,10 @@ export default function NotesWall() {
     }
   };
 
-  // Height from last note — empty state stays compact so footer isn't miles away
   const containerHeightVh = useMemo(() => {
-    if (positionedNotes.length === 0) return 42;
+    if (positionedNotes.length === 0) return 70;
     const lastY = Math.max(...positionedNotes.map((n) => n.computedY));
-    return Math.min(Math.max(lastY + 28, 50), 180);
+    return Math.min(Math.max(lastY + 32, 70), 220);
   }, [positionedNotes]);
 
   return (
@@ -98,7 +106,7 @@ export default function NotesWall() {
         data-text="Not Defterim"
         style={{
           position: 'absolute',
-          top: '8%',
+          top: '6%',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 10,
@@ -113,7 +121,7 @@ export default function NotesWall() {
         <p
           style={{
             position: 'absolute',
-            top: '45%',
+            top: '42%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             color: 'var(--text-muted)',
@@ -127,7 +135,7 @@ export default function NotesWall() {
       )}
 
       <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
-        {positionedNotes.map((note) => (
+        {positionedNotes.map((note, index) => (
           <div
             key={note.id}
             className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
@@ -145,6 +153,7 @@ export default function NotesWall() {
               maxWidth: '300px',
               backdropFilter: 'blur(var(--blur-amount))',
               cursor: 'pointer',
+              zIndex: notes.length - index,
               transition:
                 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0.3s, background 0.3s, border-color 1.2s ease, box-shadow 0.3s ease',
             }}
@@ -158,7 +167,7 @@ export default function NotesWall() {
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = `rotate(${note.computedRotation}deg) scale(1)`;
-              e.currentTarget.style.zIndex = '1';
+              e.currentTarget.style.zIndex = String(notes.length - index);
               e.currentTarget.style.background = note.isAdmin
                 ? 'rgba(255, 215, 0, 0.04)'
                 : 'var(--card-bg)';

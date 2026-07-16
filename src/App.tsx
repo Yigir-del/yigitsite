@@ -75,7 +75,21 @@ function App() {
                 element={
                   <>
                     <Hero />
+                    <div
+                      aria-hidden
+                      style={{
+                        height: '28vh',
+                        pointerEvents: 'none',
+                      }}
+                    />
                     <NotesWall />
+                    <div
+                      aria-hidden
+                      style={{
+                        height: '18vh',
+                        pointerEvents: 'none',
+                      }}
+                    />
                   </>
                 }
               />
