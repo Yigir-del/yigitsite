@@ -1,5 +1,15 @@
-import { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const QUOTES = [
+  "Burada demokrasi yok. Ben ne istersem o çalar. 🛑",
+  "DJ benim, istek parça almıyorum. 🎧✋",
+  "Spotify Premium'umu sen mi ödüyorsun? Hayır. 💸😒",
+  "Senin müzik zevkine güvenmiyorum. 🗑️😷",
+  "Mekan benim, kurallar benim. 👑😎",
+];
+
+const MESSAGE_DURATION = 2500;
 
 export default function FlyingMusic() {
   const [position, setPosition] = useState({ x: typeof window !== 'undefined' ? window.innerWidth * 0.8 : 0, y: typeof window !== 'undefined' ? window.innerHeight * 0.2 : 0 });
@@ -9,6 +19,9 @@ export default function FlyingMusic() {
   const [searchAttempts, setSearchAttempts] = useState(0);
   const [iframeKey, setIframeKey] = useState(0);
   const messageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messageIdRef = useRef(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchAttemptsRef = useRef(0);
 
   useEffect(() => {
     // Gentle floating movement
@@ -24,39 +37,66 @@ export default function FlyingMusic() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const scheduleMessageHide = useCallback((messageId: number, onHide: () => void) => {
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    messageTimeoutRef.current = setTimeout(() => {
+      if (messageIdRef.current === messageId) onHide();
+    }, MESSAGE_DURATION);
+  }, []);
+
+  const showSassyQuote = useCallback(() => {
+    const attempts = searchAttemptsRef.current;
+
+    if (attempts < 3) {
+      const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+      searchAttemptsRef.current = attempts + 1;
+      setSearchAttempts(attempts + 1);
+      setSearchMessage(quote);
+
+      const messageId = ++messageIdRef.current;
+      scheduleMessageHide(messageId, () => setSearchMessage(''));
+    } else {
+      setSearchMessage("Çok zorladın. Müzik falan yok sana! 💥🚪");
+
+      const messageId = ++messageIdRef.current;
+      scheduleMessageHide(messageId, () => {
+        setIsOpen(false);
+        searchAttemptsRef.current = 0;
+        setSearchAttempts(0);
+        setSearchMessage('');
+        setSearchValue('');
+        setIframeKey(prev => prev + 1);
+      });
+    }
+  }, [scheduleMessageHide]);
+
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!value.trim()) {
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      showSassyQuote();
+    }, 400);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchValue.trim()) return;
 
-    if (messageTimeoutRef.current) {
-      clearTimeout(messageTimeoutRef.current);
-    }
-
-    if (searchAttempts < 3) {
-      const quotes = [
-        "Burada demokrasi yok. Ben ne istersem o çalar. 🛑",
-        "DJ benim, istek parça almıyorum. 🎧✋",
-        "Spotify Premium'umu sen mi ödüyorsun? Hayır. 💸😒",
-        "Senin müzik zevkine güvenmiyorum. 🗑️😷",
-        "Mekan benim, kurallar benim. 👑😎"
-      ];
-      setSearchMessage(quotes[Math.floor(Math.random() * quotes.length)]);
-      setSearchAttempts(prev => prev + 1);
-      
-      messageTimeoutRef.current = setTimeout(() => {
-        setSearchMessage('');
-      }, 2500);
-
-    } else {
-      setSearchMessage("Çok zorladın. Müzik falan yok sana! 💥🚪");
-      messageTimeoutRef.current = setTimeout(() => {
-        setIsOpen(false);
-        setSearchAttempts(0);
-        setSearchMessage('');
-        setSearchValue('');
-        setIframeKey(prev => prev + 1); // Force iframe to reload, stopping music
-      }, 2500);
-    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    showSassyQuote();
   };
 
   return (
@@ -143,7 +183,7 @@ export default function FlyingMusic() {
               type="text" 
               placeholder="Şarkı ara..." 
               value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               style={{
                 flex: 1,
                 background: 'rgba(255,255,255,0.05)',
@@ -187,28 +227,33 @@ export default function FlyingMusic() {
       </motion.div>
 
       {/* Sassy Screen Overlay */}
-      {searchMessage && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
-          animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            zIndex: 9999,
-            pointerEvents: 'none',
-            fontFamily: 'var(--font-title)',
-            fontSize: '3rem',
-            fontWeight: 700,
-            color: searchAttempts >= 3 ? '#ef4444' : 'var(--text-main)',
-            textAlign: 'center',
-            textShadow: '0 10px 40px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.3)',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {searchMessage}
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {searchMessage && (
+          <motion.div
+            key={searchMessage}
+            initial={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
+            animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+            exit={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              zIndex: 9999,
+              pointerEvents: 'none',
+              fontFamily: 'var(--font-title)',
+              fontSize: '3rem',
+              fontWeight: 700,
+              color: searchAttempts >= 3 ? '#ef4444' : 'var(--text-main)',
+              textAlign: 'center',
+              textShadow: '0 10px 40px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.3)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {searchMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

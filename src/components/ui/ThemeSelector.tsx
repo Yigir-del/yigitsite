@@ -1,17 +1,90 @@
+import { useEffect, useState } from 'react';
 import { useTheme, type DomainTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
 import { Infinity as InfinityIcon, Skull, Moon, Flame, Gem } from 'lucide-react';
 
+type ThemeConfig = {
+  id: DomainTheme;
+  name: string;
+  icon: JSX.Element;
+  startX: string;
+  startY: string;
+  duration: number;
+};
+
+const themes: ThemeConfig[] = [
+  { id: 'Muryokusho', name: 'Muryokusho', icon: <InfinityIcon size={24} />, startX: '15vw', startY: '25vh', duration: 40 },
+  { id: 'FukumaMizushi', name: 'Fukuma Mizushi', icon: <Skull size={24} />, startX: '75vw', startY: '20vh', duration: 35 },
+  { id: 'KangoAneitei', name: 'Kango Aneitei', icon: <Moon size={24} />, startX: '85vw', startY: '75vh', duration: 45 },
+  { id: 'GaikanTecchisen', name: 'Gaikan Tecchisen', icon: <Flame size={24} />, startX: '20vw', startY: '70vh', duration: 38 },
+  { id: 'ShinganSoai', name: 'Shingan Soai', icon: <Gem size={24} />, startX: '50vw', startY: '85vh', duration: 50 },
+];
+
+function parsePosition(startX: string, startY: string) {
+  const x = (parseFloat(startX) / 100) * window.innerWidth;
+  const y = (parseFloat(startY) / 100) * window.innerHeight;
+  return { x, y };
+}
+
+function FloatingThemeIcon({
+  t,
+  isActive,
+  onSelect,
+}: {
+  t: ThemeConfig;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
+  const [position, setPosition] = useState(() =>
+    typeof window !== 'undefined' ? parsePosition(t.startX, t.startY) : { x: 0, y: 0 }
+  );
+  const [rotation, setRotation] = useState(0);
+
+  useEffect(() => {
+    const updatePosition = () => {
+      const newX = window.innerWidth * 0.05 + Math.random() * (window.innerWidth * 0.85);
+      const newY = window.innerHeight * 0.05 + Math.random() * (window.innerHeight * 0.85);
+      setPosition({ x: newX, y: newY });
+      setRotation(prev => prev + 90 + Math.random() * 180);
+    };
+
+    const interval = setInterval(updatePosition, t.duration * 250);
+    return () => clearInterval(interval);
+  }, [t.duration]);
+
+  return (
+    <motion.button
+      onClick={onSelect}
+      title={t.name}
+      animate={{ x: position.x, y: position.y, rotate: rotation }}
+      transition={{ duration: t.duration * 0.25, ease: 'easeInOut' }}
+      style={{
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: isActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.02)',
+        backdropFilter: 'blur(4px)',
+        border: isActive ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.05)',
+        color: isActive ? 'var(--accent-soft-white)' : 'var(--text-muted)',
+        cursor: 'pointer',
+        opacity: isActive ? 1 : 0.5,
+        padding: '1rem',
+        borderRadius: '50%',
+        boxShadow: isActive ? '0 0 20px rgba(255,255,255,0.1)' : 'none',
+        zIndex: 1,
+      }}
+      whileHover={{ scale: 1.15, opacity: 0.9 }}
+    >
+      {t.icon}
+    </motion.button>
+  );
+}
+
 export default function ThemeSelector() {
   const { theme, setTheme, isTransitioning } = useTheme();
-
-  const themes: { id: DomainTheme; name: string; icon: JSX.Element; startX: string; startY: string; duration: number }[] = [
-    { id: 'Muryokusho', name: 'Muryokusho', icon: <InfinityIcon size={24} />, startX: '15vw', startY: '25vh', duration: 40 },
-    { id: 'FukumaMizushi', name: 'Fukuma Mizushi', icon: <Skull size={24} />, startX: '75vw', startY: '20vh', duration: 35 },
-    { id: 'KangoAneitei', name: 'Kango Aneitei', icon: <Moon size={24} />, startX: '85vw', startY: '75vh', duration: 45 },
-    { id: 'GaikanTecchisen', name: 'Gaikan Tecchisen', icon: <Flame size={24} />, startX: '20vw', startY: '70vh', duration: 38 },
-    { id: 'ShinganSoai', name: 'Shingan Soai', icon: <Gem size={24} />, startX: '50vw', startY: '85vh', duration: 50 },
-  ];
 
   return (
     <>
@@ -52,62 +125,16 @@ export default function ThemeSelector() {
         position: 'fixed',
         inset: 0,
         pointerEvents: isTransitioning ? 'none' : 'auto',
-        zIndex: 1, 
+        zIndex: 1,
         overflow: 'hidden'
       }}>
         {themes.map((t) => (
-          <motion.button
+          <FloatingThemeIcon
             key={t.id}
-            onClick={() => setTheme(t.id)}
-            title={t.name}
-            drag
-            dragMomentum={true}
-            whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
-            initial={{ rotate: 0 }}
-            animate={{ 
-              x: [0, 75, 25, 0], 
-              y: [0, 65, -25, 0],
-              rotate: [0, 90, 180, 360]
-            }}
-            transition={{ 
-              duration: t.duration, 
-              ease: "linear", 
-              repeat: Infinity 
-            }}
-            style={{
-              position: 'absolute',
-              left: t.startX,
-              top: t.startY,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: theme === t.id ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.02)',
-              backdropFilter: 'blur(4px)',
-              border: theme === t.id ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.05)',
-              color: theme === t.id ? 'var(--accent-soft-white)' : 'var(--text-muted)',
-              cursor: 'grab',
-              opacity: theme === t.id ? 1 : 0.5,
-              padding: '1rem',
-              borderRadius: '50%',
-              boxShadow: theme === t.id ? '0 0 20px rgba(255,255,255,0.1)' : 'none'
-            }}
-            onMouseEnter={(e) => {
-              if (theme !== t.id) {
-                e.currentTarget.style.opacity = '0.9';
-                e.currentTarget.style.border = '1px solid rgba(255,255,255,0.2)';
-                e.currentTarget.style.color = 'var(--text-main)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (theme !== t.id) {
-                e.currentTarget.style.opacity = '0.5';
-                e.currentTarget.style.border = '1px solid rgba(255,255,255,0.05)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-              }
-            }}
-          >
-            {t.icon}
-          </motion.button>
+            t={t}
+            isActive={theme === t.id}
+            onSelect={() => setTheme(t.id)}
+          />
         ))}
       </div>
     </>
