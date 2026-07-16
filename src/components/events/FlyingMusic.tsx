@@ -115,21 +115,21 @@ export default function FlyingMusic() {
           top: isOpen ? undefined : 0,
           right: isOpen ? '2rem' : undefined,
           bottom: isOpen ? '2rem' : undefined,
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(5px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(var(--blur-amount))',
+          border: '1px solid var(--glass-border)',
           borderRadius: '50%',
           width: '50px',
           height: '50px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'var(--text-primary)',
+          color: 'var(--text-main)',
           cursor: isOpen ? 'pointer' : 'grab',
           zIndex: 100,
-          boxShadow: '0 0 15px rgba(255,255,255,0.2)'
+          boxShadow: '0 0 15px var(--glow)'
         }}
-        whileHover={{ scale: 1.1, boxShadow: '0 0 25px rgba(255,255,255,0.6)' }}
+        whileHover={{ scale: 1.1, boxShadow: 'var(--hover-scale-glow)' }}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 18V5l12-2v13"></path>
@@ -157,13 +157,13 @@ export default function FlyingMusic() {
         right: '2rem',
         bottom: '6rem',
         width: '320px',
-        background: 'rgba(10, 10, 15, 0.9)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid var(--accent-muted-blue)',
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(var(--blur-amount))',
+        border: '1px solid var(--glass-border)',
         borderRadius: '16px',
         padding: '1rem',
         zIndex: 99,
-        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+        boxShadow: '0 10px 40px var(--shadow)',
         pointerEvents: isOpen ? 'auto' : 'none',
         cursor: isOpen ? 'grab' : 'default',
       }}>
@@ -186,24 +186,21 @@ export default function FlyingMusic() {
               onChange={(e) => handleSearchChange(e.target.value)}
               style={{
                 flex: 1,
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--input-bg)',
+                border: '1px solid var(--glass-border)',
                 padding: '0.5rem 0.8rem',
                 borderRadius: '8px',
-                color: 'var(--text-primary)',
+                color: 'var(--text-main)',
                 outline: 'none',
                 fontSize: '0.9rem'
               }}
             />
             <button 
               type="submit"
+              className="btn-domain"
               style={{
-                background: 'var(--accent-muted-blue)',
-                border: 'none',
-                color: '#fff',
                 padding: '0 1rem',
                 borderRadius: '8px',
-                cursor: 'pointer',
                 fontWeight: 600
               }}
             >

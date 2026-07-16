@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const sentences = [
   "Şu an CSS biliyormuş gibi yapıyorum.",
@@ -9,9 +9,11 @@ const sentences = [
   "Hiçlikten merhabalar."
 ];
 
+const FLIP_THRESHOLD = 18;
+
 export default function Footer() {
   const [quote, setQuote] = useState('');
-  const [clicks, setClicks] = useState(0);
+  const clicksRef = useRef(0);
   const [endMessage, setEndMessage] = useState("Gerçekten sonuna kadar geldin mi?");
 
   useEffect(() => {
@@ -19,13 +21,18 @@ export default function Footer() {
   }, []);
 
   const handleClick = () => {
-    setClicks(c => c + 1);
-    if (clicks === 0) setEndMessage("Hayır, ciddiyim.");
-    if (clicks === 1) setEndMessage("Aşağıda başka hiçbir şey yok.");
-    if (clicks === 2) setEndMessage("Tıklamayı bırak.");
-    if (clicks > 2) {
-      const target = document.querySelector('.app-container');
-      if (target) target.classList.add('flipped');
+    const next = clicksRef.current + 1;
+    clicksRef.current = next;
+
+    if (next === 1) setEndMessage("Hayır, ciddiyim.");
+    else if (next === 2) setEndMessage("Aşağıda başka hiçbir şey yok.");
+    else if (next === 3) setEndMessage("Tıklamayı bırak.");
+    else if (next === 8) setEndMessage("Hâlâ mı?");
+    else if (next === 14) setEndMessage("Son uyarı.");
+    else if (next >= FLIP_THRESHOLD) {
+      window.dispatchEvent(new Event('world-flip'));
+      setEndMessage("...tamam.");
+      clicksRef.current = 0;
     }
   };
 
@@ -33,17 +40,24 @@ export default function Footer() {
     <footer style={{
       padding: '4rem 2rem',
       textAlign: 'center',
-      borderTop: '1px solid var(--bg-soft-gray)',
+      borderTop: '1px solid var(--glass-border)',
       position: 'relative',
-      zIndex: 10
+      zIndex: 10,
+      transition: 'border-color 1.2s ease',
     }}>
       <p style={{ opacity: 0.7, marginBottom: '2rem' }}>{quote}</p>
-      
-      <div 
+
+      <div
         onClick={handleClick}
         style={{ marginTop: '4rem', cursor: 'pointer', padding: '2rem' }}
       >
-        <span style={{ fontSize: '0.8rem', letterSpacing: '2px', opacity: 0.5, textTransform: 'uppercase' }}>
+        <span style={{
+          fontSize: '0.8rem',
+          letterSpacing: '2px',
+          opacity: 0.5,
+          textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+        }}>
           {endMessage}
         </span>
       </div>

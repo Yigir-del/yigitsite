@@ -25,10 +25,9 @@ export default function ChaosManager() {
         setShowAchievement(true);
         setTimeout(() => setShowAchievement(false), 4000);
       } else if (randomEvent === 'gravity') {
-        const target = document.querySelector('.app-container');
-        if (target) target.classList.add('flipped');
+        window.dispatchEvent(new Event('world-flip'));
         setTimeout(() => {
-          if (target) target.classList.remove('flipped');
+          window.dispatchEvent(new Event('world-flip'));
         }, 5000);
       } else {
         setTimeout(() => {

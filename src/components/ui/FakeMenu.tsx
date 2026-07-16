@@ -44,7 +44,7 @@ export default function FakeMenu() {
         }}>
           <div style={{ padding: '0.5rem', cursor: 'pointer', transition: 'background 0.2s', borderRadius: '4px' }} className="menu-item" onClick={() => triggerAlert('Gerçekliği inceliyorum... 👁️')}>Öğeyi İncele</div>
           <div style={{ padding: '0.5rem', cursor: 'pointer', transition: 'background 0.2s', borderRadius: '4px' }} className="menu-item" onClick={() => triggerAlert('Aslında her şey bir hiçlikten ibaret. 🌌')}>Kaynağı Görüntüle</div>
-          <div style={{ padding: '0.5rem', cursor: 'pointer', color: 'red', transition: 'background 0.2s', borderRadius: '4px' }} className="menu-item" onClick={() => { const el = document.querySelector('.app-container'); if(el) el.classList.toggle('flipped'); }}>Siteyi Boz / Düzenle</div>
+          <div style={{ padding: '0.5rem', cursor: 'pointer', color: 'var(--accent-soft-white)', transition: 'background 0.2s', borderRadius: '4px' }} className="menu-item" onClick={() => window.dispatchEvent(new Event('world-flip'))}>Siteyi Boz / Düzenle</div>
         </div>
       )}
 

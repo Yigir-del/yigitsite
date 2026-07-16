@@ -72,32 +72,35 @@ export default function Thoughts() {
           position: 'fixed', 
           top: '100px', 
           right: '20px', 
-          background: 'rgba(10, 10, 15, 0.8)', 
-          backdropFilter: 'blur(10px)',
+          background: 'var(--glass-bg)', 
+          backdropFilter: 'blur(var(--blur-amount))',
           padding: '1.5rem', 
           borderRadius: '12px', 
           width: '280px', 
-          border: '1px solid var(--accent-muted-blue)',
+          border: '1px solid var(--glass-border)',
           zIndex: 100,
-          boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+          boxShadow: '0 10px 30px var(--shadow)'
         }}>
-          <h3 style={{ color: 'var(--text-primary)', marginBottom: '1rem', fontSize: '1rem' }}>Admin: Düşünce Ekle</h3>
+          <h3 style={{ color: 'var(--text-main)', marginBottom: '1rem', fontSize: '1rem' }}>Admin: Düşünce Ekle</h3>
           <input 
             type="text" 
             value={newType} 
             onChange={e => setNewType(e.target.value)} 
             placeholder="Kategori"
-            style={{ width: '100%', padding: '0.6rem', marginBottom: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', outline: 'none', fontSize: '0.85rem' }}
+            className="input-domain"
+            style={{ width: '100%', padding: '0.6rem', marginBottom: '1rem', fontSize: '0.85rem' }}
           />
           <textarea 
             value={newText}
             onChange={e => setNewText(e.target.value)}
             placeholder="Ne düşünüyorsun?"
-            style={{ width: '100%', padding: '0.6rem', minHeight: '80px', marginBottom: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
+            className="input-domain"
+            style={{ width: '100%', padding: '0.6rem', minHeight: '80px', marginBottom: '1rem', fontSize: '0.85rem', resize: 'vertical' }}
           />
           <button 
             onClick={addThought}
-            style={{ width: '100%', padding: '0.6rem', background: 'var(--accent-muted-blue)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
+            className="btn-domain"
+            style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.9rem' }}
           >
             Gönder
           </button>

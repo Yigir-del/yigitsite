@@ -1,19 +1,42 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&family=Caveat&display=swap');
 
 :root {
-  /* Colors */
-  --bg-deep-charcoal: #121417;
-  --bg-dark-navy: #0d131f;
-  --bg-soft-gray: #1e2024;
-  --text-main: #e2e8f0;
-  --text-muted: #94a3b8;
-  
-  --accent-muted-blue: #4b6b8b;
-  --accent-desaturated-cyan: #395c6b;
-  --accent-pale-gray: #cbd5e1;
-  --accent-soft-white: #f8fafc;
+  --bg-deep-charcoal: #08061a;
+  --bg-dark-navy: #0c0a1e;
+  --bg-soft-gray: #1a1630;
+  --text-main: #e8e4f5;
+  --text-muted: #9b93b8;
+  --accent-muted-blue: #6b5b9a;
+  --accent-desaturated-cyan: #4a3d72;
+  --accent-pale-gray: #c4b8e0;
+  --accent-soft-white: #f3efff;
 
-  /* Typography */
+  --glow: rgba(139, 92, 246, 0.35);
+  --glow-strong: rgba(167, 139, 250, 0.55);
+  --glass-bg: rgba(20, 16, 40, 0.45);
+  --glass-border: rgba(167, 139, 250, 0.18);
+  --card-bg: rgba(18, 14, 36, 0.55);
+  --card-border: rgba(139, 92, 246, 0.12);
+  --card-hover: rgba(139, 92, 246, 0.1);
+  --input-bg: rgba(10, 8, 28, 0.5);
+  --button-bg: #5b4a8a;
+  --button-hover: #7c6aad;
+  --tag-bg: rgba(139, 92, 246, 0.1);
+  --tag-border: rgba(167, 139, 250, 0.22);
+  --selection-bg: rgba(139, 92, 246, 0.45);
+  --selection-text: #f3efff;
+  --scrollbar-thumb: #5b4a8a;
+  --scrollbar-track: #0c0a1e;
+  --link-hover: #c4b8e0;
+  --cursor-glow: rgba(167, 139, 250, 0.5);
+  --timeline: #6b5b9a;
+  --shadow: rgba(40, 20, 80, 0.45);
+  --gradient-a: rgba(60, 30, 120, 0.45);
+  --gradient-b: rgba(20, 40, 90, 0.35);
+  --blur-amount: 14px;
+  --noise-opacity: 0.08;
+  --hover-scale-glow: 0 0 28px rgba(167, 139, 250, 0.45);
+
   --font-title: 'Playfair Display', serif;
   --font-body: 'Inter', sans-serif;
   --font-handwriting: 'Caveat', cursive;
@@ -25,23 +48,58 @@
   box-sizing: border-box;
 }
 
+html {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
 body {
   background-color: var(--bg-deep-charcoal);
   color: var(--text-main);
   font-family: var(--font-body);
   overflow-x: hidden;
   position: relative;
-  /* Noise texture fallback or base */
-  background-image: 
-    radial-gradient(circle at top left, rgba(13, 19, 31, 0.8), transparent 50%),
-    radial-gradient(circle at bottom right, rgba(30, 32, 36, 0.5), transparent 50%);
+  background-image:
+    radial-gradient(circle at top left, var(--gradient-a), transparent 55%),
+    radial-gradient(circle at bottom right, var(--gradient-b), transparent 50%);
+  transition:
+    background-color 1.6s cubic-bezier(0.22, 1, 0.36, 1),
+    color 1.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Base element styles */
+a {
+  color: var(--accent-pale-gray);
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
   font-weight: 400;
   letter-spacing: -0.02em;
+  transition: color 1.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 h1 {
@@ -57,6 +115,7 @@ p {
   line-height: 1.6;
   font-weight: 300;
   color: var(--text-muted);
+  transition: color 1.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .handwriting {
@@ -66,10 +125,64 @@ p {
   transform: rotate(-2deg);
 }
 
-/* Utility for chaos */
-.flipped {
-  filter: hue-rotate(180deg) invert(0.8) contrast(1.5);
-  transition: filter 1s ease;
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  box-shadow: 0 10px 40px var(--shadow);
+  transition:
+    background 1.2s ease,
+    border-color 1.2s ease,
+    box-shadow 1.2s ease;
+}
+
+.card-surface {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.card-surface:hover {
+  background: var(--card-hover);
+  box-shadow: var(--hover-scale-glow);
+}
+
+.tag {
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-domain {
+  background: var(--button-bg);
+  color: var(--accent-soft-white);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-domain:hover {
+  background: var(--button-hover);
+  box-shadow: var(--hover-scale-glow);
+}
+
+.input-domain {
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input-domain:focus {
+  border-color: var(--accent-muted-blue);
+  box-shadow: 0 0 0 1px var(--glow);
 }
 
 .glitch {
@@ -89,13 +202,13 @@ p {
 
 .glitch::before {
   left: 2px;
-  text-shadow: -1px 0 red;
+  text-shadow: -1px 0 var(--accent-soft-white);
   animation: glitch-anim-1 2s infinite linear alternate-reverse;
 }
 
 .glitch::after {
   left: -2px;
-  text-shadow: -1px 0 blue;
+  text-shadow: -1px 0 var(--accent-muted-blue);
   animation: glitch-anim-2 3s infinite linear alternate-reverse;
 }
 
@@ -135,6 +248,13 @@ p {
   height: 100vh;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.03;
+  opacity: var(--noise-opacity);
   background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+  transition: opacity 1.4s ease;
+}
+
+.world-shell {
+  min-height: 100vh;
+  will-change: transform;
+  transform-origin: center center;
 }

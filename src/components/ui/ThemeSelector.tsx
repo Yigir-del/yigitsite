@@ -73,16 +73,16 @@ export default function ThemeSelector() {
               exit={{ opacity: 0, y: 8, filter: 'blur(6px)', scale: 0.98 }}
               transition={{ duration: 0.45, ease: cinematic }}
               style={{
-                background: 'rgba(10, 12, 18, 0.45)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--blur-amount))',
+                WebkitBackdropFilter: 'blur(var(--blur-amount))',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '12px',
                 padding: '0.75rem',
                 minWidth: '200px',
                 maxHeight: 'min(50vh, 360px)',
                 overflowY: 'auto',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
+                boxShadow: '0 12px 40px var(--shadow)',
               }}
             >
               <div
@@ -114,7 +114,7 @@ export default function ThemeSelector() {
                       display: 'block',
                       width: '100%',
                       textAlign: 'left',
-                      background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      background: isActive ? 'var(--card-hover)' : 'transparent',
                       border: 'none',
                       borderRadius: '8px',
                       padding: '0.55rem 0.65rem',
@@ -129,7 +129,7 @@ export default function ThemeSelector() {
                     whileHover={
                       isTransitioning
                         ? undefined
-                        : { backgroundColor: 'rgba(255,255,255,0.06)', color: 'var(--text-main)' }
+                        : { backgroundColor: 'var(--card-hover)', color: 'var(--text-main)' }
                     }
                   >
                     {d.label}
@@ -146,10 +146,10 @@ export default function ThemeSelector() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           style={{
-            background: 'rgba(10, 12, 18, 0.4)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.14)',
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(var(--blur-amount))',
+            WebkitBackdropFilter: 'blur(var(--blur-amount))',
+            border: '1px solid var(--glass-border)',
             borderRadius: '999px',
             padding: '0.65rem 1.1rem',
             color: 'var(--text-main)',
@@ -158,7 +158,7 @@ export default function ThemeSelector() {
             fontWeight: 300,
             letterSpacing: '0.28em',
             cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+            boxShadow: '0 8px 24px var(--shadow)',
           }}
         >
           {open ? 'KAPAT' : 'DOMAIN'}

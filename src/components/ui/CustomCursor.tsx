@@ -12,19 +12,40 @@ export default function CustomCursor() {
   }, []);
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: pos.y,
-      left: pos.x,
-      width: '8px',
-      height: '8px',
-      background: 'var(--text-main)',
-      borderRadius: '50%',
-      pointerEvents: 'none',
-      zIndex: 9999,
-      transform: 'translate(-50%, -50%)',
-      transition: 'width 0.2s, height 0.2s',
-      mixBlendMode: 'difference'
-    }} />
+    <>
+      <div
+        style={{
+          position: 'fixed',
+          top: pos.y,
+          left: pos.x,
+          width: '120px',
+          height: '120px',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+          zIndex: 9998,
+          transform: 'translate(-50%, -50%)',
+          background: `radial-gradient(circle, var(--cursor-glow) 0%, transparent 70%)`,
+          opacity: 0.55,
+          transition: 'background 1.2s ease',
+        }}
+      />
+      <div
+        style={{
+          position: 'fixed',
+          top: pos.y,
+          left: pos.x,
+          width: '8px',
+          height: '8px',
+          background: 'var(--text-main)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          transform: 'translate(-50%, -50%)',
+          boxShadow: '0 0 12px var(--cursor-glow)',
+          transition: 'background 1.2s ease, box-shadow 1.2s ease',
+          mixBlendMode: 'difference',
+        }}
+      />
+    </>
   );
 }

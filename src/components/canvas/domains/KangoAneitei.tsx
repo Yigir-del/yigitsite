@@ -2,7 +2,6 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-/** Rising ink shards — monochrome, sparse */
 function InkShards() {
   const count = 140;
   const mesh = useRef<THREE.InstancedMesh>(null);
@@ -41,7 +40,7 @@ function InkShards() {
   return (
     <instancedMesh ref={mesh} args={[undefined, undefined, count]} frustumCulled={false}>
       <octahedronGeometry args={[1, 0]} />
-      <meshBasicMaterial color="#111111" transparent opacity={0.7} depthWrite={false} />
+      <meshBasicMaterial color="#1a1028" transparent opacity={0.75} depthWrite={false} />
     </instancedMesh>
   );
 }
@@ -59,19 +58,20 @@ function ShadowSea() {
   return (
     <mesh ref={ref} position={[0, -2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[70, 70, 24, 24]} />
-      <meshStandardMaterial color="#020202" metalness={0.85} roughness={0.25} />
+      <meshStandardMaterial color="#0a0614" metalness={0.85} roughness={0.25} />
     </mesh>
   );
 }
 
-/** Chimera Shadow Garden — ink void, liquid black */
+/** Chimera Shadow Garden — ink void, dark violet fog */
 export default function KangoAneitei() {
   return (
     <>
-      <color attach="background" args={['#000000']} />
-      <ambientLight intensity={0.15} color="#ffffff" />
-      <directionalLight position={[0, 8, 2]} intensity={0.4} color="#555555" />
-      <fog attach="fog" args={['#010101', 2, 16]} />
+      <color attach="background" args={['#030205']} />
+      <ambientLight intensity={0.12} color="#6b4a8a" />
+      <directionalLight position={[0, 8, 2]} intensity={0.35} color="#4a3560" />
+      <pointLight position={[-3, 1, 2]} color="#3a2060" intensity={0.8} distance={16} />
+      <fog attach="fog" args={['#050308', 2, 14]} />
       <ShadowSea />
       <InkShards />
     </>

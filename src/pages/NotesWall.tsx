@@ -107,23 +107,25 @@ export default function NotesWall() {
               transform: `rotate(${note.computedRotation}deg)`,
               padding: '2rem',
               // EXTREMELY transparent card
-              background: note.isAdmin ? 'rgba(255, 215, 0, 0.02)' : 'rgba(255, 255, 255, 0.01)',
-              border: note.isAdmin ? '1px solid rgba(255, 215, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.03)',
+              background: note.isAdmin ? 'rgba(255, 215, 0, 0.04)' : 'var(--card-bg)',
+              border: note.isAdmin ? '1px solid rgba(255, 215, 0, 0.15)' : '1px solid var(--card-border)',
               borderRadius: '8px',
               maxWidth: '300px',
-              backdropFilter: 'blur(2px)',
+              backdropFilter: 'blur(var(--blur-amount))',
               cursor: 'pointer',
-              transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0.3s, background 0.3s'
+              transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0.3s, background 0.3s, border-color 1.2s ease, box-shadow 0.3s ease'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = `rotate(0deg) scale(1.05)`;
               e.currentTarget.style.zIndex = '50';
-              e.currentTarget.style.background = note.isAdmin ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.background = note.isAdmin ? 'rgba(255, 215, 0, 0.08)' : 'var(--card-hover)';
+              e.currentTarget.style.boxShadow = 'var(--hover-scale-glow)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = `rotate(${note.computedRotation}deg) scale(1)`;
               e.currentTarget.style.zIndex = '1';
-              e.currentTarget.style.background = note.isAdmin ? 'rgba(255, 215, 0, 0.02)' : 'rgba(255, 255, 255, 0.01)';
+              e.currentTarget.style.background = note.isAdmin ? 'rgba(255, 215, 0, 0.04)' : 'var(--card-bg)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           >
             {note.isAdmin && <div style={{ position: 'absolute', top: '-10px', right: '10px', fontSize: '20px' }}>📌</div>}

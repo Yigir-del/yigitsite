@@ -60,21 +60,21 @@ export default function FlyingPen() {
           position: 'fixed',
           left: 0,
           top: 0,
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(5px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(var(--blur-amount))',
+          border: '1px solid var(--glass-border)',
           borderRadius: '50%',
           width: '50px',
           height: '50px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'var(--text-primary)',
+          color: 'var(--text-main)',
           cursor: 'grab',
           zIndex: 90,
-          boxShadow: '0 0 15px rgba(255,255,255,0.2)'
+          boxShadow: '0 0 15px var(--glow)'
         }}
-        whileHover={{ scale: 1.1, boxShadow: '0 0 25px rgba(255,255,255,0.6)' }}
+        whileHover={{ scale: 1.1, boxShadow: 'var(--hover-scale-glow)' }}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 19l7-7 3 3-7 7-3-3z"></path>

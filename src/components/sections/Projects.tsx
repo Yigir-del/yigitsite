@@ -38,7 +38,7 @@ export default function Projects() {
         {projects.map((p) => (
           <div key={p.id} className="project-section" style={{ position: 'relative' }}>
             {/* Cinematic Line */}
-            <div style={{ position: 'absolute', left: '-2rem', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, transparent, var(--accent-muted-blue), transparent)' }}></div>
+            <div style={{ position: 'absolute', left: '-2rem', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, transparent, var(--timeline), transparent)' }}></div>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem' }}>
               <div style={{ flex: '1 1 500px' }}>
@@ -61,7 +61,7 @@ export default function Projects() {
                   <h3 style={{ fontSize: '1rem', color: 'var(--accent-pale-gray)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Code size={18}/> Teknolojiler</h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {p.technologies.map(tech => (
-                      <span key={tech} style={{ padding: '0.3rem 0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <span key={tech} className="tag">
                         {tech}
                       </span>
                     ))}
@@ -77,8 +77,8 @@ export default function Projects() {
               </div>
 
               {/* Cinematic Image/Video */}
-              <div style={{ flex: '1 1 300px', minHeight: '300px', background: 'rgba(20, 20, 20, 0.6)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.03) 50%, transparent 60%)', backgroundSize: '200% 200%', animation: 'shimmer 3s infinite linear' }}></div>
+              <div className="card-surface" style={{ flex: '1 1 300px', minHeight: '300px', borderRadius: '12px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(45deg, transparent 40%, var(--glow) 50%, transparent 60%)', backgroundSize: '200% 200%', animation: 'shimmer 3s infinite linear', opacity: 0.35 }}></div>
                 
                 {p.images && p.images.length > 0 ? (
                   <div style={{ width: '100%', height: '100%', padding: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

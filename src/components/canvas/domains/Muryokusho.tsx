@@ -47,9 +47,9 @@ function Moon() {
     >
       <sphereGeometry args={[1.5, 32, 32]} />
       <meshStandardMaterial
-        color={clickCount > 5 ? '#ff4444' : '#ffffff'}
-        emissive={clickCount > 5 ? '#ff0000' : '#444444'}
-        emissiveIntensity={0.5}
+        color={clickCount > 5 ? '#ff4444' : '#e8e0ff'}
+        emissive={clickCount > 5 ? '#ff0000' : '#4a3d72'}
+        emissiveIntensity={0.45}
         roughness={0.8}
       />
       {clickCount > 5 && <pointLight color="#ff0000" intensity={2} distance={20} />}
@@ -57,16 +57,17 @@ function Moon() {
   );
 }
 
-/** Pure void — untouched classic Muryokusho */
+/** Classic void — stars + moon, soft cosmic violet cast */
 export default function Muryokusho() {
   return (
     <>
-      <color attach="background" args={['#0d131f']} />
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[-10, 10, 5]} intensity={1} />
+      <color attach="background" args={['#0c0a1e']} />
+      <ambientLight intensity={0.4} color="#b8a8e8" />
+      <directionalLight position={[-10, 10, 5]} intensity={0.9} color="#d4c8ff" />
+      <pointLight position={[4, 2, -6]} color="#7c5cff" intensity={0.6} distance={30} />
       <MovingStars />
       <Moon />
-      <fog attach="fog" args={['#0d131f', 5, 15]} />
+      <fog attach="fog" args={['#0c0a1e', 5, 16]} />
     </>
   );
 }
