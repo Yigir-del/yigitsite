@@ -36,6 +36,7 @@ export default function CustomCursor() {
     <>
       <div
         ref={glowRef}
+        className="custom-cursor custom-cursor--glow"
         style={{
           position: 'fixed',
           top: 0,
@@ -52,6 +53,7 @@ export default function CustomCursor() {
       />
       <div
         ref={dotRef}
+        className="custom-cursor custom-cursor--dot"
         style={{
           position: 'fixed',
           top: 0,

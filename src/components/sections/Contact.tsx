@@ -35,7 +35,7 @@ export default function Contact() {
   };
 
   return (
-    <section style={{
+    <section className="contact-section" style={{
       minHeight: '100vh',
       padding: '4rem 2rem',
       display: 'flex',

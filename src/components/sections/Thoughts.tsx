@@ -61,9 +61,9 @@ export default function Thoughts() {
   };
 
   return (
-    <section ref={containerRef} style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto', overflowX: 'hidden', position: 'relative' }}>
-      <h1 className="glitch" data-text="Düşünceler" style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '3rem' }}>Düşünceler</h1>
-      <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '5rem', fontStyle: 'italic', fontFamily: 'serif' }}>
+    <section ref={containerRef} className="thoughts-section" style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto', overflowX: 'hidden', position: 'relative' }}>
+      <h1 className="glitch" data-text="Düşünceler" style={{ textAlign: 'center', marginBottom: '2rem', fontSize: 'clamp(2rem, 7vw, 3rem)' }}>Düşünceler</h1>
+      <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '5rem', fontStyle: 'italic', fontFamily: 'serif', padding: '0 0.5rem' }}>
         "Bazen bir şeyler yazarım, genelde mantıklı olmazlar."
       </p>
 
@@ -76,7 +76,7 @@ export default function Thoughts() {
           backdropFilter: 'blur(var(--blur-amount))',
           padding: '1.5rem', 
           borderRadius: '12px', 
-          width: '280px', 
+          width: 'min(280px, calc(100vw - 2rem))', 
           border: '1px solid var(--glass-border)',
           zIndex: 100,
           boxShadow: '0 10px 30px var(--shadow)'
@@ -111,21 +111,23 @@ export default function Thoughts() {
         <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Şu an buralar sessiz...</p>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3rem', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(1.25rem, 4vw, 3rem)', justifyContent: 'center', padding: 'clamp(0.5rem, 2vw, 2rem)' }}>
         {myThoughts.map((t, i) => {
           const mt = i % 2 === 0 ? '0' : '4rem';
           return (
             <div key={t.id} className="thought-paper" style={{
               background: 'rgba(255, 255, 255, 0.03)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '2.5rem',
-              width: '350px',
+              padding: 'clamp(1.25rem, 4vw, 2.5rem)',
+              width: 'min(350px, 100%)',
+              maxWidth: '100%',
               borderRadius: '2px', // paper-like
               boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
               transform: `rotate(${t.rotation}deg)`,
               marginTop: mt,
               position: 'relative',
-              transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+              transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              boxSizing: 'border-box',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = `rotate(0deg) scale(1.05) translateY(-10px)`;

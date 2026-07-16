@@ -59,12 +59,14 @@ export default function FakeMenu() {
             zIndex: 99999,
             pointerEvents: 'none',
             fontFamily: 'var(--font-title)',
-            fontSize: '3rem',
+            fontSize: 'clamp(1.25rem, 5vw, 3rem)',
             fontWeight: 700,
             color: 'var(--text-main)',
             textAlign: 'center',
             textShadow: '0 10px 40px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.3)',
-            whiteSpace: 'nowrap'
+            whiteSpace: 'normal',
+            maxWidth: '90vw',
+            padding: '0 1rem',
           }}
         >
           {alertMsg}

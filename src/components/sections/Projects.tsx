@@ -28,21 +28,21 @@ export default function Projects() {
   }, []);
 
   return (
-    <section ref={containerRef} style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1000px', margin: '0 auto' }}>
-      <h1 className="glitch" data-text="İnşa Ettiklerim" style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '3rem' }}>İnşa Ettiklerim</h1>
-      <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '5rem', fontSize: '1.2rem' }}>
+    <section ref={containerRef} className="projects-section" style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1000px', margin: '0 auto' }}>
+      <h1 className="glitch" data-text="İnşa Ettiklerim" style={{ textAlign: 'center', marginBottom: '1rem', fontSize: 'clamp(2rem, 7vw, 3rem)' }}>İnşa Ettiklerim</h1>
+      <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '5rem', fontSize: 'clamp(1rem, 3.5vw, 1.2rem)' }}>
         Zamanımı harcadığım karanlık köşeler.
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(3rem, 8vw, 8rem)' }}>
         {projects.map((p) => (
           <div key={p.id} className="project-section" style={{ position: 'relative' }}>
             {/* Cinematic Line */}
-            <div style={{ position: 'absolute', left: '-2rem', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, transparent, var(--timeline), transparent)' }}></div>
+            <div className="project-section__line" style={{ position: 'absolute', left: '-2rem', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, transparent, var(--timeline), transparent)' }}></div>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem' }}>
-              <div style={{ flex: '1 1 500px' }}>
-                <h2 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+                <h2 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                   {p.title}
                   <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color='var(--text-primary)'} onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}>
                     <ExternalLink size={24} />

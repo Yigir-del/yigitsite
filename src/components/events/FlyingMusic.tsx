@@ -136,9 +136,9 @@ export default function FlyingMusic() {
         transition={{ duration: 0.25 }}
         style={{
           position: 'fixed',
-          right: '2rem',
+          right: '1rem',
           bottom: '6rem',
-          width: '320px',
+          width: 'min(320px, calc(100vw - 2rem))',
           background: 'var(--glass-bg)',
           border: '1px solid var(--glass-border)',
           borderRadius: '16px',

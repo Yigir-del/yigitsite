@@ -84,7 +84,7 @@ export default function Studio() {
     }
   };
   return (
-    <section style={{
+    <section className="studio-section" style={{
       minHeight: '80vh',
       padding: '8rem 2rem 4rem',
       display: 'flex',
@@ -92,7 +92,7 @@ export default function Studio() {
       alignItems: 'center',
       gap: '2rem'
     }}>
-      <h2 className="glitch" data-text="Stüdyom" style={{ marginBottom: '0.5rem', fontSize: '2.5rem' }}>
+      <h2 className="glitch" data-text="Stüdyom" style={{ marginBottom: '0.5rem', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)' }}>
         Stüdyom
       </h2>
       <p style={{ color: 'var(--text-muted)', marginBottom: '3rem', fontStyle: 'italic', textAlign: 'center' }}>
@@ -117,7 +117,7 @@ export default function Studio() {
             <h3 style={{ color: 'var(--text-primary)', marginBottom: '1.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span>📷</span> Fotoğraf Paylaş
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="studio-admin-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <input 
                 type="text" 
                 value={newAlt} 
@@ -170,7 +170,7 @@ export default function Studio() {
       
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
         gap: '2rem',
         width: '100%',
         maxWidth: '1200px',

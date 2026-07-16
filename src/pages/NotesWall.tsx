@@ -61,9 +61,9 @@ export default function NotesWall() {
       const pseudoRandom3 = Math.sin(index * 54321) * 10000;
       const randomValue3 = pseudoRandom3 - Math.floor(pseudoRandom3);
 
-      const x = 10 + randomValue * 60;
-      const y = 14 + index * 18 + randomValue2 * 8;
-      const rotation = (randomValue3 - 0.5) * 20;
+      const x = 6 + randomValue * 38;
+      const y = 16 + index * 20 + randomValue2 * 8;
+      const rotation = (randomValue3 - 0.5) * 16;
 
       return { ...note, computedX: x, computedY: y, computedRotation: rotation };
     });
@@ -103,7 +103,7 @@ export default function NotesWall() {
       }}
     >
       <h1
-        className="glitch"
+        className="glitch notes-wall-title"
         data-text="Not Defterim"
         style={{
           position: 'absolute',
@@ -111,8 +111,9 @@ export default function NotesWall() {
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 10,
-          fontSize: 'clamp(2rem, 5vw, 3rem)',
+          fontSize: 'clamp(1.75rem, 6vw, 3rem)',
           whiteSpace: 'nowrap',
+          paddingTop: 'env(safe-area-inset-top)',
         }}
       >
         Not Defterim
@@ -151,7 +152,7 @@ export default function NotesWall() {
                 ? '1px solid rgba(255, 215, 0, 0.15)'
                 : '1px solid var(--card-border)',
               borderRadius: '8px',
-              maxWidth: '300px',
+              maxWidth: 'min(300px, calc(100vw - 2rem))',
               backdropFilter: 'blur(var(--blur-amount))',
               cursor: 'pointer',
               zIndex: notes.length - index,

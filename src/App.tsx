@@ -45,16 +45,33 @@ function App() {
     return () => window.removeEventListener('world-flip', toggleWorld);
   }, [toggleWorld]);
 
-  // Flip around current viewport center so edges stay filled with theme (no broken bottom)
+  // Flip only the content stage — keep starfield/atmosphere fixed so the theme never tears
   useEffect(() => {
-    const html = document.documentElement;
-    const midY = window.scrollY + window.innerHeight / 2;
-    html.style.transformOrigin = `50% ${midY}px`;
-    html.classList.toggle('world-flipped', upsideDown);
+    const stage = document.querySelector('.app-container') as HTMLElement | null;
+    if (!stage) return;
 
+    const syncOrigin = () => {
+      const midY = window.scrollY + window.innerHeight / 2;
+      stage.style.transformOrigin = `50% ${midY}px`;
+    };
+
+    syncOrigin();
+    stage.classList.toggle('world-flipped', upsideDown);
+    document.documentElement.classList.toggle('world-flipped', upsideDown);
+
+    if (!upsideDown) {
+      stage.style.transformOrigin = '';
+      return;
+    }
+
+    window.addEventListener('scroll', syncOrigin, { passive: true });
+    window.addEventListener('resize', syncOrigin);
     return () => {
-      html.classList.remove('world-flipped');
-      html.style.transformOrigin = '';
+      stage.classList.remove('world-flipped');
+      document.documentElement.classList.remove('world-flipped');
+      stage.style.transformOrigin = '';
+      window.removeEventListener('scroll', syncOrigin);
+      window.removeEventListener('resize', syncOrigin);
     };
   }, [upsideDown]);
 

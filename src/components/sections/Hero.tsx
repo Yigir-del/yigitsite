@@ -1,23 +1,11 @@
 export default function Hero() {
   return (
-    <section style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      textAlign: 'center',
-      padding: '2rem'
-    }}>
-      <h1 className="glitch" data-text="İzler burada kalır." style={{ marginBottom: '1rem' }}>
+    <section className="hero-section">
+      <h1 className="glitch hero-section__title" data-text="İzler burada kalır.">
         İzler burada kalır.
       </h1>
-      <h2 style={{ color: 'var(--text-muted)' }}>
-        Bazıları senin olabilir.
-      </h2>
-      <div className="handwriting" style={{ marginTop: '3rem', opacity: 0.7 }}>
-        (aşağıda bir defter var)
-      </div>
+      <h2 className="hero-section__sub">Bazıları senin olabilir.</h2>
+      <div className="handwriting hero-section__hint">(aşağıda bir defter var)</div>
     </section>
   );
 }

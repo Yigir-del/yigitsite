@@ -238,6 +238,9 @@ p {
   z-index: 0;
   pointer-events: none;
   background-color: #0d131f;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
 }
 
 #canvas-container {
@@ -246,8 +249,12 @@ p {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   z-index: 0;
   pointer-events: none;
+  /* Slight overscan so mobile chrome / flip never flashes empty edges */
+  transform: scale(1.08);
+  transform-origin: center center;
 }
 
 #canvas-container canvas {
@@ -273,18 +280,307 @@ p {
   transition: opacity 1.4s ease;
 }
 
-/* Easter egg flip — origin set in JS to viewport mid; fill edges with theme bg */
-html.world-flipped {
-  transform: rotate(180deg);
+/* Easter egg flip — content only; starfield stays fixed so theme never tears */
+html,
+html.world-flipped,
+html.world-flipped body {
   background-color: #0d131f;
 }
 
-html.world-flipped body {
-  background-color: transparent;
+.app-container.world-flipped {
+  transform: rotate(180deg);
+  /* origin set in JS to current viewport mid */
 }
 
-html.world-flipped .atmosphere-fill,
-html.world-flipped #canvas-container {
+/* ─── Layout shells ─── */
+.page-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.hero-section {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 6rem 1.5rem 2rem;
+}
+
+.hero-section__title {
+  margin-bottom: 1rem;
+  max-width: 16ch;
+}
+
+.hero-section__sub {
+  color: var(--text-muted);
+  max-width: 22ch;
+}
+
+.hero-section__hint {
+  margin-top: 3rem;
+  opacity: 0.7;
+}
+
+/* ─── Domain watermark ─── */
+.domain-watermark {
+  position: fixed;
+  top: 1.75rem;
+  left: 1.75rem;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.domain-watermark__eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.55rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.55;
+  margin-bottom: 0.25rem;
+}
+
+.domain-watermark__name {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--text-main);
+  letter-spacing: 0.18em;
+  opacity: 0.9;
+}
+
+/* ─── Site navigation ─── */
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 200;
+  pointer-events: none;
+  padding: 1.25rem 1.25rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.site-nav__desktop {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem 1.75rem;
+  background: rgba(10, 10, 10, 0.45);
+  padding: 0.85rem 1.75rem;
+  border-radius: 50px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  pointer-events: auto;
+}
+
+.site-nav__link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.site-nav__link:hover,
+.site-nav__link.is-active {
+  color: var(--text-main);
+}
+
+.site-nav__burger {
+  display: none;
+  pointer-events: auto;
+  margin-left: auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 10, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  position: relative;
+  z-index: 220;
+  padding: 0;
+}
+
+.site-nav__burger span {
+  display: block;
+  width: 18px;
+  height: 1.5px;
+  background: var(--text-main);
+  margin: 5px auto;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.site-nav__burger.is-open span:nth-child(1) {
+  transform: translateY(6.5px) rotate(45deg);
+}
+
+.site-nav__burger.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.site-nav__burger.is-open span:nth-child(3) {
+  transform: translateY(-6.5px) rotate(-45deg);
+}
+
+.site-nav__panel {
   position: fixed;
   inset: 0;
+  z-index: 210;
+  background: rgba(8, 10, 16, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
 }
+
+.site-nav__panel.is-open {
+  pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+}
+
+.site-nav__panel-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.35rem;
+  padding: 5rem 1.5rem 2rem;
+}
+
+.site-nav__panel-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-family: var(--font-title);
+  font-size: clamp(1.6rem, 7vw, 2.2rem);
+  letter-spacing: 0.04em;
+  transition: color 0.2s ease;
+}
+
+.site-nav__panel-link.is-active,
+.site-nav__panel-link:hover {
+  color: var(--text-main);
+}
+
+/* ─── Mobile / tablet ─── */
+@media (max-width: 860px) {
+  .site-nav {
+    padding: 0.85rem 0.85rem 0;
+    justify-content: flex-end;
+  }
+
+  .site-nav__desktop {
+    display: none;
+  }
+
+  .site-nav__burger {
+    display: block;
+  }
+
+  .domain-watermark {
+    top: 0.95rem;
+    left: 0.95rem;
+    max-width: calc(100vw - 5.5rem);
+  }
+
+  .domain-watermark__eyebrow {
+    font-size: 0.45rem;
+    letter-spacing: 0.22em;
+  }
+
+  .domain-watermark__name {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 9vw, 2.85rem);
+  }
+
+  h2 {
+    font-size: clamp(1.15rem, 5.5vw, 1.85rem);
+  }
+
+  .handwriting {
+    font-size: 1.2rem;
+  }
+
+  .hero-section {
+    padding: 5.5rem 1.25rem 2rem;
+  }
+
+  .hero-section__hint {
+    margin-top: 2rem;
+  }
+
+  .about-aside-note {
+    display: none !important;
+  }
+
+  .notes-wall-title {
+    top: 4.5rem !important;
+  }
+
+  .custom-cursor {
+    display: none !important;
+  }
+
+  .about-section {
+    padding: 5.5rem 1.25rem 3rem !important;
+  }
+
+  .projects-section {
+    padding: 5.5rem 1.25rem 3rem !important;
+  }
+
+  .project-section__line {
+    display: none;
+  }
+
+  .thoughts-section {
+    padding: 5.5rem 1.25rem 3rem !important;
+  }
+
+  .contact-section {
+    padding: 5.5rem 1.25rem 3rem !important;
+  }
+
+  .studio-section {
+    padding: 5.5rem 1.25rem 3rem !important;
+  }
+
+  .studio-admin-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .domain-watermark__eyebrow {
+    display: none;
+  }
+
+  .domain-watermark__name {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .custom-cursor {
+    display: none !important;
+  }
+}
+
