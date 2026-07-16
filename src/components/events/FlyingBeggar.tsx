@@ -23,7 +23,8 @@ export default function FlyingBeggar() {
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busyRef = useRef(false);
 
-  const say = (text: string, holdMs = 3200) => {
+  const say = (text: string, holdMs = 9000) => {
+    busyRef.current = true;
     setLine(text);
     setShowBubble(true);
     if (hideRef.current) clearTimeout(hideRef.current);
@@ -43,8 +44,7 @@ export default function FlyingBeggar() {
 
       if (shouldJab(0.15)) {
         const jab = pickRandom(BEGGAR_TO_SAGE);
-        busyRef.current = true;
-        say(jab, 3400);
+        say(jab, 9500);
         emit({ from: 'beggar', kind: 'jab', line: jab });
         return;
       }
@@ -55,7 +55,7 @@ export default function FlyingBeggar() {
     };
 
     const firstSpeak = setTimeout(speak, 2500);
-    const speakLoop = setInterval(speak, 8000 + Math.random() * 4000);
+    const speakLoop = setInterval(speak, 14000 + Math.random() * 6000);
 
     const onFlyerSpeak = (e: Event) => {
       const detail = (e as CustomEvent<FlyerSpeakDetail>).detail;
@@ -67,8 +67,8 @@ export default function FlyingBeggar() {
       if (replyRef.current) clearTimeout(replyRef.current);
       busyRef.current = true;
       replyRef.current = setTimeout(() => {
-        say(reply, 3600);
-      }, 1500);
+        say(reply, 10000);
+      }, 1800);
     };
 
     window.addEventListener(FLYER_SPEAK, onFlyerSpeak);

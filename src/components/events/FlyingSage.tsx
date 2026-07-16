@@ -24,7 +24,8 @@ export default function FlyingSage() {
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busyRef = useRef(false);
 
-  const say = (text: string, holdMs = 3600) => {
+  const say = (text: string, holdMs = 9500) => {
+    busyRef.current = true;
     setLine(text);
     setShowBubble(true);
     if (hideRef.current) clearTimeout(hideRef.current);
@@ -44,8 +45,7 @@ export default function FlyingSage() {
 
       if (shouldJab(0.15)) {
         const jab = pickRandom(SAGE_TO_BEGGAR);
-        busyRef.current = true;
-        say(jab, 3800);
+        say(jab, 10000);
         emit({ from: 'sage', kind: 'jab', line: jab });
         return;
       }
@@ -56,7 +56,7 @@ export default function FlyingSage() {
     };
 
     const first = setTimeout(speak, 5500);
-    const loop = setInterval(speak, 12000 + Math.random() * 5000);
+    const loop = setInterval(speak, 16000 + Math.random() * 7000);
 
     const onFlyerSpeak = (e: Event) => {
       const detail = (e as CustomEvent<FlyerSpeakDetail>).detail;
@@ -68,8 +68,8 @@ export default function FlyingSage() {
       if (replyRef.current) clearTimeout(replyRef.current);
       busyRef.current = true;
       replyRef.current = setTimeout(() => {
-        say(reply, 3800);
-      }, 1500);
+        say(reply, 10000);
+      }, 1800);
     };
 
     window.addEventListener(FLYER_SPEAK, onFlyerSpeak);
