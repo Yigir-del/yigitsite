@@ -1,4 +1,4 @@
-import { useTheme, DomainTheme } from '../../context/ThemeContext';
+import { useTheme, type DomainTheme } from '../../context/ThemeContext';
 
 export default function ThemeSelector() {
   const { theme, setTheme, isTransitioning } = useTheme();
