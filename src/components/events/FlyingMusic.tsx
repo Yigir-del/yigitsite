@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
+import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 const QUOTES = [
   "Burada demokrasi yok. Ben ne istersem o çalar. 🛑",
@@ -13,6 +14,7 @@ const QUOTES = [
 const MESSAGE_DURATION = 2500;
 
 export default function FlyingMusic() {
+  const isMobilePerf = useIsMobilePerf();
   const [position, setPosition] = useState(randomOffscreenStart);
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -24,13 +26,14 @@ export default function FlyingMusic() {
   const searchAttemptsRef = useRef(0);
 
   useEffect(() => {
+    if (isMobilePerf) return;
     const enter = setTimeout(() => setPosition(randomOnScreen()), 120);
     const interval = setInterval(() => setPosition(randomOnScreen()), 12000);
     return () => {
       clearTimeout(enter);
       clearInterval(interval);
     };
-  }, []);
+  }, [isMobilePerf]);
 
   useEffect(() => {
     return () => {
@@ -77,8 +80,42 @@ export default function FlyingMusic() {
     showSassyQuote();
   };
 
+  const musicIcon = (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13"></path>
+      <circle cx="6" cy="18" r="3"></circle>
+      <circle cx="18" cy="16" r="3"></circle>
+    </svg>
+  );
+
   return (
     <>
+      {isMobilePerf ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          title="Müzik Kutusu"
+          style={{
+            position: 'fixed',
+            right: '1rem',
+            bottom: '4.25rem',
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '50%',
+            width: '50px',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-main)',
+            cursor: 'pointer',
+            zIndex: 100,
+            boxShadow: '0 0 15px var(--glow)',
+          }}
+        >
+          {musicIcon}
+        </button>
+      ) : (
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         title="Müzik Kutusu"
@@ -109,12 +146,9 @@ export default function FlyingMusic() {
         }}
         whileHover={{ scale: 1.1 }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 18V5l12-2v13"></path>
-          <circle cx="6" cy="18" r="3"></circle>
-          <circle cx="18" cy="16" r="3"></circle>
-        </svg>
+        {musicIcon}
       </motion.button>
+      )}
 
       <motion.div
         drag
@@ -187,6 +221,7 @@ export default function FlyingMusic() {
           </div>
         </form>
 
+        {isOpen && (
         <iframe
           key={iframeKey}
           style={{ borderRadius: '12px', background: 'transparent' }}
@@ -198,6 +233,7 @@ export default function FlyingMusic() {
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
           loading="lazy"
         />
+        )}
       </motion.div>
 
       {/* Lightweight CSS overlay — no Framer scale (was causing jank with WebGL) */}

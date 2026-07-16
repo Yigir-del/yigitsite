@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -28,6 +29,7 @@ export default function Thoughts() {
   }, []);
 
   useEffect(() => {
+    if (getIsMobilePerf()) return;
     if (containerRef.current && myThoughts.length > 0) {
       const cards = containerRef.current.querySelectorAll('.thought-paper');
       gsap.fromTo(cards, 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { lazy, Suspense, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { ReactLenis } from '@studio-freight/react-lenis';
 import Background from './components/canvas/Background';
@@ -6,24 +6,25 @@ import ChaosManager from './components/events/ChaosManager';
 import EasterEggs from './components/events/EasterEggs';
 import FlyingPen from './components/events/FlyingPen';
 import FlyingMusic from './components/events/FlyingMusic';
-import FlyingBeggar from './components/events/FlyingBeggar';
-import FlyingSage from './components/events/FlyingSage';
-import SocialDrifters from './components/events/SocialDrifters';
-import CustomCursor from './components/ui/CustomCursor';
 import FakeMenu from './components/ui/FakeMenu';
 import Navigation from './components/layout/Navigation';
 import Footer from './components/layout/Footer';
-
 import Hero from './components/sections/Hero';
-import About from './components/sections/About';
-import Projects from './components/sections/Projects';
-import Thoughts from './components/sections/Thoughts';
 import NotesWall from './pages/NotesWall';
-import Studio from './components/sections/Studio';
-import Contact from './components/sections/Contact';
-
 import { ThemeProvider } from './context/ThemeContext';
 import ThemeSelector from './components/ui/ThemeSelector';
+import { useIsMobilePerf } from './hooks/useIsMobilePerf';
+
+const About = lazy(() => import('./components/sections/About'));
+const Projects = lazy(() => import('./components/sections/Projects'));
+const Thoughts = lazy(() => import('./components/sections/Thoughts'));
+const Studio = lazy(() => import('./components/sections/Studio'));
+const Contact = lazy(() => import('./components/sections/Contact'));
+
+const FlyingBeggar = lazy(() => import('./components/events/FlyingBeggar'));
+const FlyingSage = lazy(() => import('./components/events/FlyingSage'));
+const SocialDrifters = lazy(() => import('./components/events/SocialDrifters'));
+const CustomCursor = lazy(() => import('./components/ui/CustomCursor'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -33,8 +34,35 @@ function ScrollToTop() {
   return null;
 }
 
+function RouteFallback() {
+  return (
+    <div
+      style={{
+        minHeight: '40vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-muted)',
+        fontSize: '0.85rem',
+        letterSpacing: '0.12em',
+        opacity: 0.5,
+      }}
+    >
+      …
+    </div>
+  );
+}
+
+function Shell({ children }: { children: ReactNode }) {
+  const isMobilePerf = useIsMobilePerf();
+  if (isMobilePerf) return <>{children}</>;
+  // Lenis ships its own @types/react — cast avoids duplicate ReactNode mismatch
+  return <ReactLenis root>{children as never}</ReactLenis>;
+}
+
 function App() {
   const [upsideDown, setUpsideDown] = useState(false);
+  const isMobilePerf = useIsMobilePerf();
 
   const toggleWorld = useCallback(() => {
     setUpsideDown((v) => !v);
@@ -45,7 +73,6 @@ function App() {
     return () => window.removeEventListener('world-flip', toggleWorld);
   }, [toggleWorld]);
 
-  // Flip only the content stage — keep starfield/atmosphere fixed so the theme never tears
   useEffect(() => {
     const stage = document.querySelector('.app-container') as HTMLElement | null;
     if (!stage) return;
@@ -81,43 +108,55 @@ function App() {
       <Background />
       <ThemeSelector />
 
-      <ReactLenis root>
+      <Shell>
         <ScrollToTop />
         <div className="app-container">
           <ChaosManager />
           <EasterEggs />
-          <FlyingBeggar />
-          <FlyingSage />
+          {!isMobilePerf && (
+            <Suspense fallback={null}>
+              <FlyingBeggar />
+              <FlyingSage />
+              <SocialDrifters />
+            </Suspense>
+          )}
           <FlyingPen />
           <FlyingMusic />
-          <SocialDrifters />
-          <CustomCursor />
+          {!isMobilePerf && (
+            <Suspense fallback={null}>
+              <CustomCursor />
+            </Suspense>
+          )}
           <FakeMenu />
           <Navigation />
 
           <main style={{ position: 'relative', zIndex: 10, minHeight: '100vh', transition: 'color 1.5s ease' }}>
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <>
-                    <Hero />
-                    <NotesWall />
-                  </>
-                }
-              />
-              <Route path="/hakkimda" element={<About />} />
-              <Route path="/projeler" element={<Projects />} />
-              <Route path="/dusunceler" element={<Thoughts />} />
-              <Route path="/studyom" element={<Studio />} />
-              <Route path="/iletisim" element={<Contact />} />
-            </Routes>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <>
+                      <Hero />
+                      <NotesWall />
+                    </>
+                  }
+                />
+                <Route path="/hakkimda" element={<About />} />
+                <Route path="/projeler" element={<Projects />} />
+                <Route path="/dusunceler" element={<Thoughts />} />
+                <Route path="/studyom" element={<Studio />} />
+                <Route path="/iletisim" element={<Contact />} />
+              </Routes>
+            </Suspense>
           </main>
 
           <Footer />
         </div>
-      </ReactLenis>
-      <div className="noise-overlay" style={{ mixBlendMode: 'overlay', pointerEvents: 'none' }} />
+      </Shell>
+      {!isMobilePerf && (
+        <div className="noise-overlay" style={{ mixBlendMode: 'overlay', pointerEvents: 'none' }} />
+      )}
     </ThemeProvider>
   );
 }

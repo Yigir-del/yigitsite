@@ -2,26 +2,24 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Note } from '../../data/notes';
 import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
+import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 export default function FlyingPen() {
+  const isMobilePerf = useIsMobilePerf();
   const [position, setPosition] = useState(randomOffscreenStart);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [authorName, setAuthorName] = useState('');
 
   useEffect(() => {
-    // First: fly in from off-screen edge → on screen
+    if (isMobilePerf) return;
     const enter = setTimeout(() => setPosition(randomOnScreen()), 80);
-
-    const interval = setInterval(() => {
-      setPosition(randomOnScreen());
-    }, 10000);
-
+    const interval = setInterval(() => setPosition(randomOnScreen()), 10000);
     return () => {
       clearTimeout(enter);
       clearInterval(interval);
     };
-  }, []);
+  }, [isMobilePerf]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,9 +43,62 @@ export default function FlyingPen() {
     setIsModalOpen(false);
   };
 
+  const penButtonStyle: React.CSSProperties = isMobilePerf
+    ? {
+        position: 'fixed',
+        right: '1rem',
+        bottom: '1rem',
+        left: 'auto',
+        top: 'auto',
+        background: 'var(--glass-bg)',
+        border: '1px solid var(--glass-border)',
+        borderRadius: '50%',
+        width: '50px',
+        height: '50px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-main)',
+        cursor: 'pointer',
+        zIndex: 90,
+        boxShadow: '0 0 15px var(--glow)',
+        transform: 'none',
+      }
+    : {
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        background: 'var(--glass-bg)',
+        border: '1px solid var(--glass-border)',
+        borderRadius: '50%',
+        width: '50px',
+        height: '50px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-main)',
+        cursor: 'grab',
+        zIndex: 90,
+        boxShadow: '0 0 15px var(--glow)',
+      };
+
   return (
     <>
-      {/* Floating Pen Button */}
+      {isMobilePerf ? (
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          title="Bırakmak istediğin bir iz var mı?"
+          style={penButtonStyle}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+            <path d="M2 2l7.586 7.586"></path>
+            <circle cx="11" cy="11" r="2"></circle>
+          </svg>
+        </button>
+      ) : (
       <motion.button
         onClick={() => setIsModalOpen(true)}
         title="Bırakmak istediğin bir iz var mı?"
@@ -57,23 +108,7 @@ export default function FlyingPen() {
         initial={false}
         animate={{ x: position.x, y: position.y }}
         transition={{ duration: 10, ease: "easeInOut" }}
-        style={{
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          background: 'var(--glass-bg)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: '50%',
-          width: '50px',
-          height: '50px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--text-main)',
-          cursor: 'grab',
-          zIndex: 90,
-          boxShadow: '0 0 15px var(--glow)'
-        }}
+        style={penButtonStyle}
         whileHover={{ scale: 1.1, boxShadow: 'var(--hover-scale-glow)' }}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -83,6 +118,7 @@ export default function FlyingPen() {
           <circle cx="11" cy="11" r="2"></circle>
         </svg>
       </motion.button>
+      )}
 
       {/* Note Input Modal */}
       {isModalOpen && (

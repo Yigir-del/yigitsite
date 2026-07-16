@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -8,6 +9,7 @@ export default function About() {
   const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (getIsMobilePerf()) return;
     if (textRef.current) {
       gsap.fromTo(textRef.current.children, 
         { y: 50, opacity: 0 },

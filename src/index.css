@@ -263,6 +263,33 @@ p {
   height: 100% !important;
 }
 
+/* Mobile CSS starfield — replaces WebGL; desktop never uses this class */
+.mobile-starfield {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 0;
+  pointer-events: none;
+  transform: none !important;
+  background-color: #0d131f;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 25% 60%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 40% 30%, rgba(226, 232, 240, 0.95), transparent),
+    radial-gradient(1px 1px at 55% 80%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(1px 1px at 70% 15%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.5px 1.5px at 85% 45%, rgba(203, 213, 225, 0.9), transparent),
+    radial-gradient(1px 1px at 15% 85%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 92% 70%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(2px 2px at 48% 12%, rgba(248, 250, 252, 0.5), transparent),
+    radial-gradient(1px 1px at 33% 42%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 62% 55%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 78% 88%, rgba(226, 232, 240, 0.8), transparent);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
 .app-container {
   position: relative;
   z-index: 1;
@@ -482,6 +509,41 @@ html.world-flipped body {
     max-width: 100%;
   }
 
+  /* Cheaper glass on mobile */
+  :root {
+    --blur-amount: 0px;
+    --noise-opacity: 0;
+    --hover-scale-glow: none;
+  }
+
+  #canvas-container:not(.mobile-starfield) {
+    transform: none;
+  }
+
+  .noise-overlay {
+    display: none !important;
+  }
+
+  .glass,
+  .site-nav__desktop,
+  .site-nav__burger,
+  .site-nav__panel,
+  .note-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: none !important;
+    animation: none !important;
+    display: none !important;
+  }
+
+  .studio-photo {
+    filter: none !important;
+  }
+
   .app-container,
   main,
   .page-container {
@@ -568,6 +630,7 @@ html.world-flipped body {
     padding: 1.15rem !important;
     max-width: calc(100vw - 1.5rem) !important;
     box-sizing: border-box;
+    box-shadow: none !important;
   }
 
   .note-card p {
@@ -601,6 +664,7 @@ html.world-flipped body {
   .project-section img {
     max-width: 100%;
     height: auto;
+    box-shadow: none !important;
   }
 
   .thought-paper {
@@ -608,6 +672,7 @@ html.world-flipped body {
     max-width: 100% !important;
     margin-top: 0 !important;
     transform: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
   }
 
   .studio-admin-grid {
@@ -653,6 +718,7 @@ html.world-flipped body {
     bottom: 0.75rem !important;
     max-width: none;
     box-sizing: border-box;
+    backdrop-filter: none !important;
   }
 
   .chaos-idle-quote {

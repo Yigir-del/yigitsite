@@ -229,6 +229,9 @@ export default function Studio() {
             <img 
               src={item.src} 
               alt={item.alt || 'Fotoğraf'}
+              loading="lazy"
+              decoding="async"
+              className="studio-photo"
               style={{
                 width: '100%',
                 height: '100%',

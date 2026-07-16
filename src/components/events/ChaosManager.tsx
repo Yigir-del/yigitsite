@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Ghost } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 type EventType = 'ufo' | 'popup' | 'achievement' | 'gravity' | 'none';
 
@@ -11,7 +12,26 @@ export default function ChaosManager() {
   const [idleQuote, setIdleQuote] = useState<string | null>(null);
 
   useEffect(() => {
-    // Standard random chaos
+    const mobile = getIsMobilePerf();
+
+    // Mobile: skip random chaos loops (major timer/UI pressure)
+    if (mobile) {
+      let idleTimer: ReturnType<typeof setTimeout>;
+      const resetIdleTimer = () => {
+        clearTimeout(idleTimer);
+        setIdleQuote(null);
+        idleTimer = setTimeout(() => {
+          setIdleQuote('Burada çok sessizleştin... İyi misin?');
+        }, 180000);
+      };
+      window.addEventListener('touchstart', resetIdleTimer, { passive: true });
+      resetIdleTimer();
+      return () => {
+        clearTimeout(idleTimer);
+        window.removeEventListener('touchstart', resetIdleTimer);
+      };
+    }
+
     const triggerChaos = () => {
       const events: EventType[] = ['ufo', 'popup', 'achievement'];
       const randomEvent = events[Math.floor(Math.random() * events.length)];
@@ -41,12 +61,10 @@ export default function ChaosManager() {
 
     const initialTimeout = setTimeout(triggerChaos, 20000);
 
-    // Idle Timer Logic
     let idleTimer: ReturnType<typeof setTimeout>;
     const resetIdleTimer = () => {
       clearTimeout(idleTimer);
       setIdleQuote(null);
-      // Reveal hidden quote after 2 minutes of idle time
       idleTimer = setTimeout(() => {
         const quotes = [
           "Bazen hiçbir şey yapmamak, yapabileceğin en iyi şeydir.",

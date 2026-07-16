@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { projects } from '../../data/projects';
 import { ExternalLink, Calendar, Code, User, ArrowRight } from 'lucide-react';
+import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -10,6 +11,7 @@ export default function Projects() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (getIsMobilePerf()) return;
     if (containerRef.current) {
       const cards = containerRef.current.querySelectorAll('.project-section');
       cards.forEach((card) => {
@@ -82,7 +84,7 @@ export default function Projects() {
                 
                 {p.images && p.images.length > 0 ? (
                   <div style={{ width: '100%', height: '100%', padding: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src={p.images[0]} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 1, borderRadius: '50%', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
+                    <img src={p.images[0]} alt={p.title} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 1, borderRadius: '50%', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
                   </div>
                 ) : (
                   <div style={{ color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 1 }}>

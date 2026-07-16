@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { type Note } from '../data/notes';
+import { useIsMobilePerf } from '../hooks/useIsMobilePerf';
 
 function noteTimestamp(note: Note) {
   if (note.created_at) {
@@ -29,6 +30,7 @@ function sortNewestFirst(list: Note[]) {
 }
 
 export default function NotesWall() {
+  const isMobilePerf = useIsMobilePerf();
   const [notes, setNotes] = useState<Note[]>([]);
 
   useEffect(() => {
@@ -188,7 +190,8 @@ export default function NotesWall() {
               borderRadius: '8px',
               maxWidth: 'min(300px, calc(100vw - 1.5rem))',
               boxSizing: 'border-box',
-              backdropFilter: 'blur(var(--blur-amount))',
+              backdropFilter: isMobilePerf ? undefined : 'blur(var(--blur-amount))',
+              WebkitBackdropFilter: isMobilePerf ? undefined : 'blur(var(--blur-amount))',
               cursor: 'pointer',
               zIndex: positionedNotes.length - index,
               transition:
