@@ -13,10 +13,9 @@ import {
 
 /** Angry beggar — mostly heckles the king; rarely jabs the sage with a mapped reply */
 export default function FlyingBeggar() {
-  const { position, transition } = useEdgeFlight({
-    startDelay: 300,
-    durationMin: 10,
-    durationMax: 15,
+  const { flightKey, from, to, duration, visible } = useEdgeFlight({
+    durationMin: 7,
+    durationMax: 11,
   });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
@@ -83,25 +82,25 @@ export default function FlyingBeggar() {
     };
   }, []);
 
+  if (!visible) return null;
+
   return (
     <motion.div
-      initial={false}
-      animate={{ x: position.x, y: position.y }}
-      transition={transition}
-      drag
-      dragMomentum
-      whileDrag={{ scale: 1.15, cursor: 'grabbing' }}
+      key={flightKey}
+      initial={{ x: from.x, y: from.y }}
+      animate={{ x: to.x, y: to.y }}
+      transition={{ duration, ease: 'linear' }}
       style={{
         position: 'fixed',
         left: 0,
         top: 0,
         zIndex: 40,
-        cursor: 'grab',
+        cursor: 'default',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '0.35rem',
-        pointerEvents: 'auto',
+        pointerEvents: 'none',
       }}
       title="Sinirli dilenci"
     >

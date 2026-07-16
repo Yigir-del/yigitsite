@@ -13,10 +13,10 @@ import {
 
 /** Wise face — mostly proverbial lines; rarely jabs the beggar with a mapped reply */
 export default function FlyingSage() {
-  const { position, transition } = useEdgeFlight({
-    startDelay: 1800,
-    durationMin: 12,
-    durationMax: 17,
+  const { flightKey, from, to, duration, visible } = useEdgeFlight({
+    startDelay: 2500,
+    durationMin: 8,
+    durationMax: 13,
   });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
@@ -83,25 +83,25 @@ export default function FlyingSage() {
     };
   }, []);
 
+  if (!visible) return null;
+
   return (
     <motion.div
-      initial={false}
-      animate={{ x: position.x, y: position.y }}
-      transition={transition}
-      drag
-      dragMomentum
-      whileDrag={{ scale: 1.12, cursor: 'grabbing' }}
+      key={flightKey}
+      initial={{ x: from.x, y: from.y }}
+      animate={{ x: to.x, y: to.y }}
+      transition={{ duration, ease: 'linear' }}
       style={{
         position: 'fixed',
         left: 0,
         top: 0,
         zIndex: 45,
-        cursor: 'grab',
+        cursor: 'default',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '0.35rem',
-        pointerEvents: 'auto',
+        pointerEvents: 'none',
       }}
       title="Bilge"
     >

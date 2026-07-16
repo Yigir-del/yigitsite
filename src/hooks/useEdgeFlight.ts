@@ -1,11 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
-import {
-  planCrossFlight,
-  randomOffscreenStart,
-  type Edge,
-} from '../utils/flightPath';
+import { useEffect, useRef, useState } from 'react';
+import { planCrossFlight, type CrossFlight, type Edge } from '../utils/flightPath';
 
-/** Continuous edge→edge flight: leave the page, re-enter elsewhere. */
+/** Continuous edge→edge flight via remounted initial→animate (no mid-screen parking). */
 export function useEdgeFlight(opts: {
   startDelay?: number;
   durationMin?: number;
@@ -13,56 +9,48 @@ export function useEdgeFlight(opts: {
   preferHorizontal?: boolean;
 } = {}) {
   const {
-    startDelay = 200,
-    durationMin = 9,
-    durationMax = 14,
+    startDelay = 0,
+    durationMin = 7,
+    durationMax = 11,
     preferHorizontal = true,
   } = opts;
 
-  const [position, setPosition] = useState(randomOffscreenStart);
-  const [duration, setDuration] = useState(10);
-  const [snap, setSnap] = useState(false);
-  const lastExitRef = useRef<Edge | undefined>(undefined);
+  const [flight, setFlight] = useState<CrossFlight>(() =>
+    planCrossFlight(undefined, { durationMin, durationMax, preferHorizontal })
+  );
+  const [flightKey, setFlightKey] = useState(0);
+  const [ready, setReady] = useState(startDelay <= 0);
+  const exitRef = useRef<Edge | undefined>(flight.exit);
 
   useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
+    if (startDelay <= 0) return;
+    const t = setTimeout(() => setReady(true), startDelay);
+    return () => clearTimeout(t);
+  }, [startDelay]);
 
-    const run = () => {
-      if (cancelled) return;
+  useEffect(() => {
+    if (!ready) return;
 
-      const flight = planCrossFlight(lastExitRef.current, {
+    const t = setTimeout(() => {
+      const next = planCrossFlight(exitRef.current, {
         durationMin,
         durationMax,
         preferHorizontal,
       });
-      lastExitRef.current = flight.exit;
+      exitRef.current = next.exit;
+      setFlight(next);
+      setFlightKey((k) => k + 1);
+    }, flight.duration * 1000);
 
-      setSnap(true);
-      setPosition(flight.from);
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (cancelled) return;
-          setSnap(false);
-          setDuration(flight.duration);
-          setPosition(flight.to);
-          timer = setTimeout(run, flight.duration * 1000 + 120);
-        });
-      });
-    };
-
-    timer = setTimeout(run, startDelay);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [startDelay, durationMin, durationMax, preferHorizontal]);
+    return () => clearTimeout(t);
+  }, [ready, flightKey, flight.duration, durationMin, durationMax, preferHorizontal]);
 
   return {
-    position,
-    transition: snap
-      ? { duration: 0 }
-      : { duration, ease: 'linear' as const },
+    flightKey,
+    from: flight.from,
+    to: flight.to,
+    duration: flight.duration,
+    // Hide until startDelay so sage doesn't spawn on top of beggar
+    visible: ready,
   };
 }
