@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ReactLenis } from '@studio-freight/react-lenis';
 import Background from './components/canvas/Background';
 import ChaosManager from './components/events/ChaosManager';
@@ -45,56 +44,53 @@ function App() {
     return () => window.removeEventListener('world-flip', toggleWorld);
   }, [toggleWorld]);
 
+  // Flip via html class — avoids wrapping Lenis in a permanent transform (which breaks bottom layout)
+  useEffect(() => {
+    document.documentElement.classList.toggle('world-flipped', upsideDown);
+    return () => document.documentElement.classList.remove('world-flipped');
+  }, [upsideDown]);
+
   return (
     <ThemeProvider>
-      <motion.div
-        className="world-shell"
-        animate={{ rotate: upsideDown ? 180 : 0 }}
-        transition={{ type: 'spring', stiffness: 70, damping: 14, mass: 1.1 }}
-      >
-        <Background />
-        <ThemeTransition />
-        <ThemeSelector />
+      <Background />
+      <ThemeTransition />
+      <ThemeSelector />
 
-        <ReactLenis root>
-          <ScrollToTop />
-          <div className="app-container">
-            <ChaosManager />
-            <EasterEggs />
-            <FlyingPen />
-            <FlyingMusic />
-            <SocialDrifters />
-            <CustomCursor />
-            <FakeMenu />
-            <Navigation />
+      <ReactLenis root>
+        <ScrollToTop />
+        <div className="app-container">
+          <ChaosManager />
+          <EasterEggs />
+          <FlyingPen />
+          <FlyingMusic />
+          <SocialDrifters />
+          <CustomCursor />
+          <FakeMenu />
+          <Navigation />
 
-            <main style={{ position: 'relative', zIndex: 10, minHeight: '100vh', transition: 'color 1.5s ease' }}>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <>
-                      <Hero />
-                      <NotesWall />
-                    </>
-                  }
-                />
-                <Route path="/hakkimda" element={<About />} />
-                <Route path="/projeler" element={<Projects />} />
-                <Route path="/dusunceler" element={<Thoughts />} />
-                <Route path="/studyom" element={<Studio />} />
-                <Route path="/iletisim" element={<Contact />} />
-              </Routes>
-            </main>
+          <main style={{ position: 'relative', zIndex: 10, minHeight: '100vh', transition: 'color 1.5s ease' }}>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <>
+                    <Hero />
+                    <NotesWall />
+                  </>
+                }
+              />
+              <Route path="/hakkimda" element={<About />} />
+              <Route path="/projeler" element={<Projects />} />
+              <Route path="/dusunceler" element={<Thoughts />} />
+              <Route path="/studyom" element={<Studio />} />
+              <Route path="/iletisim" element={<Contact />} />
+            </Routes>
+          </main>
 
-            <Footer />
-          </div>
-        </ReactLenis>
-      </motion.div>
-      <div
-        className="noise-overlay"
-        style={{ mixBlendMode: 'overlay', pointerEvents: 'none' }}
-      />
+          <Footer />
+        </div>
+      </ReactLenis>
+      <div className="noise-overlay" style={{ mixBlendMode: 'overlay', pointerEvents: 'none' }} />
     </ThemeProvider>
   );
 }

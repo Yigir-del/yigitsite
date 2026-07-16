@@ -51,6 +51,7 @@
 html {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   scrollbar-width: thin;
+  transition: transform 1.15s cubic-bezier(0.34, 1.45, 0.64, 1);
 }
 
 ::-webkit-scrollbar {
@@ -253,8 +254,8 @@ p {
   transition: opacity 1.4s ease;
 }
 
-.world-shell {
-  min-height: 100vh;
-  will-change: transform;
+/* Easter egg: whole page flip — only when active, elastic ease */
+html.world-flipped {
+  transform: rotate(180deg);
   transform-origin: center center;
 }
