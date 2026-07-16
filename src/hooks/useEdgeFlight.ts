@@ -1,5 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { planCrossFlight, type CrossFlight, type Edge } from '../utils/flightPath';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  planCrossFlight,
+  planFlightFromPoint,
+  type CrossFlight,
+  type Edge,
+} from '../utils/flightPath';
 
 /** Slow edge flights; sometimes pause mid-page, then leave again. */
 export function useEdgeFlight(opts: {
@@ -20,6 +25,7 @@ export function useEdgeFlight(opts: {
   );
   const [flightKey, setFlightKey] = useState(0);
   const [ready, setReady] = useState(startDelay <= 0);
+  const [paused, setPaused] = useState(false);
   const exitRef = useRef<Edge | undefined>(flight.exit);
 
   useEffect(() => {
@@ -29,7 +35,7 @@ export function useEdgeFlight(opts: {
   }, [startDelay]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || paused) return;
 
     const t = setTimeout(() => {
       const next = planCrossFlight(exitRef.current, {
@@ -43,7 +49,29 @@ export function useEdgeFlight(opts: {
     }, flight.duration * 1000);
 
     return () => clearTimeout(t);
-  }, [ready, flightKey, flight.duration, durationMin, durationMax, preferHorizontal]);
+  }, [
+    ready,
+    paused,
+    flightKey,
+    flight.duration,
+    durationMin,
+    durationMax,
+    preferHorizontal,
+  ]);
+
+  const resumeFrom = useCallback(
+    (point: { x: number; y: number }) => {
+      const next = planFlightFromPoint(point, {
+        durationMin: Math.max(10, durationMin - 4),
+        durationMax: Math.max(14, durationMax - 4),
+      });
+      exitRef.current = next.exit;
+      setFlight(next);
+      setFlightKey((k) => k + 1);
+      setPaused(false);
+    },
+    [durationMin, durationMax]
+  );
 
   return {
     flightKey,
@@ -52,5 +80,8 @@ export function useEdgeFlight(opts: {
     times: flight.times,
     duration: flight.duration,
     visible: ready,
+    paused,
+    setPaused,
+    resumeFrom,
   };
 }

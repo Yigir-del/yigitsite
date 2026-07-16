@@ -52,7 +52,7 @@ export default function SocialDrifters() {
       const tooltip = type === 'github' ? "GitHub'a uğra." : 'LinkedIn tarafı.';
       const link =
         type === 'github'
-          ? 'https://github.com/yigit-del'
+          ? 'https://github.com/Yigir-del'
           : 'https://www.linkedin.com/in/yigit-efe-altuntas/';
 
       const { start, end } = randomFlightPath(window.innerWidth, window.innerHeight);

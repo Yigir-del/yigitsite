@@ -60,6 +60,42 @@ export type CrossFlight = {
   duration: number;
 };
 
+/** Continue from a thrown/dragged point toward a random exit edge. */
+export function planFlightFromPoint(
+  point: { x: number; y: number },
+  opts: { durationMin?: number; durationMax?: number } = {}
+): CrossFlight {
+  const { durationMin = 12, durationMax = 18 } = opts;
+  const w = typeof window !== 'undefined' ? window.innerWidth : 800;
+  const h = typeof window !== 'undefined' ? window.innerHeight : 600;
+
+  const exit = randomEdge();
+  const to = pointOnEdge(exit, w, h, 140);
+  const duration = durationMin + Math.random() * (durationMax - durationMin);
+
+  // Sometimes drift through mid before leaving
+  if (Math.random() < 0.4) {
+    const mid = midScreenPoint(w, h);
+    return {
+      enter: 'left',
+      exit,
+      x: [point.x, mid.x, mid.x, to.x],
+      y: [point.y, mid.y, mid.y, to.y],
+      times: [0, 0.3, 0.5, 1],
+      duration,
+    };
+  }
+
+  return {
+    enter: 'left',
+    exit,
+    x: [point.x, to.x],
+    y: [point.y, to.y],
+    times: [0, 1],
+    duration,
+  };
+}
+
 /**
  * Slow edge flight. Often detours to mid-screen, hangs a bit, then leaves.
  */

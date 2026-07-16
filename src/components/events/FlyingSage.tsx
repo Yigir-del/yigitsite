@@ -13,16 +13,18 @@ import {
 
 /** Wise face — mostly proverbial lines; rarely jabs the beggar with a mapped reply */
 export default function FlyingSage() {
-  const { flightKey, x, y, times, duration, visible } = useEdgeFlight({
+  const { flightKey, x, y, times, duration, visible, setPaused, resumeFrom } = useEdgeFlight({
     startDelay: 2500,
     durationMin: 18,
     durationMax: 28,
   });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busyRef = useRef(false);
+  const throwResumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const say = (text: string, holdMs = 3600) => {
     setLine(text);
@@ -79,6 +81,7 @@ export default function FlyingSage() {
       clearInterval(loop);
       if (hideRef.current) clearTimeout(hideRef.current);
       if (replyRef.current) clearTimeout(replyRef.current);
+      if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
       window.removeEventListener(FLYER_SPEAK, onFlyerSpeak);
     };
   }, []);
@@ -89,19 +92,35 @@ export default function FlyingSage() {
     <motion.div
       key={flightKey}
       initial={{ x: x[0], y: y[0] }}
-      animate={{ x, y }}
+      animate={dragging ? undefined : { x, y }}
       transition={{ duration, times, ease: 'easeInOut' }}
+      drag
+      dragMomentum
+      whileDrag={{ scale: 1.12, cursor: 'grabbing', zIndex: 200 }}
+      onDragStart={() => {
+        if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
+        setDragging(true);
+        setPaused(true);
+      }}
+      onDragEnd={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        throwResumeRef.current = setTimeout(() => {
+          const t = new DOMMatrix(getComputedStyle(el).transform);
+          setDragging(false);
+          resumeFrom({ x: t.m41, y: t.m42 });
+        }, 700);
+      }}
       style={{
         position: 'fixed',
         left: 0,
         top: 0,
-        zIndex: 45,
-        cursor: 'default',
+        zIndex: dragging ? 200 : 45,
+        cursor: 'grab',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '0.35rem',
-        pointerEvents: 'none',
+        pointerEvents: 'auto',
       }}
       title="Bilge"
     >
