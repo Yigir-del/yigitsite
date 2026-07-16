@@ -4,94 +4,115 @@ import { upload } from '@vercel/blob/client';
 
 interface StudioItem {
   id: string;
-  type?: 'photo'; // Removed music
+  type?: 'photo';
   src?: string;
   alt?: string;
   size: string;
   date?: string;
 }
 
-// Default items removed
-
 export default function Studio() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [items, setItems] = useState<StudioItem[]>([]);
-  
-  // Photo Admin form state
+
   const [newAlt, setNewAlt] = useState('');
   const [newSize, setNewSize] = useState('medium');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setIsAdmin(localStorage.getItem('yigit_admin') === 'true');
-    
-    // Fetch from Backend API
+
     fetch('/api/photos')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setItems(data);
-        } else {
-          setItems([]);
-        }
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setItems(data);
+        else setItems([]);
       })
       .catch(() => setItems([]));
   }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const clearPending = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPendingFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPendingFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const confirmUpload = async () => {
+    if (!pendingFile || isUploading) return;
+
+    setIsUploading(true);
     try {
-      const newBlob = await upload(file.name, file, {
+      const newBlob = await upload(pendingFile.name, pendingFile, {
         access: 'public',
         handleUploadUrl: '/api/upload',
         clientPayload: newSize,
       });
-      
+
       const now = new Date();
-      const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+      const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
       const newItem: StudioItem = {
-        id: Date.now().toString(), // temporary id until refresh
+        id: Date.now().toString(),
         type: 'photo',
         src: newBlob.url,
         alt: newAlt.trim() || 'İsimsiz Eser',
         size: newSize,
-        date: formattedDate
+        date: formattedDate,
       };
 
-      setItems(prev => [newItem, ...prev]);
-      
+      setItems((prev) => [newItem, ...prev]);
       setNewAlt('');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      clearPending();
     } catch (err) {
       console.error('Upload failed:', err);
-      alert('Fotoğraf yüklenirken bir hata oluştu.');
+      alert('Fotoğraf yüklenemedi. JPG, PNG, WebP, AVIF veya HEIC biçiminde tekrar dene.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const deleteItem = async (id: string, src: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    // Optimistic delete
-    setItems(prev => prev.filter(p => p.id !== id));
-    
+    setItems((prev) => prev.filter((p) => p.id !== id));
+
     try {
       await fetch(`/api/photos?id=${id}&url=${encodeURIComponent(src)}`, { method: 'DELETE' });
     } catch (err) {
       console.error('Failed to delete photo', err);
     }
   };
+
   return (
-    <section className="studio-section" style={{
-      minHeight: '80vh',
-      padding: '8rem 2rem 4rem',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: '2rem'
-    }}>
+    <section
+      className="studio-section"
+      style={{
+        minHeight: '80vh',
+        padding: '8rem 2rem 4rem',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '2rem',
+      }}
+    >
       <h2 className="glitch" data-text="Stüdyom" style={{ marginBottom: '0.5rem', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)' }}>
         Stüdyom
       </h2>
@@ -101,15 +122,14 @@ export default function Studio() {
 
       {isAdmin && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1200px', marginBottom: '2rem' }}>
-          {/* Fotoğraf Ekleme Bölümü */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{ 
-              background: 'rgba(10, 10, 15, 0.8)', 
+            style={{
+              background: 'rgba(10, 10, 15, 0.8)',
               backdropFilter: 'blur(10px)',
-              padding: '2rem', 
-              borderRadius: '16px', 
+              padding: '2rem',
+              borderRadius: '16px',
               border: '1px solid var(--accent-pale-gray)',
               boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
             }}
@@ -117,19 +137,20 @@ export default function Studio() {
             <h3 style={{ color: 'var(--text-primary)', marginBottom: '1.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span>📷</span> Fotoğraf Paylaş
             </h3>
+
             <div className="studio-admin-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-              <input 
-                type="text" 
-                value={newAlt} 
-                onChange={e => setNewAlt(e.target.value)} 
+              <input
+                type="text"
+                value={newAlt}
+                onChange={(e) => setNewAlt(e.target.value)}
                 placeholder="Açıklama (Alt Text)"
                 style={{ width: '100%', padding: '0.8rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', outline: 'none', borderRadius: '8px', transition: 'border 0.3s' }}
-                onFocus={e => e.target.style.border = '1px solid var(--accent-pale-gray)'}
-                onBlur={e => e.target.style.border = '1px solid rgba(255,255,255,0.1)'}
+                onFocus={(e) => (e.target.style.border = '1px solid var(--accent-pale-gray)')}
+                onBlur={(e) => (e.target.style.border = '1px solid rgba(255,255,255,0.1)')}
               />
               <select
                 value={newSize}
-                onChange={e => setNewSize(e.target.value)}
+                onChange={(e) => setNewSize(e.target.value)}
                 style={{ width: '100%', padding: '0.8rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', outline: 'none', borderRadius: '8px', cursor: 'pointer' }}
               >
                 <option value="small">Küçük (Kare)</option>
@@ -137,45 +158,143 @@ export default function Studio() {
                 <option value="large">Büyük (Dikey Uzun)</option>
               </select>
             </div>
-            
-            <div style={{ position: 'relative', marginTop: '1rem' }}>
-              <input 
-                type="file" 
-                accept="image/*"
+
+            <div style={{ marginTop: '1rem' }}>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/heic,image/heif,.heic,.heif"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                title=" "
-                style={{ 
-                  position: 'absolute', width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 2
-                }}
+                disabled={isUploading}
+                style={{ position: 'fixed', width: '1px', height: '1px', opacity: 0, pointerEvents: 'none' }}
               />
-              <motion.div 
-                whileHover={{ scale: 1.01, boxShadow: '0 0 20px rgba(255,255,255,0.1)', borderColor: 'var(--accent-pale-gray)' }}
-                whileTap={{ scale: 0.99 }}
-                style={{ 
-                  width: '100%', padding: '2rem', background: 'rgba(0,0,0,0.3)', 
-                  border: '2px dashed rgba(255,255,255,0.2)', borderRadius: '12px', 
-                  textAlign: 'center', color: 'var(--text-muted)', position: 'relative', zIndex: 1,
-                  transition: 'border 0.3s'
-                }}
-              >
-                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>✨</span>
-                <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-main)' }}>Bilgisayarından bir fotoğraf seç</p>
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem' }}>veya sürükleyip buraya bırak</p>
-              </motion.div>
+
+              {!previewUrl ? (
+                <motion.button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  whileHover={{ scale: 1.01, boxShadow: '0 0 20px rgba(255,255,255,0.1)', borderColor: 'var(--accent-pale-gray)' }}
+                  whileTap={{ scale: 0.99 }}
+                  style={{
+                    width: '100%',
+                    padding: '2rem',
+                    background: 'rgba(0,0,0,0.3)',
+                    border: '2px dashed rgba(255,255,255,0.2)',
+                    borderRadius: '12px',
+                    textAlign: 'center',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    transition: 'border 0.3s',
+                  }}
+                >
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>✨</span>
+                  <span style={{ display: 'block', fontWeight: 600, color: 'var(--text-main)' }}>Cihazından bir fotoğraf seç</span>
+                  <span style={{ display: 'block', marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                    Seçince önce önizleme gelir, onaylarsan siteye yerleşir
+                  </span>
+                </motion.button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      maxHeight: '360px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      background: 'rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    <img
+                      src={previewUrl}
+                      alt="Önizleme"
+                      style={{
+                        width: '100%',
+                        maxHeight: '360px',
+                        objectFit: 'contain',
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
+                    {pendingFile?.name}
+                  </p>
+
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={confirmUpload}
+                      disabled={isUploading}
+                      className="btn-domain"
+                      style={{
+                        flex: 1,
+                        minWidth: '140px',
+                        padding: '0.9rem 1.2rem',
+                        borderRadius: '10px',
+                        fontWeight: 600,
+                        cursor: isUploading ? 'wait' : 'pointer',
+                        opacity: isUploading ? 0.7 : 1,
+                      }}
+                    >
+                      {isUploading ? 'Yükleniyor...' : 'Onayla ve Yerleştir'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isUploading) return;
+                        clearPending();
+                      }}
+                      disabled={isUploading}
+                      style={{
+                        flex: 1,
+                        minWidth: '120px',
+                        padding: '0.9rem 1.2rem',
+                        borderRadius: '10px',
+                        background: 'transparent',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        color: 'var(--text-muted)',
+                        cursor: isUploading ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      Vazgeç
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      style={{
+                        flex: 1,
+                        minWidth: '120px',
+                        padding: '0.9rem 1.2rem',
+                        borderRadius: '10px',
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        color: 'var(--text-main)',
+                        cursor: isUploading ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      Başka Seç
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
       )}
-      
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
-        gap: '2rem',
-        width: '100%',
-        maxWidth: '1200px',
-        gridAutoRows: '250px'
-      }}>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
+          gap: '2rem',
+          width: '100%',
+          maxWidth: '1200px',
+          gridAutoRows: '250px',
+        }}
+      >
         {items.map((item, i) => (
           <motion.div
             key={item.id}
@@ -206,19 +325,30 @@ export default function Studio() {
               background: 'rgba(20,20,25,0.5)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
             }}
           >
             {isAdmin && (
-              <button 
+              <button
                 onClick={(e) => deleteItem(item.id, item.src || '', e)}
                 style={{
-                  position: 'absolute', top: '10px', right: '10px',
-                  background: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none',
-                  borderRadius: '50%', width: '30px', height: '30px',
-                  cursor: 'pointer', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 'bold', backdropFilter: 'blur(4px)',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  background: 'rgba(239, 68, 68, 0.9)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '30px',
+                  height: '30px',
+                  cursor: 'pointer',
+                  zIndex: 50,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  backdropFilter: 'blur(4px)',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
                 }}
                 title="Sil"
               >
@@ -226,8 +356,8 @@ export default function Studio() {
               </button>
             )}
 
-            <img 
-              src={item.src} 
+            <img
+              src={item.src}
               alt={item.alt || 'Fotoğraf'}
               loading="lazy"
               decoding="async"
@@ -237,14 +367,16 @@ export default function Studio() {
                 height: '100%',
                 objectFit: 'cover',
                 filter: 'grayscale(80%) contrast(1.2)',
-                transition: 'all 0.5s ease'
+                transition: 'all 0.5s ease',
               }}
             />
-            <div 
+            <div
               className="overlay"
               style={{
                 position: 'absolute',
-                bottom: 0, left: 0, right: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
                 background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)',
                 padding: '2rem 1.5rem 1rem',
                 opacity: 0,
@@ -253,7 +385,7 @@ export default function Studio() {
                 flexDirection: 'column',
                 alignItems: 'flex-start',
                 justifyContent: 'flex-end',
-                height: '100%'
+                height: '100%',
               }}
             >
               <span style={{ color: '#fff', fontFamily: 'var(--font-title)', fontSize: '1.2rem', letterSpacing: '1px' }}>

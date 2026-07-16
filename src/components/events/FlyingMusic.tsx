@@ -17,6 +17,7 @@ export default function FlyingMusic() {
   const isMobilePerf = useIsMobilePerf();
   const [position, setPosition] = useState(randomOffscreenStart);
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldMountPlayer, setShouldMountPlayer] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [searchMessage, setSearchMessage] = useState('');
   const [searchAttempts, setSearchAttempts] = useState(0);
@@ -38,6 +39,17 @@ export default function FlyingMusic() {
   useEffect(() => {
     return () => {
       if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const preloadPlayer = () => setShouldMountPlayer(true);
+    const idleId = window.requestIdleCallback?.(preloadPlayer, { timeout: 1200 });
+    const timeoutId = idleId === undefined ? window.setTimeout(preloadPlayer, 500) : undefined;
+
+    return () => {
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
   }, []);
 
@@ -151,7 +163,7 @@ export default function FlyingMusic() {
       )}
 
       <motion.div
-        drag
+        drag={!isMobilePerf}
         dragConstraints={{
           left: -(typeof window !== 'undefined' ? window.innerWidth - 350 : 1000),
           right: 50,
@@ -221,17 +233,22 @@ export default function FlyingMusic() {
           </div>
         </form>
 
-        {isOpen && (
+        {shouldMountPlayer && (
         <iframe
           key={iframeKey}
-          style={{ borderRadius: '12px', background: 'transparent' }}
+          style={{
+            borderRadius: '12px',
+            background: 'transparent',
+            display: isOpen ? 'block' : 'none',
+          }}
           src="https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0"
           width="100%"
           height="152"
           frameBorder="0"
           allowFullScreen={false}
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
+          loading="eager"
+          title="Spotify çalma listesi"
         />
         )}
       </motion.div>

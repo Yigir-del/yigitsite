@@ -14,7 +14,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         // Return a token that allows the client to upload
         return {
-          allowedContentTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+          allowedContentTypes: [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/avif',
+            'image/heic',
+            'image/heif',
+          ],
           tokenPayload: JSON.stringify({ size: clientPayload || 'medium' }),
         };
       },
