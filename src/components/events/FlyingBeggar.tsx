@@ -59,7 +59,8 @@ export default function FlyingBeggar() {
         position: 'fixed',
         left: 0,
         top: 0,
-        zIndex: 88,
+        // Always under other flyers so they can pass over
+        zIndex: 40,
         cursor: 'grab',
         display: 'flex',
         flexDirection: 'column',
@@ -69,36 +70,49 @@ export default function FlyingBeggar() {
       }}
       title="Sinirli dilenci"
     >
-      <AnimatePresence mode="wait">
-        {showBubble && line && (
-          <motion.div
-            key={line}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              background: 'var(--glass-bg)',
-              border: '1px solid var(--glass-border)',
-              color: 'var(--text-main)',
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.72rem',
-              fontWeight: 500,
-              letterSpacing: '0.02em',
-              padding: '0.45rem 0.7rem',
-              borderRadius: '10px',
-              maxWidth: '180px',
-              textAlign: 'center',
-              boxShadow: '0 8px 24px var(--shadow)',
-              whiteSpace: 'normal',
-              lineHeight: 1.35,
-              pointerEvents: 'none',
-            }}
-          >
-            {line}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Absolute bubble — does not shift the face when it opens */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '100%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          marginBottom: '0.4rem',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {showBubble && line && (
+            <motion.div
+              key={line}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                background: 'var(--glass-bg)',
+                border: '1px solid var(--glass-border)',
+                color: 'var(--text-main)',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.72rem',
+                fontWeight: 500,
+                letterSpacing: '0.02em',
+                padding: '0.45rem 0.7rem',
+                borderRadius: '10px',
+                maxWidth: '180px',
+                width: 'max-content',
+                textAlign: 'center',
+                boxShadow: '0 8px 24px var(--shadow)',
+                whiteSpace: 'normal',
+                lineHeight: 1.35,
+              }}
+            >
+              {line}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <div
         style={{
@@ -112,6 +126,8 @@ export default function FlyingBeggar() {
           justifyContent: 'center',
           boxShadow: '0 0 14px var(--glow)',
           userSelect: 'none',
+          position: 'relative',
+          zIndex: 0,
         }}
         aria-hidden
       >

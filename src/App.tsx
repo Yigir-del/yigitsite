@@ -68,9 +68,9 @@ function App() {
         <div className="app-container">
           <ChaosManager />
           <EasterEggs />
+          <FlyingBeggar />
           <FlyingPen />
           <FlyingMusic />
-          <FlyingBeggar />
           <SocialDrifters />
           <CustomCursor />
           <FakeMenu />
