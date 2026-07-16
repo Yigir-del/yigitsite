@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { ReactLenis } from '@studio-freight/react-lenis';
 import Background from './components/canvas/Background';
 import ChaosManager from './components/events/ChaosManager';
@@ -14,6 +15,7 @@ import NotesWall from './pages/NotesWall';
 import { ThemeProvider } from './context/ThemeContext';
 import ThemeSelector from './components/ui/ThemeSelector';
 import { useIsMobilePerf } from './hooks/useIsMobilePerf';
+import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
 
 const About = lazy(() => import('./components/sections/About'));
 const Projects = lazy(() => import('./components/sections/Projects'));
@@ -34,30 +36,39 @@ function ScrollToTop() {
   return null;
 }
 
-function RouteFallback() {
-  return (
-    <div
-      style={{
-        minHeight: '40vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--text-muted)',
-        fontSize: '0.85rem',
-        letterSpacing: '0.12em',
-        opacity: 0.5,
-      }}
-    >
-      …
-    </div>
-  );
-}
-
 function Shell({ children }: { children: ReactNode }) {
   const isMobilePerf = useIsMobilePerf();
   if (isMobilePerf) return <>{children}</>;
-  // Lenis ships its own @types/react — cast avoids duplicate ReactNode mismatch
   return <ReactLenis root>{children as never}</ReactLenis>;
+}
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <PageTransition key={location.pathname}>
+        <Suspense fallback={<PageTransitionFallback />}>
+          <Routes location={location}>
+            <Route
+              path="/"
+              element={
+                <>
+                  <Hero />
+                  <NotesWall />
+                </>
+              }
+            />
+            <Route path="/hakkimda" element={<About />} />
+            <Route path="/projeler" element={<Projects />} />
+            <Route path="/dusunceler" element={<Thoughts />} />
+            <Route path="/studyom" element={<Studio />} />
+            <Route path="/iletisim" element={<Contact />} />
+          </Routes>
+        </Suspense>
+      </PageTransition>
+    </AnimatePresence>
+  );
 }
 
 function App() {
@@ -131,24 +142,7 @@ function App() {
           <Navigation />
 
           <main style={{ position: 'relative', zIndex: 10, minHeight: '100vh', transition: 'color 1.5s ease' }}>
-            <Suspense fallback={<RouteFallback />}>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <>
-                      <Hero />
-                      <NotesWall />
-                    </>
-                  }
-                />
-                <Route path="/hakkimda" element={<About />} />
-                <Route path="/projeler" element={<Projects />} />
-                <Route path="/dusunceler" element={<Thoughts />} />
-                <Route path="/studyom" element={<Studio />} />
-                <Route path="/iletisim" element={<Contact />} />
-              </Routes>
-            </Suspense>
+            <AnimatedRoutes />
           </main>
 
           <Footer />
