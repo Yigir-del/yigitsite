@@ -1,87 +1,119 @@
 import { useTheme, type DomainTheme } from '../../context/ThemeContext';
+import { motion } from 'framer-motion';
 
 export default function ThemeSelector() {
   const { theme, setTheme, isTransitioning } = useTheme();
 
-  const themes: { id: DomainTheme; name: string }[] = [
-    { id: 'Muryokusho', name: 'Muryokusho' },
-    { id: 'FukumaMizushi', name: 'Fukuma Mizushi' },
-    { id: 'KangoAneitei', name: 'Kango Aneitei' },
-    { id: 'GaikanTecchisen', name: 'Gaikan Tecchisen' },
-    { id: 'ShinganSoai', name: 'Shingan Soai' },
+  const themes: { id: DomainTheme; name: string; startX: string; startY: string; duration: number }[] = [
+    { id: 'Muryokusho', name: 'Muryokusho', startX: '10vw', startY: '20vh', duration: 40 },
+    { id: 'FukumaMizushi', name: 'Fukuma Mizushi', startX: '70vw', startY: '15vh', duration: 35 },
+    { id: 'KangoAneitei', name: 'Kango Aneitei', startX: '80vw', startY: '80vh', duration: 45 },
+    { id: 'GaikanTecchisen', name: 'Gaikan Tecchisen', startX: '15vw', startY: '75vh', duration: 38 },
+    { id: 'ShinganSoai', name: 'Shingan Soai', startX: '45vw', startY: '50vh', duration: 50 },
   ];
 
   return (
     <>
-      <div style={{
-        position: 'fixed',
-        bottom: '2rem',
-        right: '2rem',
-        zIndex: 100,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-        pointerEvents: isTransitioning ? 'none' : 'auto',
-      }}>
-        <div style={{
-          fontSize: '0.8rem',
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
-          color: 'var(--text-muted)',
-          marginBottom: '1rem',
-          opacity: 0.7
-        }}>
-          Ryōiki Tenkai
-        </div>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
-          {themes.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTheme(t.id)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: theme === t.id ? 'var(--accent-soft-white)' : 'var(--text-muted)',
-                fontSize: '1rem',
-                fontFamily: 'var(--font-title)',
-                cursor: 'pointer',
-                opacity: theme === t.id ? 1 : 0.5,
-                transition: 'all 0.3s ease',
-                textShadow: theme === t.id ? '0 0 10px var(--accent-muted-blue)' : 'none',
-                transform: theme === t.id ? 'scale(1.05)' : 'scale(1)',
-                transformOrigin: 'right center',
-              }}
-              onMouseEnter={(e) => {
-                if (theme !== t.id) e.currentTarget.style.opacity = '0.8';
-              }}
-              onMouseLeave={(e) => {
-                if (theme !== t.id) e.currentTarget.style.opacity = '0.5';
-              }}
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Watermark */}
+      {/* Small Top Left Active Theme Indicator */}
       <div style={{
         position: 'fixed',
         top: '2rem',
         left: '2rem',
         zIndex: 50,
         pointerEvents: 'none',
-        opacity: 0.1,
-        fontFamily: 'var(--font-title)',
-        fontSize: 'clamp(3rem, 5vw, 6rem)',
-        color: 'var(--text-main)',
-        whiteSpace: 'nowrap',
-        writingMode: 'vertical-rl',
-        textOrientation: 'mixed',
-        letterSpacing: '0.5em',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.2rem'
       }}>
-        {themes.find(t => t.id === theme)?.name}
+        <div style={{
+          fontSize: '0.6rem',
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+          opacity: 0.6
+        }}>
+          Ryōiki Tenkai
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-title)',
+          fontSize: '1.2rem',
+          color: 'var(--text-main)',
+          letterSpacing: '0.1em',
+          opacity: 0.9,
+          textShadow: '0 0 10px rgba(255,255,255,0.2)'
+        }}>
+          {themes.find(t => t.id === theme)?.name}
+        </div>
+      </div>
+
+      {/* Floating Theme Modifiers in the Background */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        pointerEvents: isTransitioning ? 'none' : 'auto',
+        zIndex: 1, // very low z-index so it's in the background, behind the main content (which is z-index 10)
+        overflow: 'hidden'
+      }}>
+        {themes.map((t) => (
+          <motion.button
+            key={t.id}
+            onClick={() => setTheme(t.id)}
+            drag
+            dragMomentum={true}
+            whileDrag={{ scale: 1.1, cursor: 'grabbing' }}
+            initial={{ x: `calc(${t.startX} - 50px)`, y: `calc(${t.startY} - 50px)` }}
+            animate={{ 
+              x: [
+                `calc(${t.startX} - 50px)`, 
+                `calc(${t.startX} + 50px)`, 
+                `calc(${t.startX} - 20px)`,
+                `calc(${t.startX} - 50px)`
+              ], 
+              y: [
+                `calc(${t.startY} - 50px)`, 
+                `calc(${t.startY} + 30px)`, 
+                `calc(${t.startY} - 60px)`,
+                `calc(${t.startY} - 50px)`
+              ] 
+            }}
+            transition={{ 
+              duration: t.duration, 
+              ease: "linear", 
+              repeat: Infinity 
+            }}
+            style={{
+              position: 'absolute',
+              background: 'rgba(255,255,255,0.02)',
+              backdropFilter: 'blur(2px)',
+              border: theme === t.id ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.05)',
+              color: theme === t.id ? 'var(--accent-soft-white)' : 'var(--text-muted)',
+              fontSize: '0.85rem',
+              fontFamily: 'var(--font-body)',
+              letterSpacing: '0.1em',
+              cursor: 'grab',
+              opacity: theme === t.id ? 1 : 0.4,
+              textShadow: theme === t.id ? '0 0 8px var(--accent-muted-blue)' : 'none',
+              padding: '0.75rem 1.25rem',
+              borderRadius: '30px',
+              whiteSpace: 'nowrap',
+              boxShadow: theme === t.id ? '0 0 15px rgba(255,255,255,0.05)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (theme !== t.id) {
+                e.currentTarget.style.opacity = '0.8';
+                e.currentTarget.style.border = '1px solid rgba(255,255,255,0.2)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (theme !== t.id) {
+                e.currentTarget.style.opacity = '0.4';
+                e.currentTarget.style.border = '1px solid rgba(255,255,255,0.05)';
+              }
+            }}
+          >
+            {t.name}
+          </motion.button>
+        ))}
       </div>
     </>
   );
