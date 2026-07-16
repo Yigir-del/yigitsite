@@ -26,7 +26,7 @@ function MovingStars() {
 
   return (
     <group ref={starsRef}>
-      <Stars radius={40} depth={40} count={900} factor={2.5} saturation={0} fade speed={0.8} />
+      <Stars radius={50} depth={50} count={1800} factor={3} saturation={0} fade speed={1} />
     </group>
   );
 }
@@ -47,9 +47,9 @@ function Moon() {
     >
       <sphereGeometry args={[1.5, 16, 16]} />
       <meshStandardMaterial
-        color={clickCount > 5 ? '#ff4444' : '#e8e0ff'}
-        emissive={clickCount > 5 ? '#ff0000' : '#4a3d72'}
-        emissiveIntensity={0.45}
+        color={clickCount > 5 ? '#ff4444' : '#ffffff'}
+        emissive={clickCount > 5 ? '#ff0000' : '#444444'}
+        emissiveIntensity={0.5}
         roughness={0.8}
       />
       {clickCount > 5 && <pointLight color="#ff0000" intensity={2} distance={20} />}
@@ -57,17 +57,16 @@ function Moon() {
   );
 }
 
-/** Classic void — stars + moon, soft cosmic violet cast */
+/** Classic starry void — only domain */
 export default function Muryokusho() {
   return (
     <>
-      <color attach="background" args={['#0c0a1e']} />
-      <ambientLight intensity={0.4} color="#b8a8e8" />
-      <directionalLight position={[-10, 10, 5]} intensity={0.9} color="#d4c8ff" />
-      <pointLight position={[4, 2, -6]} color="#7c5cff" intensity={0.6} distance={30} />
+      <color attach="background" args={['#0d131f']} />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[-10, 10, 5]} intensity={1} />
       <MovingStars />
       <Moon />
-      <fog attach="fog" args={['#0c0a1e', 5, 16]} />
+      <fog attach="fog" args={['#0d131f', 5, 15]} />
     </>
   );
 }

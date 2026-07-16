@@ -22,7 +22,6 @@ import Contact from './components/sections/Contact';
 
 import { ThemeProvider } from './context/ThemeContext';
 import ThemeSelector from './components/ui/ThemeSelector';
-import ThemeTransition from './components/ui/ThemeTransition';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -59,10 +58,8 @@ function App() {
 
   return (
     <ThemeProvider>
-      {/* Fixed atmosphere — fills viewport under canvas so flip never shows empty/wrong color */}
       <div className="atmosphere-fill" aria-hidden />
       <Background />
-      <ThemeTransition />
       <ThemeSelector />
 
       <ReactLenis root>
@@ -84,21 +81,7 @@ function App() {
                 element={
                   <>
                     <Hero />
-                    <div
-                      aria-hidden
-                      style={{
-                        height: '28vh',
-                        pointerEvents: 'none',
-                      }}
-                    />
                     <NotesWall />
-                    <div
-                      aria-hidden
-                      style={{
-                        height: '18vh',
-                        pointerEvents: 'none',
-                      }}
-                    />
                   </>
                 }
               />

@@ -1,12 +1,7 @@
 import { Canvas } from '@react-three/fiber';
-import { useTheme } from '../../context/ThemeContext';
 import Muryokusho from './domains/Muryokusho';
-import GaikanTecchisen from './domains/GaikanTecchisen';
-import ShinganSoai from './domains/ShinganSoai';
 
 export default function Background() {
-  const { theme } = useTheme();
-
   return (
     <div id="canvas-container">
       <Canvas
@@ -21,9 +16,7 @@ export default function Background() {
           depth: true,
         }}
       >
-        {theme === 'Muryokusho' && <Muryokusho />}
-        {theme === 'GaikanTecchisen' && <GaikanTecchisen />}
-        {theme === 'ShinganSoai' && <ShinganSoai />}
+        <Muryokusho />
       </Canvas>
     </div>
   );

@@ -85,10 +85,11 @@ export default function NotesWall() {
     }
   };
 
+  // Title stays at top; only the wall height stretches downward
   const containerHeightVh = useMemo(() => {
-    if (positionedNotes.length === 0) return 70;
+    if (positionedNotes.length === 0) return 100;
     const lastY = Math.max(...positionedNotes.map((n) => n.computedY));
-    return Math.min(Math.max(lastY + 32, 70), 220);
+    return Math.min(Math.max(lastY + 40, 100), 240);
   }, [positionedNotes]);
 
   return (
@@ -106,7 +107,7 @@ export default function NotesWall() {
         data-text="Not Defterim"
         style={{
           position: 'absolute',
-          top: '6%',
+          top: '5%',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 10,
@@ -121,7 +122,7 @@ export default function NotesWall() {
         <p
           style={{
             position: 'absolute',
-            top: '42%',
+            top: '22%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             color: 'var(--text-muted)',
