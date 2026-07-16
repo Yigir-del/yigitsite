@@ -1,71 +1,77 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
+import {
+  BEGGAR_OWN,
+  BEGGAR_TO_SAGE,
+  BEGGAR_REPLY_TO_SAGE,
+  FLYER_SPEAK,
+  pickRandom,
+  shouldJab,
+  type FlyerSpeakDetail,
+} from '../../utils/flyerDialogue';
 
-const TAUNTS = [
-  "Kral, biraz bağış?",
-  "Hey kral, cebin dolu mu?",
-  "Dilenci aç, kral kör mü?",
-  "Bir kuruşluk merhamet, kralım!",
-  "Zengin kral, fakir dilenci — klasik.",
-  "Kral bak buraya! Görmezden gelme.",
-  "Tahtın güzel, cüzdanın da öyle midir?",
-  "Kral, bugün lütuf günü mü?",
-  "Dilenciyim ama gururum var… azıcık.",
-  "Kral! Kral! Bakıyorum sana!",
-  "Bir kahve parası, ey yüce kral.",
-  "Sen kral, ben dilenci — sen ver, ben alırım.",
-];
-
-const ROASTS_AT_SAGE = [
-  "Bilge, öğüdün bedava mı? Ben de bedavayım.",
-  "Sus bilge, açken felsefe dinlenmez.",
-  "Sakalın uzun, öğüdün boş.",
-  "Bilge, sen konuş; ben dilenirim. İş bölümü.",
-  "Öğüt yerine bir kuruş versene, bilge.",
-  "Bilgelik karnı doyurmuyor — denedim.",
-  "Hey bilge, kendi aynana bak önce.",
-  "Sen bilge, ben dilenci — en azından dürüstüm.",
-  "Öğüt satıyorsun, müşteri yok.",
-  "Bilge kapat çeneni, krala bakıyorum.",
-];
-
-/** Angry beggar face that drifts around and heckles the king (and sometimes the sage) */
+/** Angry beggar — mostly heckles the king; rarely jabs the sage with a mapped reply */
 export default function FlyingBeggar() {
   const [position, setPosition] = useState(randomOffscreenStart);
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const busyRef = useRef(false);
 
   const say = (text: string, holdMs = 3200) => {
     setLine(text);
     setShowBubble(true);
     if (hideRef.current) clearTimeout(hideRef.current);
-    hideRef.current = setTimeout(() => setShowBubble(false), holdMs);
+    hideRef.current = setTimeout(() => {
+      setShowBubble(false);
+      busyRef.current = false;
+    }, holdMs);
   };
 
   useEffect(() => {
     const enter = setTimeout(() => setPosition(randomOnScreen(0.15)), 200);
     const move = setInterval(() => setPosition(randomOnScreen(0.15)), 9000);
 
+    const emit = (detail: FlyerSpeakDetail) => {
+      window.dispatchEvent(new CustomEvent(FLYER_SPEAK, { detail }));
+    };
+
     const speak = () => {
-      say(TAUNTS[Math.floor(Math.random() * TAUNTS.length)]);
+      if (busyRef.current) return;
+
+      if (shouldJab(0.15)) {
+        const jab = pickRandom(BEGGAR_TO_SAGE);
+        busyRef.current = true;
+        say(jab, 3400);
+        emit({ from: 'beggar', kind: 'jab', line: jab });
+        return;
+      }
+
+      const own = pickRandom(BEGGAR_OWN);
+      say(own);
+      emit({ from: 'beggar', kind: 'own', line: own });
     };
 
     const firstSpeak = setTimeout(speak, 2500);
-    const speakLoop = setInterval(speak, 7000 + Math.random() * 4000);
+    const speakLoop = setInterval(speak, 8000 + Math.random() * 4000);
 
-    const onSageAdvice = () => {
-      // Sometimes clap back at the sage
-      if (Math.random() > 0.55) return;
+    const onFlyerSpeak = (e: Event) => {
+      const detail = (e as CustomEvent<FlyerSpeakDetail>).detail;
+      if (!detail || detail.from !== 'sage' || detail.kind !== 'jab') return;
+
+      const reply = BEGGAR_REPLY_TO_SAGE[detail.line];
+      if (!reply) return;
+
       if (replyRef.current) clearTimeout(replyRef.current);
+      busyRef.current = true;
       replyRef.current = setTimeout(() => {
-        say(ROASTS_AT_SAGE[Math.floor(Math.random() * ROASTS_AT_SAGE.length)], 3400);
-      }, 1400 + Math.random() * 800);
+        say(reply, 3600);
+      }, 1500);
     };
 
-    window.addEventListener('sage-advice', onSageAdvice);
+    window.addEventListener(FLYER_SPEAK, onFlyerSpeak);
 
     return () => {
       clearTimeout(enter);
@@ -74,7 +80,7 @@ export default function FlyingBeggar() {
       clearInterval(speakLoop);
       if (hideRef.current) clearTimeout(hideRef.current);
       if (replyRef.current) clearTimeout(replyRef.current);
-      window.removeEventListener('sage-advice', onSageAdvice);
+      window.removeEventListener(FLYER_SPEAK, onFlyerSpeak);
     };
   }, []);
 

@@ -1,44 +1,77 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
+import {
+  SAGE_OWN,
+  SAGE_TO_BEGGAR,
+  SAGE_REPLY_TO_BEGGAR,
+  FLYER_SPEAK,
+  pickRandom,
+  shouldJab,
+  type FlyerSpeakDetail,
+} from '../../utils/flyerDialogue';
 
-const ADVICE = [
-  "Dilenci, açlık zihin açar — seninki hâlâ kapalı.",
-  "Öğüt: dilenmeden önce gururu bir kenara bırak… seninkisi çok yer kaplıyor.",
-  "Ey dilenci, krala bağırıyorsun; aynaya bir bak derim.",
-  "Bilgelik der ki: teneke kutu dolmazsa, dil de dinlensin.",
-  "Öğüt veriyorum çünkü acıyorum — biraz da can sıkıyorsun.",
-  "Dilenci, merhamet dilenirsin; nezaket ise unutulmuş.",
-  "Taht istemiyorsun, tamam — ama en azından fısılda.",
-  "Açlık geçici, lafın kalıcı… daha az kalıcı konuş.",
-  "Ey dilenci: önce kendini doyur, sonra kralı yargıla.",
-  "Bilge sözü: bağış almak için yüzünü düzelt. O kaşlar korkutuyor.",
-  "Öğüt: kral kör değil — sen biraz fazla görünürsün.",
-  "Dilenci kardeşim, gururla aç kalmak da bir sanat… sen acemisin.",
-];
-
-/** Wise face that drifts around and sasses advice at the beggar */
+/** Wise face — mostly proverbial lines; rarely jabs the beggar with a mapped reply */
 export default function FlyingSage() {
   const [position, setPosition] = useState(randomOffscreenStart);
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const busyRef = useRef(false);
+
+  const say = (text: string, holdMs = 3600) => {
+    setLine(text);
+    setShowBubble(true);
+    if (hideRef.current) clearTimeout(hideRef.current);
+    hideRef.current = setTimeout(() => {
+      setShowBubble(false);
+      busyRef.current = false;
+    }, holdMs);
+  };
 
   useEffect(() => {
     const enter = setTimeout(() => setPosition(randomOnScreen(0.18)), 900);
     const move = setInterval(() => setPosition(randomOnScreen(0.18)), 11000);
 
-    const advise = () => {
-      const next = ADVICE[Math.floor(Math.random() * ADVICE.length)];
-      setLine(next);
-      setShowBubble(true);
-      if (hideRef.current) clearTimeout(hideRef.current);
-      hideRef.current = setTimeout(() => setShowBubble(false), 3600);
-      window.dispatchEvent(new CustomEvent('sage-advice', { detail: { line: next } }));
+    const emit = (detail: FlyerSpeakDetail) => {
+      window.dispatchEvent(new CustomEvent(FLYER_SPEAK, { detail }));
     };
 
-    const first = setTimeout(advise, 5500);
-    const loop = setInterval(advise, 11000 + Math.random() * 5000);
+    const speak = () => {
+      if (busyRef.current) return;
+
+      if (shouldJab(0.15)) {
+        const jab = pickRandom(SAGE_TO_BEGGAR);
+        busyRef.current = true;
+        say(jab, 3800);
+        emit({ from: 'sage', kind: 'jab', line: jab });
+        return;
+      }
+
+      const own = pickRandom(SAGE_OWN);
+      say(own);
+      emit({ from: 'sage', kind: 'own', line: own });
+    };
+
+    const first = setTimeout(speak, 5500);
+    const loop = setInterval(speak, 12000 + Math.random() * 5000);
+
+    const onFlyerSpeak = (e: Event) => {
+      const detail = (e as CustomEvent<FlyerSpeakDetail>).detail;
+      if (!detail || detail.from !== 'beggar' || detail.kind !== 'jab') return;
+
+      const reply = SAGE_REPLY_TO_BEGGAR[detail.line];
+      if (!reply) return;
+
+      if (replyRef.current) clearTimeout(replyRef.current);
+      busyRef.current = true;
+      replyRef.current = setTimeout(() => {
+        say(reply, 3800);
+      }, 1500);
+    };
+
+    window.addEventListener(FLYER_SPEAK, onFlyerSpeak);
 
     return () => {
       clearTimeout(enter);
@@ -46,6 +79,8 @@ export default function FlyingSage() {
       clearInterval(move);
       clearInterval(loop);
       if (hideRef.current) clearTimeout(hideRef.current);
+      if (replyRef.current) clearTimeout(replyRef.current);
+      window.removeEventListener(FLYER_SPEAK, onFlyerSpeak);
     };
   }, []);
 
@@ -130,17 +165,12 @@ export default function FlyingSage() {
       >
         <svg width="34" height="34" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="32" cy="28" r="20" fill="#1e2a32" stroke="var(--accent-pale-gray)" strokeWidth="2" />
-          {/* calm brows */}
           <path d="M18 24 L28 22" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
           <path d="M46 24 L36 22" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-          {/* knowing eyes */}
           <circle cx="24" cy="28" r="2.5" fill="#e2e8f0" />
           <circle cx="40" cy="28" r="2.5" fill="#e2e8f0" />
-          {/* slight smirk */}
           <path d="M24 36 Q32 42 42 35" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round" fill="none" />
-          {/* beard */}
           <path d="M22 40 Q32 54 42 40" fill="#64748b" opacity="0.85" />
-          {/* tiny scroll */}
           <rect x="48" y="44" width="10" height="14" rx="1.5" fill="#c4b8a0" stroke="#8a7a60" strokeWidth="1" />
           <line x1="50" y1="48" x2="56" y2="48" stroke="#8a7a60" strokeWidth="0.8" />
           <line x1="50" y1="51" x2="56" y2="51" stroke="#8a7a60" strokeWidth="0.8" />
