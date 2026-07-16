@@ -46,9 +46,9 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="sync">
-      <PageTransition key={location.pathname}>
-        <Suspense fallback={<PageTransitionFallback />}>
+    <Suspense fallback={<PageTransitionFallback />}>
+      <AnimatePresence mode="wait" initial={false}>
+        <PageTransition key={location.pathname}>
           <Routes location={location}>
             <Route
               path="/"
@@ -65,9 +65,9 @@ function AnimatedRoutes() {
             <Route path="/studyom" element={<Studio />} />
             <Route path="/iletisim" element={<Contact />} />
           </Routes>
-        </Suspense>
-      </PageTransition>
-    </AnimatePresence>
+        </PageTransition>
+      </AnimatePresence>
+    </Suspense>
   );
 }
 
