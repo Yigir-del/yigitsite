@@ -55,7 +55,7 @@ function FloatingThemeIcon({
   return (
     <motion.button
       onClick={onSelect}
-      title={t.name}
+      title={isActive ? `${t.name} (aktif tema)` : `${t.name} — temayı değiştir`}
       animate={{ x: position.x, y: position.y, rotate: rotation }}
       transition={{ duration: t.duration * 0.25, ease: 'easeInOut' }}
       style={{
@@ -65,18 +65,19 @@ function FloatingThemeIcon({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: isActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.02)',
+        background: isActive ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)',
         backdropFilter: 'blur(4px)',
-        border: isActive ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.05)',
+        border: isActive ? '1px solid rgba(255,255,255,0.4)' : '1px solid rgba(255,255,255,0.12)',
         color: isActive ? 'var(--accent-soft-white)' : 'var(--text-muted)',
-        cursor: 'pointer',
-        opacity: isActive ? 1 : 0.5,
+        cursor: isActive ? 'default' : 'pointer',
+        opacity: isActive ? 1 : 0.65,
         padding: '1rem',
         borderRadius: '50%',
-        boxShadow: isActive ? '0 0 20px rgba(255,255,255,0.1)' : 'none',
-        zIndex: 1,
+        boxShadow: isActive ? '0 0 20px rgba(255,255,255,0.15)' : 'none',
+        zIndex: 45,
+        pointerEvents: 'auto',
       }}
-      whileHover={{ scale: 1.15, opacity: 0.9 }}
+      whileHover={isActive ? undefined : { scale: 1.15, opacity: 1 }}
     >
       {t.icon}
     </motion.button>
@@ -120,20 +121,24 @@ export default function ThemeSelector() {
         </div>
       </div>
 
-      {/* Floating Theme Modifiers in the Background */}
+      {/* Floating Theme Modifiers — above page content so clicks register */}
       <div style={{
         position: 'fixed',
         inset: 0,
-        pointerEvents: isTransitioning ? 'none' : 'auto',
-        zIndex: 1,
-        overflow: 'hidden'
+        pointerEvents: 'none',
+        zIndex: 45,
+        overflow: 'hidden',
+        opacity: isTransitioning ? 0.3 : 1,
+        transition: 'opacity 0.4s ease',
       }}>
         {themes.map((t) => (
           <FloatingThemeIcon
             key={t.id}
             t={t}
             isActive={theme === t.id}
-            onSelect={() => setTheme(t.id)}
+            onSelect={() => {
+              if (!isTransitioning) setTheme(t.id);
+            }}
           />
         ))}
       </div>
