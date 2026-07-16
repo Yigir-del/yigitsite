@@ -1,12 +1,12 @@
 import { useTheme, type DomainTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
-import { Infinity, Skull, Moon, Flame, Gem } from 'lucide-react';
+import { Infinity as InfinityIcon, Skull, Moon, Flame, Gem } from 'lucide-react';
 
 export default function ThemeSelector() {
   const { theme, setTheme, isTransitioning } = useTheme();
 
   const themes: { id: DomainTheme; name: string; icon: JSX.Element; startX: string; startY: string; duration: number }[] = [
-    { id: 'Muryokusho', name: 'Muryokusho', icon: <Infinity size={24} />, startX: '15vw', startY: '25vh', duration: 40 },
+    { id: 'Muryokusho', name: 'Muryokusho', icon: <InfinityIcon size={24} />, startX: '15vw', startY: '25vh', duration: 40 },
     { id: 'FukumaMizushi', name: 'Fukuma Mizushi', icon: <Skull size={24} />, startX: '75vw', startY: '20vh', duration: 35 },
     { id: 'KangoAneitei', name: 'Kango Aneitei', icon: <Moon size={24} />, startX: '85vw', startY: '75vh', duration: 45 },
     { id: 'GaikanTecchisen', name: 'Gaikan Tecchisen', icon: <Flame size={24} />, startX: '20vw', startY: '70vh', duration: 38 },
