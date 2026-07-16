@@ -63,20 +63,10 @@ export default function ThemeSelector() {
             drag
             dragMomentum={true}
             whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
-            initial={{ x: `calc(${t.startX} - 25px)`, y: `calc(${t.startY} - 25px)`, rotate: 0 }}
+            initial={{ rotate: 0 }}
             animate={{ 
-              x: [
-                `calc(${t.startX} - 25px)`, 
-                `calc(${t.startX} + 50px)`, 
-                `calc(${t.startX} - 20px)`,
-                `calc(${t.startX} - 25px)`
-              ], 
-              y: [
-                `calc(${t.startY} - 25px)`, 
-                `calc(${t.startY} + 40px)`, 
-                `calc(${t.startY} - 50px)`,
-                `calc(${t.startY} - 25px)`
-              ],
+              x: [0, 75, 25, 0], 
+              y: [0, 65, -25, 0],
               rotate: [0, 90, 180, 360]
             }}
             transition={{ 
@@ -86,6 +76,8 @@ export default function ThemeSelector() {
             }}
             style={{
               position: 'absolute',
+              left: t.startX,
+              top: t.startY,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

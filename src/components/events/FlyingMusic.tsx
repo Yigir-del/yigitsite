@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 export default function FlyingMusic() {
@@ -8,6 +8,7 @@ export default function FlyingMusic() {
   const [searchMessage, setSearchMessage] = useState('');
   const [searchAttempts, setSearchAttempts] = useState(0);
   const [iframeKey, setIframeKey] = useState(0);
+  const messageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Gentle floating movement
@@ -27,6 +28,10 @@ export default function FlyingMusic() {
     e.preventDefault();
     if (!searchValue.trim()) return;
 
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+    }
+
     if (searchAttempts < 3) {
       const quotes = [
         "Burada demokrasi yok. Ben ne istersem o çalar. 🛑",
@@ -38,20 +43,19 @@ export default function FlyingMusic() {
       setSearchMessage(quotes[Math.floor(Math.random() * quotes.length)]);
       setSearchAttempts(prev => prev + 1);
       
-      // Hide message after a short delay
-      setTimeout(() => {
+      messageTimeoutRef.current = setTimeout(() => {
         setSearchMessage('');
       }, 2500);
 
     } else {
       setSearchMessage("Çok zorladın. Müzik falan yok sana! 💥🚪");
-      setTimeout(() => {
+      messageTimeoutRef.current = setTimeout(() => {
         setIsOpen(false);
         setSearchAttempts(0);
         setSearchMessage('');
         setSearchValue('');
         setIframeKey(prev => prev + 1); // Force iframe to reload, stopping music
-      }, 2000);
+      }, 2500);
     }
   };
 
