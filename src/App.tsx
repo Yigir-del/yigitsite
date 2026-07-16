@@ -21,6 +21,11 @@ import NotesWall from './pages/NotesWall';
 import Studio from './components/sections/Studio';
 import Contact from './components/sections/Contact';
 
+// Theme Context & UI
+import { ThemeProvider } from './context/ThemeContext';
+import ThemeSelector from './components/ui/ThemeSelector';
+import ThemeTransition from './components/ui/ThemeTransition';
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -31,8 +36,11 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <>
+    <ThemeProvider>
       <Background />
+      <ThemeTransition />
+      <ThemeSelector />
+      
       <ReactLenis root>
         <ScrollToTop />
         <div className="app-container">
@@ -45,7 +53,7 @@ function App() {
           <FakeMenu />
           <Navigation />
           
-          <main style={{ position: 'relative', zIndex: 10, minHeight: '100vh' }}>
+          <main style={{ position: 'relative', zIndex: 10, minHeight: '100vh', transition: 'color 1.5s ease' }}>
             <Routes>
               <Route path="/" element={
                 <>
@@ -64,8 +72,8 @@ function App() {
           <Footer />
         </div>
       </ReactLenis>
-      <div className="noise-overlay"></div>
-    </>
+      <div className="noise-overlay" style={{ mixBlendMode: 'overlay', opacity: 0.1, pointerEvents: 'none', transition: 'all 1.5s ease' }}></div>
+    </ThemeProvider>
   );
 }
 
