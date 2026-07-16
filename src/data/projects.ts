@@ -17,7 +17,7 @@ export const projects: Project[] = [
     role: "Kurucu Ortak",
     description: "Her şey tek bir soruyla başladı:\n\"Neden bunun için beş farklı site dolaşıyorum?\"\n\nÜniversite taban puanları bir yerde, lise verileri başka yerde, öğrenci yorumları bambaşka bir köşedeydi. Hepsini tek bir yerde toplamaya karar verdik. Sonra olay büyüdü. Her yeni özellik, peşinden başka bir soruyu sürükledi.\n\nHiç bilmediğimiz teknolojilerle boğuşurken, ortağımla günlerce tek bir problemi çözmeye çalıştığımız oldu. Amacımız sadece yeni bir site yapmak değildi; insanların saatlerce sekmeler arasında kaybolmayacağı bir yer inşa etmekti.\n\nİnternette aslında her şey vardı, sadece aynı yerde değillerdi.",
     technologies: ["Python", "Django", "PostgreSQL", "JavaScript", "HTML/CSS", "Gunicorn", "WhiteNoise", "psycopg2", "python-decouple", "Django Silk"],
-    timeline: "Ağustos 2023 - Günümüz",
+    timeline: "Mayıs 2024",
     lessonsLearned: "Bazen en zor şey kod yazmak değil, neyi yazmaman gerektiğine karar vermektir. Bir vizyonu başkalarıyla paylaşmak ve onu hayatta tutmak, en az mimari kurmak kadar karmaşıktır.",
     link: "https://sinavizcisi.com",
     images: ["https://sinavizcisi.com/static/images/icon_son.png"]
