@@ -46,7 +46,7 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="sync">
       <PageTransition key={location.pathname}>
         <Suspense fallback={<PageTransitionFallback />}>
           <Routes location={location}>
@@ -133,11 +133,6 @@ function App() {
           )}
           <FlyingPen />
           <FlyingMusic />
-          {!isMobilePerf && (
-            <Suspense fallback={null}>
-              <CustomCursor />
-            </Suspense>
-          )}
           <FakeMenu />
           <Navigation />
 
@@ -148,6 +143,12 @@ function App() {
           <Footer />
         </div>
       </Shell>
+      {/* Cursor stays outside flipped stage so glow + tip never invert */}
+      {!isMobilePerf && (
+        <Suspense fallback={null}>
+          <CustomCursor />
+        </Suspense>
+      )}
       {!isMobilePerf && (
         <div className="noise-overlay" style={{ mixBlendMode: 'overlay', pointerEvents: 'none' }} />
       )}
