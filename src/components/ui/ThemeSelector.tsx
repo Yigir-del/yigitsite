@@ -12,15 +12,14 @@ export default function ThemeSelector() {
 
   return (
     <>
-      {/* Active domain — top right */}
+      {/* Active domain — top left (classic watermark) */}
       <div
         style={{
           position: 'fixed',
           top: '1.75rem',
-          right: '1.75rem',
+          left: '1.75rem',
           zIndex: 50,
           pointerEvents: 'none',
-          textAlign: 'right',
         }}
       >
         <div

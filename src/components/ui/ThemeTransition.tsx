@@ -10,13 +10,15 @@ export default function ThemeTransition() {
   const showTitle = transitionProgress > 0.15 && transitionProgress < 0.85;
   const showDomain = transitionProgress > 0.4 && transitionProgress < 0.9;
 
-  // Soft dissolve intensity — never opaque, never solid color fill
+  // Soft dissolve — never opaque, never solid color fill
   const veil = isTransitioning
     ? Math.sin(Math.min(1, transitionProgress) * Math.PI) * 0.45
     : 0;
   const blurPx = isTransitioning
     ? Math.sin(Math.min(1, transitionProgress) * Math.PI) * 10
     : 0;
+  const fog = incoming.fogHint;
+  const spark = incoming.particleHint;
 
   return (
     <AnimatePresence>
@@ -40,8 +42,8 @@ export default function ThemeTransition() {
               radial-gradient(
                 ellipse at center,
                 transparent 20%,
-                ${incoming.fog.color}55 70%,
-                ${incoming.fog.color}99 100%
+                ${fog}55 70%,
+                ${fog}99 100%
               )
             `,
             opacity: Math.max(0.15, veil),
@@ -86,7 +88,7 @@ export default function ThemeTransition() {
                     fontWeight: 300,
                     color: 'var(--text-main)',
                     letterSpacing: '0.2em',
-                    textShadow: `0 0 40px ${incoming.particle.color}66`,
+                    textShadow: `0 0 40px ${spark}66`,
                   }}
                 >
                   {incoming.label}
@@ -95,7 +97,6 @@ export default function ThemeTransition() {
             </AnimatePresence>
           </div>
 
-          {/* Soft energy sweep — low opacity band, not a flash */}
           <motion.div
             initial={{ x: '-120%', opacity: 0 }}
             animate={{ x: '120%', opacity: [0, 0.25, 0] }}
@@ -105,12 +106,7 @@ export default function ThemeTransition() {
               top: 0,
               bottom: 0,
               width: '35%',
-              background: `linear-gradient(
-                90deg,
-                transparent,
-                ${incoming.particle.color}33,
-                transparent
-              )`,
+              background: `linear-gradient(90deg, transparent, ${spark}33, transparent)`,
               mixBlendMode: 'screen',
             }}
           />
