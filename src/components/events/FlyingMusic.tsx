@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
 
 const QUOTES = [
   "Burada demokrasi yok. Ben ne istersem o çalar. 🛑",
@@ -12,10 +13,7 @@ const QUOTES = [
 const MESSAGE_DURATION = 2500;
 
 export default function FlyingMusic() {
-  const [position, setPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth * 0.8 : 0,
-    y: typeof window !== 'undefined' ? window.innerHeight * 0.2 : 0,
-  });
+  const [position, setPosition] = useState(randomOffscreenStart);
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [searchMessage, setSearchMessage] = useState('');
@@ -26,15 +24,12 @@ export default function FlyingMusic() {
   const searchAttemptsRef = useRef(0);
 
   useEffect(() => {
-    const updatePosition = () => {
-      const newX = window.innerWidth * 0.1 + Math.random() * (window.innerWidth * 0.8);
-      const newY = window.innerHeight * 0.1 + Math.random() * (window.innerHeight * 0.8);
-      setPosition({ x: newX, y: newY });
+    const enter = setTimeout(() => setPosition(randomOnScreen()), 120);
+    const interval = setInterval(() => setPosition(randomOnScreen()), 12000);
+    return () => {
+      clearTimeout(enter);
+      clearInterval(interval);
     };
-
-    updatePosition();
-    const interval = setInterval(updatePosition, 12000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -90,6 +85,7 @@ export default function FlyingMusic() {
         drag
         dragMomentum={true}
         whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
+        initial={false}
         animate={!isOpen ? { x: position.x, y: position.y } : undefined}
         transition={{ duration: 12, ease: 'easeInOut' }}
         style={{

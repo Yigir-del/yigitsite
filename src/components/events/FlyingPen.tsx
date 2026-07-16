@@ -1,26 +1,26 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Note } from '../../data/notes';
+import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
 
 export default function FlyingPen() {
-  const [position, setPosition] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const [position, setPosition] = useState(randomOffscreenStart);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [authorName, setAuthorName] = useState('');
 
   useEffect(() => {
-    // Make the pen float around randomly but smoothly
-    const updatePosition = () => {
-      // Generate a new random position on the screen
-      const newX = window.innerWidth * 0.1 + Math.random() * (window.innerWidth * 0.8);
-      const newY = window.innerHeight * 0.1 + Math.random() * (window.innerHeight * 0.8);
-      setPosition({ x: newX, y: newY });
+    // First: fly in from off-screen edge → on screen
+    const enter = setTimeout(() => setPosition(randomOnScreen()), 80);
+
+    const interval = setInterval(() => {
+      setPosition(randomOnScreen());
+    }, 10000);
+
+    return () => {
+      clearTimeout(enter);
+      clearInterval(interval);
     };
-
-    updatePosition();
-    const interval = setInterval(updatePosition, 10000); // Move every 10 seconds
-
-    return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,6 +54,7 @@ export default function FlyingPen() {
         drag
         dragMomentum={true}
         whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
+        initial={false}
         animate={{ x: position.x, y: position.y }}
         transition={{ duration: 10, ease: "easeInOut" }}
         style={{
@@ -61,7 +62,6 @@ export default function FlyingPen() {
           left: 0,
           top: 0,
           background: 'var(--glass-bg)',
-          backdropFilter: 'blur(var(--blur-amount))',
           border: '1px solid var(--glass-border)',
           borderRadius: '50%',
           width: '50px',

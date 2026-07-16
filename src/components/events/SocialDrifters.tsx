@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { pointOnEdge, randomEdge, type Edge } from '../../utils/flightPath';
 
 interface Drifter {
   id: string;
@@ -29,51 +30,72 @@ const LinkedinIcon = () => (
   </svg>
 );
 
+function randomFlightPath(w: number, h: number) {
+  const startEdge = randomEdge();
+  const endEdge = randomEdge(startEdge);
+  return {
+    start: pointOnEdge(startEdge as Edge, w, h),
+    end: pointOnEdge(endEdge, w, h),
+  };
+}
+
 export default function SocialDrifters() {
   const [drifters, setDrifters] = useState<Drifter[]>([]);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const spawnDrifter = () => {
+      if (cancelled) return;
       const type = Math.random() > 0.5 ? 'github' : 'linkedin';
-      const tooltip = type === 'github' ? "GitHub'a uğra." : "LinkedIn tarafı.";
-      const link = type === 'github' ? "https://github.com/yigit-del" : "https://www.linkedin.com/in/yigit-efe-altuntas/";
-      
-      const startX = -100;
-      const startY = Math.random() * window.innerHeight;
-      const endX = window.innerWidth + 100;
-      const endY = Math.random() * window.innerHeight;
-      
+      const tooltip = type === 'github' ? "GitHub'a uğra." : 'LinkedIn tarafı.';
+      const link =
+        type === 'github'
+          ? 'https://github.com/yigit-del'
+          : 'https://www.linkedin.com/in/yigit-efe-altuntas/';
+
+      const { start, end } = randomFlightPath(window.innerWidth, window.innerHeight);
+      const duration = 18 + Math.random() * 16;
+
       const newDrifter: Drifter = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).slice(2, 11),
         type,
-        startX,
-        startY,
-        endX,
-        endY,
-        duration: 20 + Math.random() * 20, 
+        startX: start.x,
+        startY: start.y,
+        endX: end.x,
+        endY: end.y,
+        duration,
         rotation: Math.random() * 360,
         tooltip,
-        link
+        link,
       };
 
-      setDrifters(prev => [...prev, newDrifter]);
+      setDrifters((prev) => [...prev, newDrifter]);
 
-      setTimeout(() => {
-        setDrifters(prev => prev.filter(d => d.id !== newDrifter.id));
-      }, newDrifter.duration * 1000);
+      const removeT = setTimeout(() => {
+        setDrifters((prev) => prev.filter((d) => d.id !== newDrifter.id));
+      }, duration * 1000);
+      timersRef.current.push(removeT);
     };
 
-    const timeout = setTimeout(function loop() {
+    const first = setTimeout(function loop() {
       spawnDrifter();
-      setTimeout(loop, 10000 + Math.random() * 15000);
-    }, 5000);
+      const next = setTimeout(loop, 9000 + Math.random() * 12000);
+      timersRef.current.push(next);
+    }, 3000);
+    timersRef.current.push(first);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
   }, []);
 
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 50, overflow: 'hidden' }}>
-      {drifters.map(d => (
+      {drifters.map((d) => (
         <motion.a
           key={d.id}
           href={d.link}
@@ -83,9 +105,19 @@ export default function SocialDrifters() {
           drag
           dragMomentum={true}
           whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
-          initial={{ x: d.startX, y: d.startY, rotate: 0 }}
-          animate={{ x: d.endX, y: d.endY, rotate: d.rotation > 180 ? 360 : -360 }}
-          transition={{ duration: d.duration, ease: "linear" }}
+          initial={{ x: d.startX, y: d.startY, rotate: 0, opacity: 0 }}
+          animate={{
+            x: d.endX,
+            y: d.endY,
+            rotate: d.rotation > 180 ? 360 : -360,
+            opacity: 1,
+          }}
+          transition={{
+            x: { duration: d.duration, ease: 'linear' },
+            y: { duration: d.duration, ease: 'linear' },
+            rotate: { duration: d.duration, ease: 'linear' },
+            opacity: { duration: 0.8 },
+          }}
           style={{
             position: 'absolute',
             left: 0,
@@ -96,16 +128,15 @@ export default function SocialDrifters() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(255,255,255,0.05)',
-            backdropFilter: 'blur(4px)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
             padding: '1rem',
             borderRadius: '50%',
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.color = 'var(--text-primary)';
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--text-main)';
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             e.currentTarget.style.color = 'var(--text-muted)';
           }}
         >
