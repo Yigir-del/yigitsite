@@ -1,146 +1,169 @@
-import { useEffect, useState } from 'react';
-import { useTheme, type DomainTheme } from '../../context/ThemeContext';
-import { motion } from 'framer-motion';
-import { Infinity as InfinityIcon, Skull, Moon, Flame, Gem } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '../../context/ThemeContext';
+import { DOMAINS } from '../../themes/domains';
 
-type ThemeConfig = {
-  id: DomainTheme;
-  name: string;
-  icon: JSX.Element;
-  startX: string;
-  startY: string;
-  duration: number;
-};
-
-const themes: ThemeConfig[] = [
-  { id: 'Muryokusho', name: 'Muryokusho', icon: <InfinityIcon size={24} />, startX: '15vw', startY: '25vh', duration: 40 },
-  { id: 'FukumaMizushi', name: 'Fukuma Mizushi', icon: <Skull size={24} />, startX: '75vw', startY: '20vh', duration: 35 },
-  { id: 'KangoAneitei', name: 'Kango Aneitei', icon: <Moon size={24} />, startX: '85vw', startY: '75vh', duration: 45 },
-  { id: 'GaikanTecchisen', name: 'Gaikan Tecchisen', icon: <Flame size={24} />, startX: '20vw', startY: '70vh', duration: 38 },
-  { id: 'ShinganSoai', name: 'Shingan Soai', icon: <Gem size={24} />, startX: '50vw', startY: '85vh', duration: 50 },
-];
-
-function parsePosition(startX: string, startY: string) {
-  const x = (parseFloat(startX) / 100) * window.innerWidth;
-  const y = (parseFloat(startY) / 100) * window.innerHeight;
-  return { x, y };
-}
-
-function FloatingThemeIcon({
-  t,
-  isActive,
-  onSelect,
-}: {
-  t: ThemeConfig;
-  isActive: boolean;
-  onSelect: () => void;
-}) {
-  const [position, setPosition] = useState(() =>
-    typeof window !== 'undefined' ? parsePosition(t.startX, t.startY) : { x: 0, y: 0 }
-  );
-  const [rotation, setRotation] = useState(0);
-
-  useEffect(() => {
-    const updatePosition = () => {
-      const newX = window.innerWidth * 0.05 + Math.random() * (window.innerWidth * 0.85);
-      const newY = window.innerHeight * 0.05 + Math.random() * (window.innerHeight * 0.85);
-      setPosition({ x: newX, y: newY });
-      setRotation(prev => prev + 90 + Math.random() * 180);
-    };
-
-    const interval = setInterval(updatePosition, t.duration * 250);
-    return () => clearInterval(interval);
-  }, [t.duration]);
-
-  return (
-    <motion.button
-      onClick={onSelect}
-      title={isActive ? `${t.name} (aktif tema)` : `${t.name} — temayı değiştir`}
-      animate={{ x: position.x, y: position.y, rotate: rotation }}
-      transition={{ duration: t.duration * 0.25, ease: 'easeInOut' }}
-      style={{
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: isActive ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)',
-        backdropFilter: 'blur(4px)',
-        border: isActive ? '1px solid rgba(255,255,255,0.4)' : '1px solid rgba(255,255,255,0.12)',
-        color: isActive ? 'var(--accent-soft-white)' : 'var(--text-muted)',
-        cursor: isActive ? 'default' : 'pointer',
-        opacity: isActive ? 1 : 0.65,
-        padding: '1rem',
-        borderRadius: '50%',
-        boxShadow: isActive ? '0 0 20px rgba(255,255,255,0.15)' : 'none',
-        zIndex: 45,
-        pointerEvents: 'auto',
-      }}
-      whileHover={isActive ? undefined : { scale: 1.15, opacity: 1 }}
-    >
-      {t.icon}
-    </motion.button>
-  );
-}
+const cinematic = [0.22, 1, 0.36, 1] as const;
 
 export default function ThemeSelector() {
   const { theme, setTheme, isTransitioning } = useTheme();
+  const [open, setOpen] = useState(false);
+  const active = DOMAINS.find((d) => d.id === theme);
 
   return (
     <>
-      {/* Small Top Left Active Theme Indicator */}
-      <div style={{
-        position: 'fixed',
-        top: '2rem',
-        left: '2rem',
-        zIndex: 50,
-        pointerEvents: 'none',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.2rem'
-      }}>
-        <div style={{
-          fontSize: '0.6rem',
-          letterSpacing: '0.3em',
-          textTransform: 'uppercase',
-          color: 'var(--text-muted)',
-          opacity: 0.6
-        }}>
-          Ryōiki Tenkai
+      {/* Active domain — top right */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '1.75rem',
+          right: '1.75rem',
+          zIndex: 50,
+          pointerEvents: 'none',
+          textAlign: 'right',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.55rem',
+            letterSpacing: '0.35em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+            opacity: 0.55,
+            marginBottom: '0.25rem',
+          }}
+        >
+          RYOIKI TENKAI
         </div>
-        <div style={{
-          fontFamily: 'var(--font-title)',
-          fontSize: '1.2rem',
-          color: 'var(--text-main)',
-          letterSpacing: '0.1em',
-          opacity: 0.9,
-          textShadow: '0 0 10px rgba(255,255,255,0.2)'
-        }}>
-          {themes.find(t => t.id === theme)?.name}
-        </div>
+        <motion.div
+          key={theme}
+          initial={{ opacity: 0, y: 4, filter: 'blur(4px)' }}
+          animate={{ opacity: 0.9, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.6, ease: cinematic }}
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.95rem',
+            fontWeight: 300,
+            color: 'var(--text-main)',
+            letterSpacing: '0.18em',
+          }}
+        >
+          {active?.label}
+        </motion.div>
       </div>
 
-      {/* Floating Theme Modifiers — above page content so clicks register */}
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        pointerEvents: 'none',
-        zIndex: 45,
-        overflow: 'hidden',
-        opacity: isTransitioning ? 0.3 : 1,
-        transition: 'opacity 0.4s ease',
-      }}>
-        {themes.map((t) => (
-          <FloatingThemeIcon
-            key={t.id}
-            t={t}
-            isActive={theme === t.id}
-            onSelect={() => {
-              if (!isTransitioning) setTheme(t.id);
-            }}
-          />
-        ))}
+      {/* Glass selector — bottom right */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '1.75rem',
+          right: '1.75rem',
+          zIndex: 55,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '0.6rem',
+        }}
+      >
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: 12, filter: 'blur(8px)', scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
+              exit={{ opacity: 0, y: 8, filter: 'blur(6px)', scale: 0.98 }}
+              transition={{ duration: 0.45, ease: cinematic }}
+              style={{
+                background: 'rgba(10, 12, 18, 0.45)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                padding: '0.75rem',
+                minWidth: '200px',
+                maxHeight: 'min(50vh, 360px)',
+                overflowY: 'auto',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.55rem',
+                  letterSpacing: '0.3em',
+                  color: 'var(--text-muted)',
+                  marginBottom: '0.6rem',
+                  paddingLeft: '0.5rem',
+                }}
+              >
+                DOMAIN
+              </div>
+              {DOMAINS.map((d, i) => {
+                const isActive = d.id === theme;
+                return (
+                  <motion.button
+                    key={d.id}
+                    type="button"
+                    disabled={isTransitioning}
+                    onClick={() => {
+                      setTheme(d.id);
+                      setOpen(false);
+                    }}
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.04, duration: 0.35, ease: cinematic }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.55rem 0.65rem',
+                      color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.72rem',
+                      fontWeight: 300,
+                      letterSpacing: '0.12em',
+                      cursor: isTransitioning ? 'wait' : 'pointer',
+                      transition: 'background 0.25s ease, color 0.25s ease',
+                    }}
+                    whileHover={
+                      isTransitioning
+                        ? undefined
+                        : { backgroundColor: 'rgba(255,255,255,0.06)', color: 'var(--text-main)' }
+                    }
+                  >
+                    {d.label}
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          style={{
+            background: 'rgba(10, 12, 18, 0.4)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            borderRadius: '999px',
+            padding: '0.65rem 1.1rem',
+            color: 'var(--text-main)',
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.65rem',
+            fontWeight: 300,
+            letterSpacing: '0.28em',
+            cursor: 'pointer',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+          }}
+        >
+          {open ? 'KAPAT' : 'DOMAIN'}
+        </motion.button>
       </div>
     </>
   );
