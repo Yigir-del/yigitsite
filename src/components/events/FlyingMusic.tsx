@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const QUOTES = [
   "Burada demokrasi yok. Ben ne istersem o çalar. 🛑",
@@ -12,7 +12,10 @@ const QUOTES = [
 const MESSAGE_DURATION = 2500;
 
 export default function FlyingMusic() {
-  const [position, setPosition] = useState({ x: typeof window !== 'undefined' ? window.innerWidth * 0.8 : 0, y: typeof window !== 'undefined' ? window.innerHeight * 0.2 : 0 });
+  const [position, setPosition] = useState({
+    x: typeof window !== 'undefined' ? window.innerWidth * 0.8 : 0,
+    y: typeof window !== 'undefined' ? window.innerHeight * 0.2 : 0,
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [searchMessage, setSearchMessage] = useState('');
@@ -23,7 +26,6 @@ export default function FlyingMusic() {
   const searchAttemptsRef = useRef(0);
 
   useEffect(() => {
-    // Gentle floating movement
     const updatePosition = () => {
       const newX = window.innerWidth * 0.1 + Math.random() * (window.innerWidth * 0.8);
       const newY = window.innerHeight * 0.1 + Math.random() * (window.innerHeight * 0.8);
@@ -32,7 +34,6 @@ export default function FlyingMusic() {
 
     updatePosition();
     const interval = setInterval(updatePosition, 12000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -70,7 +71,7 @@ export default function FlyingMusic() {
         setSearchAttempts(0);
         setSearchMessage('');
         setSearchValue('');
-        setIframeKey(prev => prev + 1);
+        setIframeKey((prev) => prev + 1);
       });
     }
   }, [scheduleMessageHide]);
@@ -90,7 +91,7 @@ export default function FlyingMusic() {
         dragMomentum={true}
         whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
         animate={!isOpen ? { x: position.x, y: position.y } : undefined}
-        transition={{ duration: 12, ease: "easeInOut" }}
+        transition={{ duration: 12, ease: 'easeInOut' }}
         style={{
           position: 'fixed',
           left: isOpen ? undefined : 0,
@@ -98,7 +99,6 @@ export default function FlyingMusic() {
           right: isOpen ? '2rem' : undefined,
           bottom: isOpen ? '2rem' : undefined,
           background: 'var(--glass-bg)',
-          backdropFilter: 'blur(var(--blur-amount))',
           border: '1px solid var(--glass-border)',
           borderRadius: '50%',
           width: '50px',
@@ -109,9 +109,9 @@ export default function FlyingMusic() {
           color: 'var(--text-main)',
           cursor: isOpen ? 'pointer' : 'grab',
           zIndex: 100,
-          boxShadow: '0 0 15px var(--glow)'
+          boxShadow: '0 0 15px var(--glow)',
         }}
-        whileHover={{ scale: 1.1, boxShadow: 'var(--hover-scale-glow)' }}
+        whileHover={{ scale: 1.1 }}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 18V5l12-2v13"></path>
@@ -120,10 +120,14 @@ export default function FlyingMusic() {
         </svg>
       </motion.button>
 
-      {/* Music Player Modal/Window */}
-      <motion.div 
+      <motion.div
         drag
-        dragConstraints={{ left: -(typeof window !== 'undefined' ? window.innerWidth - 350 : 1000), right: 50, top: -(typeof window !== 'undefined' ? window.innerHeight - 250 : 800), bottom: 50 }}
+        dragConstraints={{
+          left: -(typeof window !== 'undefined' ? window.innerWidth - 350 : 1000),
+          right: 50,
+          top: -(typeof window !== 'undefined' ? window.innerHeight - 250 : 800),
+          bottom: 50,
+        }}
         dragMomentum={true}
         dragElastic={0.2}
         whileDrag={{ scale: 1.02, cursor: 'grabbing' }}
@@ -133,25 +137,25 @@ export default function FlyingMusic() {
           scale: isOpen ? 1 : 0.9,
           opacity: isOpen ? 1 : 0,
         }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.25 }}
         style={{
-        position: 'fixed',
-        right: '2rem',
-        bottom: '6rem',
-        width: '320px',
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(var(--blur-amount))',
-        border: '1px solid var(--glass-border)',
-        borderRadius: '16px',
-        padding: '1rem',
-        zIndex: 99,
-        boxShadow: '0 10px 40px var(--shadow)',
-        pointerEvents: isOpen ? 'auto' : 'none',
-        cursor: isOpen ? 'grab' : 'default',
-      }}>
+          position: 'fixed',
+          right: '2rem',
+          bottom: '6rem',
+          width: '320px',
+          background: 'var(--glass-bg)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '16px',
+          padding: '1rem',
+          zIndex: 99,
+          boxShadow: '0 10px 40px var(--shadow)',
+          pointerEvents: isOpen ? 'auto' : 'none',
+          cursor: isOpen ? 'grab' : 'default',
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h4 style={{ margin: 0, color: 'var(--accent-pale-gray)', fontSize: '0.9rem' }}>Senin Frekansın</h4>
-          <button 
+          <button
             onClick={() => setIsOpen(false)}
             style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}
           >
@@ -161,9 +165,9 @@ export default function FlyingMusic() {
 
         <form onSubmit={handleSearch} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input 
-              type="text" 
-              placeholder="Şarkı ara..." 
+            <input
+              type="text"
+              placeholder="Şarkı ara..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               style={{
@@ -174,65 +178,69 @@ export default function FlyingMusic() {
                 borderRadius: '8px',
                 color: 'var(--text-main)',
                 outline: 'none',
-                fontSize: '0.9rem'
+                fontSize: '0.9rem',
               }}
             />
-            <button 
+            <button
               type="submit"
               className="btn-domain"
-              style={{
-                padding: '0 1rem',
-                borderRadius: '8px',
-                fontWeight: 600
-              }}
+              style={{ padding: '0 1rem', borderRadius: '8px', fontWeight: 600 }}
             >
               Ara
             </button>
           </div>
         </form>
-        
-        {/* We keep the iframe mounted but hide the container so it doesn't reload and stops playing if we used conditional rendering */}
-        <iframe 
+
+        <iframe
           key={iframeKey}
-          style={{ borderRadius: '12px', background: 'transparent' }} 
-          src="https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0" 
-          width="100%" 
-          height="152" 
-          frameBorder="0" 
-          allowFullScreen={false} 
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+          style={{ borderRadius: '12px', background: 'transparent' }}
+          src="https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0"
+          width="100%"
+          height="152"
+          frameBorder="0"
+          allowFullScreen={false}
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
           loading="lazy"
-        ></iframe>
+        />
       </motion.div>
 
-      {/* Sassy Screen Overlay */}
-      <AnimatePresence>
-        {searchMessage && (
-          <motion.div
-            key={searchMessage}
-            initial={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
-            animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
-            exit={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
-            transition={{ duration: 0.2 }}
-            style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              zIndex: 9999,
-              pointerEvents: 'none',
-              fontFamily: 'var(--font-title)',
-              fontSize: '3rem',
-              fontWeight: 700,
-              color: searchAttempts >= 3 ? '#ef4444' : 'var(--text-main)',
-              textAlign: 'center',
-              textShadow: '0 10px 40px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.3)',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {searchMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Lightweight CSS overlay — no Framer scale (was causing jank with WebGL) */}
+      {searchMessage && (
+        <div
+          key={searchMessage}
+          className="music-quote-toast"
+          style={{
+            color: searchAttempts >= 3 ? '#ef4444' : 'var(--text-main)',
+          }}
+        >
+          {searchMessage}
+        </div>
+      )}
+
+      <style>{`
+        .music-quote-toast {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          z-index: 9999;
+          pointer-events: none;
+          font-family: var(--font-title);
+          font-size: clamp(1.25rem, 4vw, 2.25rem);
+          font-weight: 700;
+          text-align: center;
+          max-width: min(90vw, 900px);
+          white-space: normal;
+          line-height: 1.25;
+          text-shadow: 0 4px 16px rgba(0,0,0,0.85);
+          transform: translate3d(-50%, -50%, 0);
+          animation: musicQuoteIn 0.18s ease-out both;
+          will-change: opacity, transform;
+        }
+        @keyframes musicQuoteIn {
+          from { opacity: 0; transform: translate3d(-50%, calc(-50% + 8px), 0); }
+          to { opacity: 1; transform: translate3d(-50%, -50%, 0); }
+        }
+      `}</style>
     </>
   );
 }
