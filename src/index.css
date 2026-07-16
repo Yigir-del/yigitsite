@@ -77,21 +77,14 @@ html {
 }
 
 body {
-  background-color: var(--bg-deep-charcoal);
+  background-color: transparent;
   color: var(--text-main);
   font-family: var(--font-body);
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
-  /* Fixed gradients = no seam when scrolling / flipping */
-  background-image:
-    radial-gradient(circle at top left, var(--gradient-a), transparent 55%),
-    radial-gradient(circle at bottom right, var(--gradient-b), transparent 50%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;
+  /* No opaque body fill — WebGL stars sit behind content */
   transition:
-    background-color 1.6s cubic-bezier(0.22, 1, 0.36, 1),
     color 1.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -242,13 +235,9 @@ p {
 .atmosphere-fill {
   position: fixed;
   inset: 0;
-  z-index: -2;
+  z-index: 0;
   pointer-events: none;
-  background-color: var(--bg-deep-charcoal);
-  background-image:
-    radial-gradient(circle at 20% 15%, var(--gradient-a), transparent 50%),
-    radial-gradient(circle at 80% 85%, var(--gradient-b), transparent 45%);
-  transition: background-color 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+  background-color: #0d131f;
 }
 
 #canvas-container {
@@ -257,8 +246,19 @@ p {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
+}
+
+#canvas-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.app-container {
+  position: relative;
+  z-index: 1;
 }
 
 .noise-overlay {
@@ -276,16 +276,15 @@ p {
 /* Easter egg flip — origin set in JS to viewport mid; fill edges with theme bg */
 html.world-flipped {
   transform: rotate(180deg);
-  background-color: var(--bg-deep-charcoal);
+  background-color: #0d131f;
 }
 
 html.world-flipped body {
-  background-color: var(--bg-deep-charcoal);
+  background-color: transparent;
 }
 
 html.world-flipped .atmosphere-fill,
 html.world-flipped #canvas-container {
-  /* Stay locked to visual viewport after rotate */
   position: fixed;
   inset: 0;
 }
