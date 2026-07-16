@@ -13,10 +13,10 @@ import {
 
 /** Wise face — mostly proverbial lines; rarely jabs the beggar with a mapped reply */
 export default function FlyingSage() {
-  const { flightKey, from, to, duration, visible } = useEdgeFlight({
+  const { flightKey, x, y, times, duration, visible } = useEdgeFlight({
     startDelay: 2500,
-    durationMin: 8,
-    durationMax: 13,
+    durationMin: 18,
+    durationMax: 28,
   });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
@@ -88,9 +88,9 @@ export default function FlyingSage() {
   return (
     <motion.div
       key={flightKey}
-      initial={{ x: from.x, y: from.y }}
-      animate={{ x: to.x, y: to.y }}
-      transition={{ duration, ease: 'linear' }}
+      initial={{ x: x[0], y: y[0] }}
+      animate={{ x, y }}
+      transition={{ duration, times, ease: 'easeInOut' }}
       style={{
         position: 'fixed',
         left: 0,

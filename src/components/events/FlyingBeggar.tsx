@@ -13,9 +13,9 @@ import {
 
 /** Angry beggar — mostly heckles the king; rarely jabs the sage with a mapped reply */
 export default function FlyingBeggar() {
-  const { flightKey, from, to, duration, visible } = useEdgeFlight({
-    durationMin: 7,
-    durationMax: 11,
+  const { flightKey, x, y, times, duration, visible } = useEdgeFlight({
+    durationMin: 16,
+    durationMax: 24,
   });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
@@ -87,9 +87,9 @@ export default function FlyingBeggar() {
   return (
     <motion.div
       key={flightKey}
-      initial={{ x: from.x, y: from.y }}
-      animate={{ x: to.x, y: to.y }}
-      transition={{ duration, ease: 'linear' }}
+      initial={{ x: x[0], y: y[0] }}
+      animate={{ x, y }}
+      transition={{ duration, times, ease: 'easeInOut' }}
       style={{
         position: 'fixed',
         left: 0,

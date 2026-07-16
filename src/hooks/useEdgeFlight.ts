@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { planCrossFlight, type CrossFlight, type Edge } from '../utils/flightPath';
 
-/** Continuous edge→edge flight via remounted initial→animate (no mid-screen parking). */
+/** Slow edge flights; sometimes pause mid-page, then leave again. */
 export function useEdgeFlight(opts: {
   startDelay?: number;
   durationMin?: number;
@@ -10,8 +10,8 @@ export function useEdgeFlight(opts: {
 } = {}) {
   const {
     startDelay = 0,
-    durationMin = 7,
-    durationMax = 11,
+    durationMin = 16,
+    durationMax = 24,
     preferHorizontal = true,
   } = opts;
 
@@ -47,10 +47,10 @@ export function useEdgeFlight(opts: {
 
   return {
     flightKey,
-    from: flight.from,
-    to: flight.to,
+    x: flight.x,
+    y: flight.y,
+    times: flight.times,
     duration: flight.duration,
-    // Hide until startDelay so sage doesn't spawn on top of beggar
     visible: ready,
   };
 }
