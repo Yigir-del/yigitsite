@@ -1,5 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import {
+  motion,
+  animate,
+  useMotionValue,
+  type AnimationPlaybackControls,
+} from 'framer-motion';
 import { pointOnEdge, randomEdge, type Edge } from '../../utils/flightPath';
 
 interface Drifter {
@@ -14,6 +19,8 @@ interface Drifter {
   tooltip: string;
   link: string;
 }
+
+const DRAG_CLICK_THRESHOLD = 8;
 
 const GithubIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -37,6 +44,115 @@ function randomFlightPath(w: number, h: number) {
     start: pointOnEdge(startEdge as Edge, w, h),
     end: pointOnEdge(endEdge, w, h),
   };
+}
+
+function ThrowableDrifter({
+  d,
+  onExpire,
+}: {
+  d: Drifter;
+  onExpire: (id: string) => void;
+}) {
+  const x = useMotionValue(d.startX);
+  const y = useMotionValue(d.startY);
+  const rotate = useMotionValue(0);
+  const controlsRef = useRef<AnimationPlaybackControls[]>([]);
+  const expireRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draggedRef = useRef(false);
+  const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    const cx = animate(x, d.endX, { duration: d.duration, ease: 'linear' });
+    const cy = animate(y, d.endY, { duration: d.duration, ease: 'linear' });
+    const cr = animate(rotate, d.rotation > 180 ? 360 : -360, {
+      duration: d.duration,
+      ease: 'linear',
+    });
+    controlsRef.current = [cx, cy, cr];
+
+    expireRef.current = setTimeout(() => onExpire(d.id), d.duration * 1000);
+
+    return () => {
+      controlsRef.current.forEach((c) => c.stop());
+      if (expireRef.current) clearTimeout(expireRef.current);
+    };
+  }, [d, onExpire, x, y, rotate]);
+
+  const stopPath = () => {
+    controlsRef.current.forEach((c) => c.stop());
+    controlsRef.current = [];
+    if (expireRef.current) clearTimeout(expireRef.current);
+  };
+
+  return (
+    <motion.div
+      role="link"
+      tabIndex={0}
+      title={d.tooltip}
+      drag
+      dragMomentum
+      dragElastic={0.25}
+      whileDrag={{ scale: 1.2, cursor: 'grabbing', zIndex: 80 }}
+      style={{
+        x,
+        y,
+        rotate,
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        color: 'var(--text-muted)',
+        pointerEvents: 'auto',
+        cursor: 'grab',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--glass-bg)',
+        border: '1px solid var(--glass-border)',
+        padding: '1rem',
+        borderRadius: '50%',
+        zIndex: dragging ? 80 : 50,
+        opacity: 1,
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ opacity: { duration: 0.8 } }}
+      onDragStart={() => {
+        draggedRef.current = false;
+        setDragging(true);
+        stopPath();
+      }}
+      onDrag={(_e, info) => {
+        if (Math.hypot(info.offset.x, info.offset.y) > DRAG_CLICK_THRESHOLD) {
+          draggedRef.current = true;
+        }
+      }}
+      onDragEnd={() => {
+        setDragging(false);
+        // After throw, linger then despawn (don't open link)
+        expireRef.current = setTimeout(() => onExpire(d.id), 8000);
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (draggedRef.current) return;
+        window.open(d.link, '_blank', 'noopener,noreferrer');
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        if (draggedRef.current) return;
+        window.open(d.link, '_blank', 'noopener,noreferrer');
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = 'var(--text-main)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = 'var(--text-muted)';
+      }}
+    >
+      {d.type === 'github' ? <GithubIcon /> : <LinkedinIcon />}
+    </motion.div>
+  );
 }
 
 export default function SocialDrifters() {
@@ -72,11 +188,6 @@ export default function SocialDrifters() {
       };
 
       setDrifters((prev) => [...prev, newDrifter]);
-
-      const removeT = setTimeout(() => {
-        setDrifters((prev) => prev.filter((d) => d.id !== newDrifter.id));
-      }, duration * 1000);
-      timersRef.current.push(removeT);
     };
 
     const first = setTimeout(function loop() {
@@ -93,55 +204,14 @@ export default function SocialDrifters() {
     };
   }, []);
 
+  const expire = (id: string) => {
+    setDrifters((prev) => prev.filter((d) => d.id !== id));
+  };
+
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 50, overflow: 'hidden' }}>
       {drifters.map((d) => (
-        <motion.a
-          key={d.id}
-          href={d.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={d.tooltip}
-          drag
-          dragMomentum={true}
-          whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
-          initial={{ x: d.startX, y: d.startY, rotate: 0, opacity: 0 }}
-          animate={{
-            x: d.endX,
-            y: d.endY,
-            rotate: d.rotation > 180 ? 360 : -360,
-            opacity: 1,
-          }}
-          transition={{
-            x: { duration: d.duration, ease: 'linear' },
-            y: { duration: d.duration, ease: 'linear' },
-            rotate: { duration: d.duration, ease: 'linear' },
-            opacity: { duration: 0.8 },
-          }}
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            color: 'var(--text-muted)',
-            pointerEvents: 'auto',
-            cursor: 'grab',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
-            padding: '1rem',
-            borderRadius: '50%',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--text-main)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--text-muted)';
-          }}
-        >
-          {d.type === 'github' ? <GithubIcon /> : <LinkedinIcon />}
-        </motion.a>
+        <ThrowableDrifter key={d.id} d={d} onExpire={expire} />
       ))}
     </div>
   );

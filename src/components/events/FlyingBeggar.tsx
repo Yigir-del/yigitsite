@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEdgeFlight } from '../../hooks/useEdgeFlight';
+import { useThrowableEdgeFlight } from '../../hooks/useThrowableEdgeFlight';
 import {
   BEGGAR_OWN,
   BEGGAR_TO_SAGE,
@@ -13,17 +13,15 @@ import {
 
 /** Angry beggar — mostly heckles the king; rarely jabs the sage with a mapped reply */
 export default function FlyingBeggar() {
-  const { flightKey, x, y, times, duration, visible, setPaused, resumeFrom, advance } = useEdgeFlight({
+  const { x, y, visible, dragging, onDragStart, onDragEnd } = useThrowableEdgeFlight({
     durationMin: 16,
     durationMax: 24,
   });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busyRef = useRef(false);
-  const throwResumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const say = (text: string, holdMs = 3200) => {
     setLine(text);
@@ -80,7 +78,6 @@ export default function FlyingBeggar() {
       clearInterval(speakLoop);
       if (hideRef.current) clearTimeout(hideRef.current);
       if (replyRef.current) clearTimeout(replyRef.current);
-      if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
       window.removeEventListener(FLYER_SPEAK, onFlyerSpeak);
     };
   }, []);
@@ -89,30 +86,9 @@ export default function FlyingBeggar() {
 
   return (
     <motion.div
-      key={flightKey}
-      initial={{ x: x[0], y: y[0] }}
-      animate={dragging ? undefined : { x, y }}
-      transition={{ duration, times, ease: 'easeInOut' }}
-      onAnimationComplete={() => {
-        if (!dragging) advance();
-      }}
-      drag
-      dragMomentum
-      whileDrag={{ scale: 1.15, cursor: 'grabbing', zIndex: 200 }}
-      onDragStart={() => {
-        if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
-        setDragging(true);
-        setPaused(true);
-      }}
-      onDragEnd={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        throwResumeRef.current = setTimeout(() => {
-          const t = new DOMMatrix(getComputedStyle(el).transform);
-          setDragging(false);
-          resumeFrom({ x: t.m41, y: t.m42 });
-        }, 700);
-      }}
       style={{
+        x,
+        y,
         position: 'fixed',
         left: 0,
         top: 0,
@@ -124,6 +100,12 @@ export default function FlyingBeggar() {
         gap: '0.35rem',
         pointerEvents: 'auto',
       }}
+      drag
+      dragMomentum
+      dragElastic={0.2}
+      whileDrag={{ scale: 1.15, cursor: 'grabbing', zIndex: 200 }}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       title="Sinirli dilenci"
     >
       <div

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEdgeFlight } from '../../hooks/useEdgeFlight';
+import { useThrowableEdgeFlight } from '../../hooks/useThrowableEdgeFlight';
 import {
   SAGE_OWN,
   SAGE_TO_BEGGAR,
@@ -13,18 +13,16 @@ import {
 
 /** Wise face — mostly proverbial lines; rarely jabs the beggar with a mapped reply */
 export default function FlyingSage() {
-  const { flightKey, x, y, times, duration, visible, setPaused, resumeFrom, advance } = useEdgeFlight({
+  const { x, y, visible, dragging, onDragStart, onDragEnd } = useThrowableEdgeFlight({
     startDelay: 2500,
     durationMin: 18,
     durationMax: 28,
   });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busyRef = useRef(false);
-  const throwResumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const say = (text: string, holdMs = 3600) => {
     setLine(text);
@@ -81,7 +79,6 @@ export default function FlyingSage() {
       clearInterval(loop);
       if (hideRef.current) clearTimeout(hideRef.current);
       if (replyRef.current) clearTimeout(replyRef.current);
-      if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
       window.removeEventListener(FLYER_SPEAK, onFlyerSpeak);
     };
   }, []);
@@ -90,30 +87,9 @@ export default function FlyingSage() {
 
   return (
     <motion.div
-      key={flightKey}
-      initial={{ x: x[0], y: y[0] }}
-      animate={dragging ? undefined : { x, y }}
-      transition={{ duration, times, ease: 'easeInOut' }}
-      onAnimationComplete={() => {
-        if (!dragging) advance();
-      }}
-      drag
-      dragMomentum
-      whileDrag={{ scale: 1.12, cursor: 'grabbing', zIndex: 200 }}
-      onDragStart={() => {
-        if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
-        setDragging(true);
-        setPaused(true);
-      }}
-      onDragEnd={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        throwResumeRef.current = setTimeout(() => {
-          const t = new DOMMatrix(getComputedStyle(el).transform);
-          setDragging(false);
-          resumeFrom({ x: t.m41, y: t.m42 });
-        }, 700);
-      }}
       style={{
+        x,
+        y,
         position: 'fixed',
         left: 0,
         top: 0,
@@ -125,6 +101,12 @@ export default function FlyingSage() {
         gap: '0.35rem',
         pointerEvents: 'auto',
       }}
+      drag
+      dragMomentum
+      dragElastic={0.2}
+      whileDrag={{ scale: 1.12, cursor: 'grabbing', zIndex: 200 }}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       title="Bilge"
     >
       <div
