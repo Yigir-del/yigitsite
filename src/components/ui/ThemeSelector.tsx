@@ -1,15 +1,16 @@
 import { useTheme, type DomainTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
+import { Infinity, Skull, Moon, Flame, Gem } from 'lucide-react';
 
 export default function ThemeSelector() {
   const { theme, setTheme, isTransitioning } = useTheme();
 
-  const themes: { id: DomainTheme; name: string; startX: string; startY: string; duration: number }[] = [
-    { id: 'Muryokusho', name: 'Muryokusho', startX: '10vw', startY: '20vh', duration: 40 },
-    { id: 'FukumaMizushi', name: 'Fukuma Mizushi', startX: '70vw', startY: '15vh', duration: 35 },
-    { id: 'KangoAneitei', name: 'Kango Aneitei', startX: '80vw', startY: '80vh', duration: 45 },
-    { id: 'GaikanTecchisen', name: 'Gaikan Tecchisen', startX: '15vw', startY: '75vh', duration: 38 },
-    { id: 'ShinganSoai', name: 'Shingan Soai', startX: '45vw', startY: '50vh', duration: 50 },
+  const themes: { id: DomainTheme; name: string; icon: JSX.Element; startX: string; startY: string; duration: number }[] = [
+    { id: 'Muryokusho', name: 'Muryokusho', icon: <Infinity size={24} />, startX: '15vw', startY: '25vh', duration: 40 },
+    { id: 'FukumaMizushi', name: 'Fukuma Mizushi', icon: <Skull size={24} />, startX: '75vw', startY: '20vh', duration: 35 },
+    { id: 'KangoAneitei', name: 'Kango Aneitei', icon: <Moon size={24} />, startX: '85vw', startY: '75vh', duration: 45 },
+    { id: 'GaikanTecchisen', name: 'Gaikan Tecchisen', icon: <Flame size={24} />, startX: '20vw', startY: '70vh', duration: 38 },
+    { id: 'ShinganSoai', name: 'Shingan Soai', icon: <Gem size={24} />, startX: '50vw', startY: '85vh', duration: 50 },
   ];
 
   return (
@@ -51,30 +52,32 @@ export default function ThemeSelector() {
         position: 'fixed',
         inset: 0,
         pointerEvents: isTransitioning ? 'none' : 'auto',
-        zIndex: 1, // very low z-index so it's in the background, behind the main content (which is z-index 10)
+        zIndex: 1, 
         overflow: 'hidden'
       }}>
         {themes.map((t) => (
           <motion.button
             key={t.id}
             onClick={() => setTheme(t.id)}
+            title={t.name}
             drag
             dragMomentum={true}
-            whileDrag={{ scale: 1.1, cursor: 'grabbing' }}
-            initial={{ x: `calc(${t.startX} - 50px)`, y: `calc(${t.startY} - 50px)` }}
+            whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
+            initial={{ x: `calc(${t.startX} - 25px)`, y: `calc(${t.startY} - 25px)`, rotate: 0 }}
             animate={{ 
               x: [
-                `calc(${t.startX} - 50px)`, 
+                `calc(${t.startX} - 25px)`, 
                 `calc(${t.startX} + 50px)`, 
                 `calc(${t.startX} - 20px)`,
-                `calc(${t.startX} - 50px)`
+                `calc(${t.startX} - 25px)`
               ], 
               y: [
-                `calc(${t.startY} - 50px)`, 
-                `calc(${t.startY} + 30px)`, 
-                `calc(${t.startY} - 60px)`,
-                `calc(${t.startY} - 50px)`
-              ] 
+                `calc(${t.startY} - 25px)`, 
+                `calc(${t.startY} + 40px)`, 
+                `calc(${t.startY} - 50px)`,
+                `calc(${t.startY} - 25px)`
+              ],
+              rotate: [0, 90, 180, 360]
             }}
             transition={{ 
               duration: t.duration, 
@@ -83,35 +86,35 @@ export default function ThemeSelector() {
             }}
             style={{
               position: 'absolute',
-              background: 'rgba(255,255,255,0.02)',
-              backdropFilter: 'blur(2px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: theme === t.id ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.02)',
+              backdropFilter: 'blur(4px)',
               border: theme === t.id ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.05)',
               color: theme === t.id ? 'var(--accent-soft-white)' : 'var(--text-muted)',
-              fontSize: '0.85rem',
-              fontFamily: 'var(--font-body)',
-              letterSpacing: '0.1em',
               cursor: 'grab',
-              opacity: theme === t.id ? 1 : 0.4,
-              textShadow: theme === t.id ? '0 0 8px var(--accent-muted-blue)' : 'none',
-              padding: '0.75rem 1.25rem',
-              borderRadius: '30px',
-              whiteSpace: 'nowrap',
-              boxShadow: theme === t.id ? '0 0 15px rgba(255,255,255,0.05)' : 'none'
+              opacity: theme === t.id ? 1 : 0.5,
+              padding: '1rem',
+              borderRadius: '50%',
+              boxShadow: theme === t.id ? '0 0 20px rgba(255,255,255,0.1)' : 'none'
             }}
             onMouseEnter={(e) => {
               if (theme !== t.id) {
-                e.currentTarget.style.opacity = '0.8';
+                e.currentTarget.style.opacity = '0.9';
                 e.currentTarget.style.border = '1px solid rgba(255,255,255,0.2)';
+                e.currentTarget.style.color = 'var(--text-main)';
               }
             }}
             onMouseLeave={(e) => {
               if (theme !== t.id) {
-                e.currentTarget.style.opacity = '0.4';
+                e.currentTarget.style.opacity = '0.5';
                 e.currentTarget.style.border = '1px solid rgba(255,255,255,0.05)';
+                e.currentTarget.style.color = 'var(--text-muted)';
               }
             }}
           >
-            {t.name}
+            {t.icon}
           </motion.button>
         ))}
       </div>
