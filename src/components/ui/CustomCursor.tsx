@@ -1,49 +1,70 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
+/** DOM-driven cursor — no React re-render per mousemove */
 export default function CustomCursor() {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const glowRef = useRef<HTMLDivElement>(null);
+  const dotRef = useRef<HTMLDivElement>(null);
+  const pos = useRef({ x: 0, y: 0 });
+  const raf = useRef(0);
 
   useEffect(() => {
-    const move = (e: MouseEvent) => {
-      setPos({ x: e.clientX, y: e.clientY });
+    const onMove = (e: MouseEvent) => {
+      pos.current.x = e.clientX;
+      pos.current.y = e.clientY;
     };
-    window.addEventListener('mousemove', move);
-    return () => window.removeEventListener('mousemove', move);
+
+    const tick = () => {
+      const { x, y } = pos.current;
+      if (glowRef.current) {
+        glowRef.current.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+      }
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+      }
+      raf.current = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', onMove, { passive: true });
+    raf.current = requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      cancelAnimationFrame(raf.current);
+    };
   }, []);
 
   return (
     <>
       <div
+        ref={glowRef}
         style={{
           position: 'fixed',
-          top: pos.y,
-          left: pos.x,
-          width: '120px',
-          height: '120px',
+          top: 0,
+          left: 0,
+          width: '100px',
+          height: '100px',
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 9998,
-          transform: 'translate(-50%, -50%)',
-          background: `radial-gradient(circle, var(--cursor-glow) 0%, transparent 70%)`,
-          opacity: 0.55,
-          transition: 'background 1.2s ease',
+          background: 'radial-gradient(circle, var(--cursor-glow) 0%, transparent 70%)',
+          opacity: 0.45,
+          willChange: 'transform',
         }}
       />
       <div
+        ref={dotRef}
         style={{
           position: 'fixed',
-          top: pos.y,
-          left: pos.x,
+          top: 0,
+          left: 0,
           width: '8px',
           height: '8px',
           background: 'var(--text-main)',
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 9999,
-          transform: 'translate(-50%, -50%)',
-          boxShadow: '0 0 12px var(--cursor-glow)',
-          transition: 'background 1.2s ease, box-shadow 1.2s ease',
+          boxShadow: '0 0 10px var(--cursor-glow)',
           mixBlendMode: 'difference',
+          willChange: 'transform',
         }}
       />
     </>

@@ -11,12 +11,14 @@ export default function Background() {
     <div id="canvas-container">
       <Canvas
         camera={{ position: [0, 0, 1], fov: 50 }}
-        dpr={[1, 1.5]}
+        dpr={1}
+        performance={{ min: 0.5 }}
         gl={{
           antialias: false,
           powerPreference: 'high-performance',
           alpha: false,
           stencil: false,
+          depth: true,
         }}
       >
         {theme === 'Muryokusho' && <Muryokusho />}

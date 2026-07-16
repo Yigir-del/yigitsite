@@ -26,7 +26,7 @@ function MovingStars() {
 
   return (
     <group ref={starsRef}>
-      <Stars radius={50} depth={50} count={3000} factor={3} saturation={0} fade speed={1} />
+      <Stars radius={40} depth={40} count={900} factor={2.5} saturation={0} fade speed={0.8} />
     </group>
   );
 }
@@ -45,7 +45,7 @@ function Moon() {
         document.body.style.cursor = 'auto';
       }}
     >
-      <sphereGeometry args={[1.5, 32, 32]} />
+      <sphereGeometry args={[1.5, 16, 16]} />
       <meshStandardMaterial
         color={clickCount > 5 ? '#ff4444' : '#e8e0ff'}
         emissive={clickCount > 5 ? '#ff0000' : '#4a3d72'}

@@ -20,7 +20,6 @@ export default function FlyingMusic() {
   const [iframeKey, setIframeKey] = useState(0);
   const messageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageIdRef = useRef(0);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchAttemptsRef = useRef(0);
 
   useEffect(() => {
@@ -40,7 +39,6 @@ export default function FlyingMusic() {
   useEffect(() => {
     return () => {
       if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
 
@@ -77,25 +75,9 @@ export default function FlyingMusic() {
     }
   }, [scheduleMessageHide]);
 
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (!value.trim()) {
-      return;
-    }
-
-    debounceRef.current = setTimeout(() => {
-      showSassyQuote();
-    }, 400);
-  };
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchValue.trim()) return;
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
     showSassyQuote();
   };
 
@@ -183,7 +165,7 @@ export default function FlyingMusic() {
               type="text" 
               placeholder="Şarkı ara..." 
               value={searchValue}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              onChange={(e) => setSearchValue(e.target.value)}
               style={{
                 flex: 1,
                 background: 'var(--input-bg)',
