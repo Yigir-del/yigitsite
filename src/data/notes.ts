@@ -7,6 +7,7 @@ export interface Note {
   y: number; // Random positioning %
   rotation: number;
   date?: string;
+  created_at?: string;
 }
 
 // Initial placeholder notes for the wall
