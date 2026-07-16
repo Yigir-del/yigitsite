@@ -17,7 +17,7 @@ export default function Contact() {
       setStatus('misafir@oda:~$ Mail sayfası açılıyor...');
       
       // Open Gmail in a new browser tab with the message pre-filled
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=81altuntas38@gmail.com&su=${encodeURIComponent('YigitSite İletişim Formu')}&body=${encodeURIComponent(message)}`;
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=81altuntas38@gmail.com&su=${encodeURIComponent('Yiğit Altuntaş İletişim')}&body=${encodeURIComponent(message)}`;
       const link = document.createElement('a');
       link.href = gmailUrl;
       link.target = '_blank';

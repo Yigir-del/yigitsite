@@ -1,0 +1,19 @@
+{
+  "name": "Yiğit Altuntaş",
+  "short_name": "Yiğit Altuntaş",
+  "description": "Personal portfolio of Yiğit Altuntaş. Computer Engineering student, Data Science enthusiast and Software Developer.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#050508",
+  "theme_color": "#050508",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

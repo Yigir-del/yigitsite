@@ -2,6 +2,7 @@
   "name": "yigitsite",
   "private": true,
   "version": "0.0.0",
+  "description": "Personal portfolio of Yiğit Altuntaş — https://yigitaltuntas.me",
   "type": "module",
   "scripts": {
     "dev": "vite",
