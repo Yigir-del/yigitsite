@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type CSSProperties } from 'react';
+import { motion } from 'framer-motion';
 import { type Note } from '../data/notes';
 import { useIsMobilePerf } from '../hooks/useIsMobilePerf';
 
@@ -29,9 +30,15 @@ function sortNewestFirst(list: Note[]) {
   return [...list].sort((a, b) => noteTimestamp(b) - noteTimestamp(a));
 }
 
+function frac(seed: number) {
+  const n = Math.sin(seed) * 10000;
+  return n - Math.floor(n);
+}
+
 export default function NotesWall() {
   const isMobilePerf = useIsMobilePerf();
   const [notes, setNotes] = useState<Note[]>([]);
+  const [dragFrontId, setDragFrontId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/notes')
@@ -51,7 +58,6 @@ export default function NotesWall() {
         created_at: customEvent.detail.created_at || new Date().toISOString(),
       };
 
-      // Immediately put newest on top
       setNotes((prev) => sortNewestFirst([newNote, ...prev]));
 
       try {
@@ -87,21 +93,31 @@ export default function NotesWall() {
   // Index 0 = newest = highest on the wall (stack)
   const positionedNotes = useMemo(() => {
     return sortNewestFirst(notes).map((note, index) => {
-      const pseudoRandom = Math.sin(index * 12345) * 10000;
-      const randomValue = pseudoRandom - Math.floor(pseudoRandom);
+      const r1 = frac(index * 12.9898 + 78.233);
+      const r2 = frac(index * 43.758 + 19.141);
+      const r3 = frac(index * 91.532 + 7.617);
+      const r4 = frac(index * 27.413 + 53.029);
 
-      const pseudoRandom2 = Math.cos(index * 67890) * 10000;
-      const randomValue2 = pseudoRandom2 - Math.floor(pseudoRandom2);
+      // Alternate left / right bands so notes scatter across the wall
+      const preferLeft = index % 2 === 0;
+      const x = preferLeft
+        ? 4 + r1 * 36 // left band ~4–40%
+        : 48 + r1 * 28; // right band ~48–76%
 
-      const pseudoRandom3 = Math.sin(index * 54321) * 10000;
-      const randomValue3 = pseudoRandom3 - Math.floor(pseudoRandom3);
+      // Newest near the title; older notes cascade down with jitter
+      const y = 16 + index * 18 + r2 * 10;
 
-      const x = 6 + randomValue * 38;
-      // Newest (index 0) sits just under the title; older notes stack downward
-      const y = 16 + index * 20 + randomValue2 * 8;
-      const rotation = (randomValue3 - 0.5) * 16;
+      // Stronger tilt both ways (−18° … +18°)
+      const rotation = (r3 - 0.5) * 36;
+      // Slight extra bias flip so consecutive notes don't all lean the same way
+      const signedRotation = (preferLeft ? 1 : -1) * Math.abs(rotation) * (r4 > 0.35 ? 1 : -1);
 
-      return { ...note, computedX: x, computedY: y, computedRotation: rotation };
+      return {
+        ...note,
+        computedX: x,
+        computedY: y,
+        computedRotation: signedRotation,
+      };
     });
   }, [notes]);
 
@@ -121,7 +137,6 @@ export default function NotesWall() {
     }
   };
 
-  // Title stays at top; only the wall height stretches downward
   const containerHeightVh = useMemo(() => {
     if (positionedNotes.length === 0) return 100;
     const lastY = Math.max(...positionedNotes.map((n) => n.computedY));
@@ -173,115 +188,139 @@ export default function NotesWall() {
       )}
 
       <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
-        {positionedNotes.map((note, index) => (
-          <div
-            key={note.id}
-            className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
-            style={{
-              position: 'absolute',
-              left: `clamp(0.5rem, ${note.computedX}%, calc(100% - min(300px, calc(100vw - 1rem)) - 0.5rem))`,
-              top: `${note.computedY}vh`,
-              transform: `rotate(${note.computedRotation}deg)`,
-              padding: '2rem',
-              background: note.isAdmin ? 'rgba(255, 215, 0, 0.04)' : 'var(--card-bg)',
-              border: note.isAdmin
-                ? '1px solid rgba(255, 215, 0, 0.15)'
-                : '1px solid var(--card-border)',
-              borderRadius: '8px',
-              maxWidth: 'min(300px, calc(100vw - 1.5rem))',
-              boxSizing: 'border-box',
-              backdropFilter: isMobilePerf ? undefined : 'blur(var(--blur-amount))',
-              WebkitBackdropFilter: isMobilePerf ? undefined : 'blur(var(--blur-amount))',
-              cursor: 'pointer',
-              zIndex: positionedNotes.length - index,
-              transition:
-                'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0.3s, background 0.3s, border-color 1.2s ease, box-shadow 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = `rotate(0deg) scale(1.05)`;
-              e.currentTarget.style.zIndex = '50';
-              e.currentTarget.style.background = note.isAdmin
-                ? 'rgba(255, 215, 0, 0.08)'
-                : 'var(--card-hover)';
-              e.currentTarget.style.boxShadow = 'var(--hover-scale-glow)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = `rotate(${note.computedRotation}deg) scale(1)`;
-              e.currentTarget.style.zIndex = String(positionedNotes.length - index);
-              e.currentTarget.style.background = note.isAdmin
-                ? 'rgba(255, 215, 0, 0.04)'
-                : 'var(--card-bg)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            {note.isAdmin && (
-              <div style={{ position: 'absolute', top: '-10px', right: '10px', fontSize: '20px' }}>
-                📌
-              </div>
-            )}
+        {positionedNotes.map((note, index) => {
+          const baseZ = positionedNotes.length - index;
+          const zIndex = dragFrontId === note.id ? 80 : baseZ;
+          const commonStyle: CSSProperties = {
+            position: 'absolute',
+            left: `clamp(0.5rem, ${note.computedX}%, calc(100% - min(300px, calc(100vw - 1rem)) - 0.5rem))`,
+            top: `${note.computedY}vh`,
+            padding: '2rem',
+            background: note.isAdmin ? 'rgba(255, 215, 0, 0.04)' : 'var(--card-bg)',
+            border: note.isAdmin
+              ? '1px solid rgba(255, 215, 0, 0.15)'
+              : '1px solid var(--card-border)',
+            borderRadius: '8px',
+            maxWidth: 'min(300px, calc(100vw - 1.5rem))',
+            boxSizing: 'border-box',
+            backdropFilter: isMobilePerf ? undefined : 'blur(var(--blur-amount))',
+            WebkitBackdropFilter: isMobilePerf ? undefined : 'blur(var(--blur-amount))',
+            zIndex,
+            touchAction: isMobilePerf ? 'pan-y' : 'none',
+          };
 
-            {isAdmin && (
-              <button
-                onClick={(e) => handleDelete(e, note.id)}
-                style={{
-                  position: 'absolute',
-                  top: '10px',
-                  right: '10px',
-                  background: 'rgba(255,0,0,0.2)',
-                  border: 'none',
-                  color: 'red',
-                  borderRadius: '50%',
-                  width: '24px',
-                  height: '24px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                }}
-                title="Sil"
-              >
-                ✕
-              </button>
-            )}
-
-            <p
-              style={{
-                margin: 0,
-                fontSize: '1.1rem',
-                lineHeight: '1.6',
-                color: 'var(--text-main)',
-                fontStyle: 'italic',
-                marginTop: isAdmin ? '1rem' : '0',
-                opacity: 0.85,
-              }}
-            >
-              "{note.text}"
-            </p>
-            <div
-              style={{
-                marginTop: '1.5rem',
-                fontSize: '0.85rem',
-                color: 'var(--text-muted)',
-                textAlign: 'right',
-              }}
-            >
-              — {note.author}
-              {note.date && (
-                <div
-                  style={{
-                    fontSize: '0.75rem',
-                    marginTop: '0.3rem',
-                    opacity: 0.6,
-                    fontStyle: 'italic',
-                  }}
-                >
-                  {note.date}
+          const body = (
+            <>
+              {note.isAdmin && (
+                <div style={{ position: 'absolute', top: '-10px', right: '10px', fontSize: '20px' }}>
+                  📌
                 </div>
               )}
-            </div>
-          </div>
-        ))}
+
+              {isAdmin && (
+                <button
+                  onClick={(e) => handleDelete(e, note.id)}
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    background: 'rgba(255,0,0,0.2)',
+                    border: 'none',
+                    color: 'red',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    zIndex: 2,
+                  }}
+                  title="Sil"
+                >
+                  ✕
+                </button>
+              )}
+
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '1.1rem',
+                  lineHeight: '1.6',
+                  color: 'var(--text-main)',
+                  fontStyle: 'italic',
+                  marginTop: isAdmin ? '1rem' : '0',
+                  opacity: 0.85,
+                }}
+              >
+                "{note.text}"
+              </p>
+              <div
+                style={{
+                  marginTop: '1.5rem',
+                  fontSize: '0.85rem',
+                  color: 'var(--text-muted)',
+                  textAlign: 'right',
+                }}
+              >
+                — {note.author}
+                {note.date && (
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      marginTop: '0.3rem',
+                      opacity: 0.6,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {note.date}
+                  </div>
+                )}
+              </div>
+            </>
+          );
+
+          // Mobile: static cards only — no drag / throw
+          if (isMobilePerf) {
+            return (
+              <div
+                key={note.id}
+                className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
+                style={{
+                  ...commonStyle,
+                  transform: `rotate(${note.computedRotation}deg)`,
+                  cursor: 'default',
+                }}
+              >
+                {body}
+              </div>
+            );
+          }
+
+          return (
+            <motion.div
+              key={note.id}
+              className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
+              drag
+              dragMomentum
+              dragElastic={0.35}
+              dragTransition={{ bounceStiffness: 180, bounceDamping: 18, power: 0.25, timeConstant: 280 }}
+              whileDrag={{ scale: 1.06, cursor: 'grabbing', zIndex: 80 }}
+              whileHover={{ scale: 1.04 }}
+              onDragStart={() => setDragFrontId(note.id)}
+              onDragEnd={() => setDragFrontId(null)}
+              initial={false}
+              style={{
+                ...commonStyle,
+                rotate: note.computedRotation,
+                cursor: 'grab',
+              }}
+            >
+              {body}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
