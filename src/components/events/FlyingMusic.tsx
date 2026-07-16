@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
+import { randomOffscreenStart, planWanderHop } from '../../utils/flightPath';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 const QUOTES = [
@@ -17,7 +17,9 @@ const SPOTIFY_SRC =
 
 export default function FlyingMusic() {
   const isMobilePerf = useIsMobilePerf();
-  const [position, setPosition] = useState(randomOffscreenStart);
+  // Prefer right/bottom entry — never pop from top-left
+  const [position, setPosition] = useState(() => randomOffscreenStart(['left', 'top']));
+  const [flightDuration, setFlightDuration] = useState(12);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shouldMountPlayer, setShouldMountPlayer] = useState(false);
@@ -31,11 +33,21 @@ export default function FlyingMusic() {
 
   useEffect(() => {
     if (isMobilePerf) return;
-    const enter = setTimeout(() => setPosition(randomOnScreen()), 120);
-    const interval = setInterval(() => setPosition(randomOnScreen()), 12000);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const hop = (preferLeave: boolean) => {
+      if (cancelled) return;
+      const next = planWanderHop({ preferLeave });
+      setPosition(next.point);
+      setFlightDuration(next.duration);
+      timer = setTimeout(() => hop(!preferLeave), next.duration * 1000);
+    };
+
+    timer = setTimeout(() => hop(false), 180);
     return () => {
-      clearTimeout(enter);
-      clearInterval(interval);
+      cancelled = true;
+      clearTimeout(timer);
     };
   }, [isMobilePerf]);
 
@@ -164,14 +176,12 @@ export default function FlyingMusic() {
           dragMomentum={true}
           whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
           initial={false}
-          animate={!isExpanded ? { x: position.x, y: position.y } : { x: 0, y: 0 }}
-          transition={{ duration: isExpanded ? 0.2 : 12, ease: 'easeInOut' }}
+          animate={{ x: position.x, y: position.y }}
+          transition={{ duration: flightDuration, ease: 'easeInOut' }}
           style={{
             position: 'fixed',
-            left: isExpanded ? undefined : 0,
-            top: isExpanded ? undefined : 0,
-            right: isExpanded ? '2rem' : undefined,
-            bottom: isExpanded ? '2rem' : undefined,
+            left: 0,
+            top: 0,
             background: 'var(--glass-bg)',
             border: isPlaying && !isExpanded ? '1px solid var(--accent-pale-gray)' : '1px solid var(--glass-border)',
             borderRadius: '50%',
@@ -181,11 +191,13 @@ export default function FlyingMusic() {
             alignItems: 'center',
             justifyContent: 'center',
             color: 'var(--text-main)',
-            cursor: isExpanded ? 'pointer' : 'grab',
+            cursor: isExpanded ? 'default' : 'grab',
             zIndex: 100,
             boxShadow: '0 0 15px var(--glow)',
+            opacity: isExpanded ? 0 : 1,
+            pointerEvents: isExpanded ? 'none' : 'auto',
           }}
-          whileHover={{ scale: 1.1 }}
+          whileHover={isExpanded ? undefined : { scale: 1.1 }}
         >
           {musicIcon}
         </motion.button>

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, type CSSProperties } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { motion, useMotionValue, animate } from 'framer-motion';
 import { type Note } from '../data/notes';
 import { useIsMobilePerf } from '../hooks/useIsMobilePerf';
 
@@ -9,11 +9,9 @@ function noteTimestamp(note: Note) {
     if (!Number.isNaN(t)) return t;
   }
 
-  // Optimistic client ids use Date.now()
   const idNum = Number(note.id);
   if (!Number.isNaN(idNum) && idNum > 1e11) return idNum;
 
-  // Fallback: DD/MM/YYYY
   if (note.date) {
     const parts = note.date.split('/').map(Number);
     if (parts.length === 3 && parts.every((n) => !Number.isNaN(n))) {
@@ -25,7 +23,6 @@ function noteTimestamp(note: Note) {
   return 0;
 }
 
-/** Newest first — latest written note is always index 0 (top of wall). */
 function sortNewestFirst(list: Note[]) {
   return [...list].sort((a, b) => noteTimestamp(b) - noteTimestamp(a));
 }
@@ -35,10 +32,159 @@ function frac(seed: number) {
   return n - Math.floor(n);
 }
 
+type PositionedNote = Note & {
+  computedX: number;
+  computedY: number;
+  computedRotation: number;
+};
+
+const HOME_DELAY_MS = 4500;
+const HOME_DURATION_S = 2.6;
+const HOME_EASE = [0.22, 1, 0.36, 1] as const;
+
+function NoteBody({
+  note,
+  isAdmin,
+  onDelete,
+}: {
+  note: PositionedNote;
+  isAdmin: boolean;
+  onDelete: (e: React.MouseEvent, id: string) => void;
+}) {
+  return (
+    <>
+      {note.isAdmin && (
+        <div style={{ position: 'absolute', top: '-10px', right: '10px', fontSize: '20px' }}>📌</div>
+      )}
+
+      {isAdmin && (
+        <button
+          onClick={(e) => onDelete(e, note.id)}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            background: 'rgba(255,0,0,0.2)',
+            border: 'none',
+            color: 'red',
+            borderRadius: '50%',
+            width: '24px',
+            height: '24px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            zIndex: 2,
+          }}
+          title="Sil"
+        >
+          ✕
+        </button>
+      )}
+
+      <p
+        style={{
+          margin: 0,
+          fontSize: '1.1rem',
+          lineHeight: '1.6',
+          color: 'var(--text-main)',
+          fontStyle: 'italic',
+          marginTop: isAdmin ? '1rem' : '0',
+          opacity: 0.85,
+        }}
+      >
+        "{note.text}"
+      </p>
+      <div
+        style={{
+          marginTop: '1.5rem',
+          fontSize: '0.85rem',
+          color: 'var(--text-muted)',
+          textAlign: 'right',
+        }}
+      >
+        — {note.author}
+        {note.date && (
+          <div style={{ fontSize: '0.75rem', marginTop: '0.3rem', opacity: 0.6, fontStyle: 'italic' }}>
+            {note.date}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/** Desktop-only: drag/throw, then slowly glide home after a pause */
+function DraggableNoteCard({
+  note,
+  style,
+  isAdmin,
+  onDelete,
+  onDragFront,
+}: {
+  note: PositionedNote;
+  style: CSSProperties;
+  isAdmin: boolean;
+  onDelete: (e: React.MouseEvent, id: string) => void;
+  onDragFront: (id: string | null) => void;
+}) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const homeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (homeTimer.current) clearTimeout(homeTimer.current);
+    };
+  }, []);
+
+  const flyHome = () => {
+    animate(x, 0, { duration: HOME_DURATION_S, ease: HOME_EASE });
+    animate(y, 0, { duration: HOME_DURATION_S, ease: HOME_EASE });
+  };
+
+  const scheduleHome = () => {
+    if (homeTimer.current) clearTimeout(homeTimer.current);
+    homeTimer.current = setTimeout(flyHome, HOME_DELAY_MS);
+  };
+
+  return (
+    <motion.div
+      className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
+      drag
+      dragMomentum
+      dragElastic={0.35}
+      dragTransition={{ bounceStiffness: 180, bounceDamping: 18, power: 0.25, timeConstant: 280 }}
+      whileDrag={{ scale: 1.06, cursor: 'grabbing', zIndex: 80 }}
+      whileHover={{ scale: 1.04 }}
+      onDragStart={() => {
+        if (homeTimer.current) clearTimeout(homeTimer.current);
+        onDragFront(note.id);
+      }}
+      onDragEnd={() => {
+        onDragFront(null);
+        scheduleHome();
+      }}
+      initial={false}
+      style={{
+        ...style,
+        x,
+        y,
+        rotate: note.computedRotation,
+        cursor: 'grab',
+      }}
+    >
+      <NoteBody note={note} isAdmin={isAdmin} onDelete={onDelete} />
+    </motion.div>
+  );
+}
+
 export default function NotesWall() {
   const isMobilePerf = useIsMobilePerf();
   const [notes, setNotes] = useState<Note[]>([]);
   const [dragFrontId, setDragFrontId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetch('/api/notes')
@@ -90,7 +236,10 @@ export default function NotesWall() {
     return () => window.removeEventListener('add-note', handleAddNote);
   }, []);
 
-  // Index 0 = newest = highest on the wall (stack)
+  useEffect(() => {
+    setIsAdmin(localStorage.getItem('yigit_admin') === 'true');
+  }, []);
+
   const positionedNotes = useMemo(() => {
     return sortNewestFirst(notes).map((note, index) => {
       const r1 = frac(index * 12.9898 + 78.233);
@@ -98,18 +247,10 @@ export default function NotesWall() {
       const r3 = frac(index * 91.532 + 7.617);
       const r4 = frac(index * 27.413 + 53.029);
 
-      // Alternate left / right bands so notes scatter across the wall
       const preferLeft = index % 2 === 0;
-      const x = preferLeft
-        ? 4 + r1 * 36 // left band ~4–40%
-        : 48 + r1 * 28; // right band ~48–76%
-
-      // Newest near the title; older notes cascade down with jitter
+      const x = preferLeft ? 4 + r1 * 36 : 48 + r1 * 28;
       const y = 16 + index * 18 + r2 * 10;
-
-      // Stronger tilt both ways (−18° … +18°)
       const rotation = (r3 - 0.5) * 36;
-      // Slight extra bias flip so consecutive notes don't all lean the same way
       const signedRotation = (preferLeft ? 1 : -1) * Math.abs(rotation) * (r4 > 0.35 ? 1 : -1);
 
       return {
@@ -120,12 +261,6 @@ export default function NotesWall() {
       };
     });
   }, [notes]);
-
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    setIsAdmin(localStorage.getItem('yigit_admin') === 'true');
-  }, []);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -209,79 +344,6 @@ export default function NotesWall() {
             touchAction: isMobilePerf ? 'pan-y' : 'none',
           };
 
-          const body = (
-            <>
-              {note.isAdmin && (
-                <div style={{ position: 'absolute', top: '-10px', right: '10px', fontSize: '20px' }}>
-                  📌
-                </div>
-              )}
-
-              {isAdmin && (
-                <button
-                  onClick={(e) => handleDelete(e, note.id)}
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    background: 'rgba(255,0,0,0.2)',
-                    border: 'none',
-                    color: 'red',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px',
-                    zIndex: 2,
-                  }}
-                  title="Sil"
-                >
-                  ✕
-                </button>
-              )}
-
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '1.1rem',
-                  lineHeight: '1.6',
-                  color: 'var(--text-main)',
-                  fontStyle: 'italic',
-                  marginTop: isAdmin ? '1rem' : '0',
-                  opacity: 0.85,
-                }}
-              >
-                "{note.text}"
-              </p>
-              <div
-                style={{
-                  marginTop: '1.5rem',
-                  fontSize: '0.85rem',
-                  color: 'var(--text-muted)',
-                  textAlign: 'right',
-                }}
-              >
-                — {note.author}
-                {note.date && (
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      marginTop: '0.3rem',
-                      opacity: 0.6,
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    {note.date}
-                  </div>
-                )}
-              </div>
-            </>
-          );
-
-          // Mobile: static cards only — no drag / throw
           if (isMobilePerf) {
             return (
               <div
@@ -293,32 +355,20 @@ export default function NotesWall() {
                   cursor: 'default',
                 }}
               >
-                {body}
+                <NoteBody note={note} isAdmin={isAdmin} onDelete={handleDelete} />
               </div>
             );
           }
 
           return (
-            <motion.div
+            <DraggableNoteCard
               key={note.id}
-              className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
-              drag
-              dragMomentum
-              dragElastic={0.35}
-              dragTransition={{ bounceStiffness: 180, bounceDamping: 18, power: 0.25, timeConstant: 280 }}
-              whileDrag={{ scale: 1.06, cursor: 'grabbing', zIndex: 80 }}
-              whileHover={{ scale: 1.04 }}
-              onDragStart={() => setDragFrontId(note.id)}
-              onDragEnd={() => setDragFrontId(null)}
-              initial={false}
-              style={{
-                ...commonStyle,
-                rotate: note.computedRotation,
-                cursor: 'grab',
-              }}
-            >
-              {body}
-            </motion.div>
+              note={note}
+              style={commonStyle}
+              isAdmin={isAdmin}
+              onDelete={handleDelete}
+              onDragFront={setDragFrontId}
+            />
           );
         })}
       </div>

@@ -13,7 +13,7 @@ import {
 
 /** Wise face — mostly proverbial lines; rarely jabs the beggar with a mapped reply */
 export default function FlyingSage() {
-  const { flightKey, x, y, times, duration, visible, setPaused, resumeFrom } = useEdgeFlight({
+  const { flightKey, x, y, times, duration, visible, setPaused, resumeFrom, advance } = useEdgeFlight({
     startDelay: 2500,
     durationMin: 18,
     durationMax: 28,
@@ -94,6 +94,9 @@ export default function FlyingSage() {
       initial={{ x: x[0], y: y[0] }}
       animate={dragging ? undefined : { x, y }}
       transition={{ duration, times, ease: 'easeInOut' }}
+      onAnimationComplete={() => {
+        if (!dragging) advance();
+      }}
       drag
       dragMomentum
       whileDrag={{ scale: 1.12, cursor: 'grabbing', zIndex: 200 }}

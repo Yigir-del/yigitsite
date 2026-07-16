@@ -1,23 +1,35 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Note } from '../../data/notes';
-import { randomOffscreenStart, randomOnScreen } from '../../utils/flightPath';
+import { planWanderHop, randomOffscreenStart } from '../../utils/flightPath';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 export default function FlyingPen() {
   const isMobilePerf = useIsMobilePerf();
-  const [position, setPosition] = useState(randomOffscreenStart);
+  // Pen prefers left/top entry — different from music
+  const [position, setPosition] = useState(() => randomOffscreenStart(['right', 'bottom']));
+  const [flightDuration, setFlightDuration] = useState(11);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [authorName, setAuthorName] = useState('');
 
   useEffect(() => {
     if (isMobilePerf) return;
-    const enter = setTimeout(() => setPosition(randomOnScreen()), 80);
-    const interval = setInterval(() => setPosition(randomOnScreen()), 10000);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const hop = (preferLeave: boolean) => {
+      if (cancelled) return;
+      const next = planWanderHop({ preferLeave });
+      setPosition(next.point);
+      setFlightDuration(next.duration);
+      timer = setTimeout(() => hop(!preferLeave), next.duration * 1000);
+    };
+
+    timer = setTimeout(() => hop(false), 260);
     return () => {
-      clearTimeout(enter);
-      clearInterval(interval);
+      cancelled = true;
+      clearTimeout(timer);
     };
   }, [isMobilePerf]);
 
@@ -107,7 +119,7 @@ export default function FlyingPen() {
         whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
         initial={false}
         animate={{ x: position.x, y: position.y }}
-        transition={{ duration: 10, ease: "easeInOut" }}
+        transition={{ duration: flightDuration, ease: "easeInOut" }}
         style={penButtonStyle}
         whileHover={{ scale: 1.1, boxShadow: 'var(--hover-scale-glow)' }}
       >

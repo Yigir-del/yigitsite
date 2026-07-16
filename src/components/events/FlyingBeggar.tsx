@@ -13,7 +13,7 @@ import {
 
 /** Angry beggar — mostly heckles the king; rarely jabs the sage with a mapped reply */
 export default function FlyingBeggar() {
-  const { flightKey, x, y, times, duration, visible, setPaused, resumeFrom } = useEdgeFlight({
+  const { flightKey, x, y, times, duration, visible, setPaused, resumeFrom, advance } = useEdgeFlight({
     durationMin: 16,
     durationMax: 24,
   });
@@ -93,6 +93,9 @@ export default function FlyingBeggar() {
       initial={{ x: x[0], y: y[0] }}
       animate={dragging ? undefined : { x, y }}
       transition={{ duration, times, ease: 'easeInOut' }}
+      onAnimationComplete={() => {
+        if (!dragging) advance();
+      }}
       drag
       dragMomentum
       whileDrag={{ scale: 1.15, cursor: 'grabbing', zIndex: 200 }}

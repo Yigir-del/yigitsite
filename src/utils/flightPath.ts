@@ -9,30 +9,31 @@ function peripheralY(h: number) {
 
 function midScreenPoint(w: number, h: number) {
   return {
-    x: w * (0.32 + Math.random() * 0.36),
-    y: h * (0.28 + Math.random() * 0.4),
+    x: w * (0.28 + Math.random() * 0.44),
+    y: h * (0.22 + Math.random() * 0.46),
   };
 }
 
-export function pointOnEdge(edge: Edge, w: number, h: number, pad = 120) {
+/** Spawn well outside the viewport so entry is never visible as a pop-in. */
+export function pointOnEdge(edge: Edge, w: number, h: number, pad = 160) {
   switch (edge) {
     case 'left':
       return { x: -pad, y: peripheralY(h) };
     case 'right':
       return { x: w + pad, y: peripheralY(h) };
     case 'top':
-      return { x: Math.random() * w, y: -pad };
+      return { x: w * (0.1 + Math.random() * 0.8), y: -pad };
     case 'bottom':
     default:
-      return { x: Math.random() * w, y: h + pad };
+      return { x: w * (0.1 + Math.random() * 0.8), y: h + pad };
   }
 }
 
-export function randomEdge(exclude?: Edge): Edge {
-  const edges: Edge[] = ['left', 'right', 'top', 'bottom'].filter(
-    (e) => e !== exclude
-  ) as Edge[];
-  return edges[Math.floor(Math.random() * edges.length)];
+export function randomEdge(exclude?: Edge | Edge[]): Edge {
+  const blocked = new Set(Array.isArray(exclude) ? exclude : exclude ? [exclude] : []);
+  const edges = (['left', 'right', 'top', 'bottom'] as Edge[]).filter((e) => !blocked.has(e));
+  const pool = edges.length ? edges : (['left', 'right', 'top', 'bottom'] as Edge[]);
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 export function randomOnScreen(margin = 0.12) {
@@ -44,10 +45,32 @@ export function randomOnScreen(margin = 0.12) {
   };
 }
 
-export function randomOffscreenStart() {
+export function randomOffscreenStart(exclude?: Edge | Edge[]) {
   const w = typeof window !== 'undefined' ? window.innerWidth : 800;
   const h = typeof window !== 'undefined' ? window.innerHeight : 600;
-  return pointOnEdge(randomEdge(), w, h);
+  return pointOnEdge(randomEdge(exclude), w, h, 180);
+}
+
+/** Wander: leave through an edge, then re-enter from a different edge onto the screen. */
+export function planWanderHop(opts: { preferLeave?: boolean } = {}): {
+  point: { x: number; y: number };
+  duration: number;
+} {
+  const w = typeof window !== 'undefined' ? window.innerWidth : 800;
+  const h = typeof window !== 'undefined' ? window.innerHeight : 600;
+  const leave = opts.preferLeave ?? Math.random() < 0.45;
+
+  if (leave) {
+    return {
+      point: pointOnEdge(randomEdge(), w, h, 180),
+      duration: 10 + Math.random() * 6,
+    };
+  }
+
+  return {
+    point: randomOnScreen(0.14),
+    duration: 11 + Math.random() * 7,
+  };
 }
 
 export type CrossFlight = {
@@ -111,7 +134,7 @@ export function planCrossFlight(
 
   const w = typeof window !== 'undefined' ? window.innerWidth : 800;
   const h = typeof window !== 'undefined' ? window.innerHeight : 600;
-  const pad = 140;
+  const pad = 180;
 
   let enter: Edge;
   let exit: Edge;

@@ -6,7 +6,7 @@ import {
   type Edge,
 } from '../utils/flightPath';
 
-/** Slow edge flights; sometimes pause mid-page, then leave again. */
+/** Infinite edge flights — no lifetime; next path starts only after the previous fully exits. */
 export function useEdgeFlight(opts: {
   startDelay?: number;
   durationMin?: number;
@@ -27,6 +27,8 @@ export function useEdgeFlight(opts: {
   const [ready, setReady] = useState(startDelay <= 0);
   const [paused, setPaused] = useState(false);
   const exitRef = useRef<Edge | undefined>(flight.exit);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   useEffect(() => {
     if (startDelay <= 0) return;
@@ -34,30 +36,17 @@ export function useEdgeFlight(opts: {
     return () => clearTimeout(t);
   }, [startDelay]);
 
-  useEffect(() => {
-    if (!ready || paused) return;
-
-    const t = setTimeout(() => {
-      const next = planCrossFlight(exitRef.current, {
-        durationMin,
-        durationMax,
-        preferHorizontal,
-      });
-      exitRef.current = next.exit;
-      setFlight(next);
-      setFlightKey((k) => k + 1);
-    }, flight.duration * 1000);
-
-    return () => clearTimeout(t);
-  }, [
-    ready,
-    paused,
-    flightKey,
-    flight.duration,
-    durationMin,
-    durationMax,
-    preferHorizontal,
-  ]);
+  const advance = useCallback(() => {
+    if (pausedRef.current) return;
+    const next = planCrossFlight(exitRef.current, {
+      durationMin,
+      durationMax,
+      preferHorizontal,
+    });
+    exitRef.current = next.exit;
+    setFlight(next);
+    setFlightKey((k) => k + 1);
+  }, [durationMin, durationMax, preferHorizontal]);
 
   const resumeFrom = useCallback(
     (point: { x: number; y: number }) => {
@@ -83,5 +72,6 @@ export function useEdgeFlight(opts: {
     paused,
     setPaused,
     resumeFrom,
+    advance,
   };
 }
