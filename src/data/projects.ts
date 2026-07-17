@@ -17,7 +17,7 @@ export const projects: Project[] = [
     role: "Kurucu Ortak",
     description: "Her şey tek bir soruyla başladı:\n\"Neden bunun için beş farklı site dolaşıyorum?\"\n\nÜniversite taban puanları bir yerde, lise verileri başka yerde, öğrenci yorumları bambaşka bir köşedeydi. Hepsini tek bir yerde toplamaya karar verdik. Sonra olay büyüdü. Her yeni özellik, peşinden başka bir soruyu sürükledi.\n\nHiç bilmediğimiz teknolojilerle boğuşurken, ortağımla günlerce tek bir problemi çözmeye çalıştığımız oldu. Amacımız sadece yeni bir site yapmak değildi; insanların saatlerce sekmeler arasında kaybolmayacağı bir yer inşa etmekti.\n\nİnternette aslında her şey vardı, sadece aynı yerde değillerdi.",
     technologies: ["Python", "Django", "PostgreSQL", "JavaScript", "HTML/CSS", "Gunicorn", "WhiteNoise", "psycopg2", "python-decouple", "Django Silk"],
-    timeline: "Mayıs 2024",
+    timeline: "Mayıs 2025",
     lessonsLearned: "Bazen en zor şey kod yazmak değil, neyi yazmaman gerektiğine karar vermektir. Bir vizyonu başkalarıyla paylaşmak ve onu hayatta tutmak, en az mimari kurmak kadar karmaşıktır.",
     link: "https://sinavizcisi.com",
     images: ["https://sinavizcisi.com/static/images/icon_son.png"]
@@ -28,7 +28,7 @@ export const projects: Project[] = [
     role: "Kurucu",
     description: "Bugüne kadar yaparken en çok keyif aldığım şey buydu.\n\nİnsanlarla konuşmayı hep sevdim ama onları anlamaya çalışmayı daha çok. \"Kim neden geç cevap veriyor? Bir sohbet gerçekten dengeli mi?\" Bu saf merak, zamanla koda dönüştü. Bunu kimseyi memnun etmek için yapmadım, önce kendimi ikna etmeliydim.\n\nPazardaki analiz uygulamalarını denedikçe hep \"Keşke şunu da gösterse\" diyordum. Sonunda kendim yazmaya başladım. Cevap süreleri, saatlik aktiviteler, duygu analizi... Bazıları çalıştı, bazıları istediğim gibi olmadı ama hepsini denedim.\n\nBelki bir gün birisi daha iyisini yapar ama o zamana kadar, en azından benim gözümde, çıta bu.",
     technologies: ["React Native", "Expo", "Zustand", "Lottie", "Chart Kit", "React Navigation", "AsyncStorage", "jsPDF & Print", "Paper UI", "File System"],
-    timeline: "Ocak 2024 - Günümüz",
+    timeline: "Kasım 2025",
     lessonsLearned: "Veriler sadece sayılardan ibaret değildir. Eğer doğru soruyu sorarsan, her satır log dosyası sana insanların karakterleri hakkında bir hikaye anlatabilir.",
     link: "https://play.google.com/store/apps/details?id=com.whatsapp.chatanalyzer",
     images: ["https://play-lh.googleusercontent.com/1uUuIsQ3Dc92ScuLu_mx5JgyYHATcYcG6Bwdq4D4NGmkGZG924vAazfjJ9EReyrxEsacdxwwq3s8LbVrvBD9UA"]
