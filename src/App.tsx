@@ -16,6 +16,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import ThemeSelector from './components/ui/ThemeSelector';
 import { useIsMobilePerf } from './hooks/useIsMobilePerf';
 import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
+import { trackPageView } from './utils/analytics';
 
 const About = lazy(() => import('./components/sections/About'));
 const Projects = lazy(() => import('./components/sections/Projects'));
@@ -33,6 +34,29 @@ function ScrollToTop() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+  return null;
+}
+
+/**
+ * GA4 SPA sayfa takibi — her route değişiminde
+ * requestIdleCallback ile ana thread boştayken gönderir.
+ */
+function Analytics() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const send = () => trackPageView(location.pathname + location.search);
+
+    // Ana thread boştayken gönder; requestIdleCallback yoksa 300ms sonra
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(send, { timeout: 300 });
+      return () => window.cancelIdleCallback(id);
+    }
+
+    const id = window.setTimeout(send, 300);
+    return () => window.clearTimeout(id);
+  }, [location.pathname, location.search]);
+
   return null;
 }
 
@@ -121,6 +145,7 @@ function App() {
 
       <Shell>
         <ScrollToTop />
+        <Analytics />
         <div className="app-container">
           <ChaosManager />
           <EasterEggs />

@@ -70,6 +70,14 @@
         ]
       }
     </script>
+    <!-- Google Analytics GA4 — async, ana thread'i bloklamaz -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7J6EVCM1BV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-7J6EVCM1BV', { send_page_view: false });
+    </script>
   </head>
   <body>
     <div id="root"></div>
