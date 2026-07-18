@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { projects } from '../../data/projects';
 import { ExternalLink, Calendar, Code, User, ArrowRight } from 'lucide-react';
 import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import SEOHead from '../../seo/SEOHead';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -30,7 +31,8 @@ export default function Projects() {
   }, []);
 
   return (
-    <section ref={containerRef} className="projects-section" style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1000px', margin: '0 auto' }}>
+    <section ref={containerRef} className="projects-section" aria-label="Projeler" style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1000px', margin: '0 auto' }}>
+      <SEOHead page="projects" />
       <h1 className="glitch" data-text="İnşa Ettiklerim" style={{ textAlign: 'center', marginBottom: '1rem', fontSize: 'clamp(2rem, 7vw, 3rem)' }}>İnşa Ettiklerim</h1>
       <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '5rem', fontSize: 'clamp(1rem, 3.5vw, 1.2rem)' }}>
         Zamanımı harcadığım karanlık köşeler.
@@ -46,13 +48,21 @@ export default function Projects() {
               <div style={{ flex: '1 1 280px', minWidth: 0 }}>
                 <h2 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                   {p.title}
-                  <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color='var(--text-primary)'} onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}>
-                    <ExternalLink size={24} />
+                  <a
+                    href={p.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${p.title} projesini aç`}
+                    style={{ color: 'var(--text-muted)', transition: 'color 0.3s' }}
+                    onMouseEnter={e => e.currentTarget.style.color='var(--text-primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color='var(--text-muted)'}
+                  >
+                    <ExternalLink size={24} aria-hidden="true" />
                   </a>
                 </h2>
                 <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><User size={16}/> {p.role}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={16}/> {p.timeline}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><User size={16} aria-hidden="true"/> {p.role}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={16} aria-hidden="true"/> {p.timeline}</span>
                 </div>
 
                 <p style={{ fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '2rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
@@ -60,7 +70,7 @@ export default function Projects() {
                 </p>
 
                 <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '1rem', color: 'var(--accent-pale-gray)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Code size={18}/> Teknolojiler</h3>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--accent-pale-gray)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Code size={18} aria-hidden="true"/> Teknolojiler</h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {p.technologies.map(tech => (
                       <span key={tech} className="tag">
@@ -88,7 +98,7 @@ export default function Projects() {
                   </div>
                 ) : (
                   <div style={{ color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 1 }}>
-                    <ArrowRight size={32} style={{ opacity: 0.5 }} />
+                    <ArrowRight size={32} style={{ opacity: 0.5 }} aria-hidden="true" />
                     <span>Görsel Yükleniyor...</span>
                   </div>
                 )}

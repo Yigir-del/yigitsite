@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import SEOHead from '../../seo/SEOHead';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -63,7 +64,8 @@ export default function Thoughts() {
   };
 
   return (
-    <section ref={containerRef} className="thoughts-section" style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto', overflowX: 'hidden', position: 'relative' }}>
+    <section ref={containerRef} className="thoughts-section" aria-label="Düşünceler" style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto', overflowX: 'hidden', position: 'relative' }}>
+      <SEOHead page="thoughts" />
       <h1 className="glitch" data-text="Düşünceler" style={{ textAlign: 'center', marginBottom: '2rem', fontSize: 'clamp(2rem, 7vw, 3rem)' }}>Düşünceler</h1>
       <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '5rem', fontStyle: 'italic', fontFamily: 'serif', padding: '0 0.5rem' }}>
         "Bazen bir şeyler yazarım, genelde mantıklı olmazlar."

@@ -247,6 +247,27 @@ export default function NotesWall() {
       const r3 = frac(index * 91.532 + 7.617);
       const r4 = frac(index * 27.413 + 53.029);
 
+      if (isMobilePerf) {
+        // Mobile: 2-column stagger with tight, controlled offsets
+        // Each note gets a column (left/right) + small random jitter
+        // Y advances in even steps so cards never fully overlap
+        const isLeftCol = index % 2 === 0;
+        // X: left col = 2..10%, right col = 50..58%  → max card width ~44vw, safe
+        const x = isLeftCol ? 2 + r1 * 8 : 50 + r1 * 8;
+        // Y: ~22vh base, then 28vh per note + small ±4vh jitter so there's breathing room
+        const y = 22 + index * 28 + (r2 - 0.5) * 8;
+        // Rotation: very subtle ±8° — readable but still "dağınık"
+        const rotation = (r3 - 0.5) * 16 * (r4 > 0.5 ? 1 : -1);
+
+        return {
+          ...note,
+          computedX: x,
+          computedY: y,
+          computedRotation: rotation,
+        };
+      }
+
+      // Desktop: original wide scatter algorithm — unchanged
       const preferLeft = index % 2 === 0;
       const x = preferLeft ? 4 + r1 * 36 : 48 + r1 * 28;
       const y = 16 + index * 18 + r2 * 10;
@@ -260,7 +281,7 @@ export default function NotesWall() {
         computedRotation: signedRotation,
       };
     });
-  }, [notes]);
+  }, [notes, isMobilePerf]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -326,17 +347,25 @@ export default function NotesWall() {
         {positionedNotes.map((note, index) => {
           const baseZ = positionedNotes.length - index;
           const zIndex = dragFrontId === note.id ? 80 : baseZ;
+
+          // Mobile cards are narrower so two columns don't collide
+          const mobileMaxW = 'min(44vw, 200px)';
+          const desktopMaxW = 'min(300px, calc(100vw - 1.5rem))';
+          const mobileLeft = `clamp(0.25rem, ${note.computedX}%, calc(50% - min(44vw, 200px) - 0.25rem))`;
+          const desktopLeft = `clamp(0.5rem, ${note.computedX}%, calc(100% - min(300px, calc(100vw - 1rem)) - 0.5rem))`;
+
           const commonStyle: CSSProperties = {
             position: 'absolute',
-            left: `clamp(0.5rem, ${note.computedX}%, calc(100% - min(300px, calc(100vw - 1rem)) - 0.5rem))`,
+            left: isMobilePerf ? mobileLeft : desktopLeft,
             top: `${note.computedY}vh`,
-            padding: '2rem',
+            padding: isMobilePerf ? '0.9rem' : '2rem',
             background: note.isAdmin ? 'rgba(255, 215, 0, 0.04)' : 'var(--card-bg)',
             border: note.isAdmin
               ? '1px solid rgba(255, 215, 0, 0.15)'
               : '1px solid var(--card-border)',
             borderRadius: '8px',
-            maxWidth: 'min(300px, calc(100vw - 1.5rem))',
+            maxWidth: isMobilePerf ? mobileMaxW : desktopMaxW,
+            width: isMobilePerf ? mobileMaxW : undefined,
             boxSizing: 'border-box',
             backdropFilter: isMobilePerf ? undefined : 'blur(var(--blur-amount))',
             WebkitBackdropFilter: isMobilePerf ? undefined : 'blur(var(--blur-amount))',

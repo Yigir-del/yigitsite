@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEOHead from '../../seo/SEOHead';
 
 export default function Contact() {
   const [identity, setIdentity] = useState('');
@@ -35,7 +36,7 @@ export default function Contact() {
   };
 
   return (
-    <section className="contact-section" style={{
+    <section className="contact-section" aria-label="İletişim" style={{
       minHeight: '100vh',
       padding: '4rem 2rem',
       display: 'flex',
@@ -43,7 +44,8 @@ export default function Contact() {
       alignItems: 'center',
       justifyContent: 'center'
     }}>
-      <h2 className="glitch" data-text="İletişim" style={{ marginBottom: '3rem' }}>İletişim</h2>
+      <SEOHead page="contact" />
+      <h1 className="glitch" data-text="İletişim" style={{ marginBottom: '3rem' }}>İletişim</h1>
       
       <div className="contact-terminal" style={{
         background: 'rgba(0, 0, 0, 0.5)',

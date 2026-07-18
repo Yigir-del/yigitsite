@@ -1,6 +1,9 @@
+import SEOHead from '../../seo/SEOHead';
+
 export default function Hero() {
   return (
     <section className="hero-section" aria-label="Yiğit Altuntaş">
+      <SEOHead page="home" />
       <h1 className="visually-hidden">Yiğit Altuntaş</h1>
       <p className="glitch hero-section__title" data-text="İzler burada kalır.">
         İzler burada kalır.
@@ -10,3 +13,4 @@ export default function Hero() {
     </section>
   );
 }
+

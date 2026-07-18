@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import SEOHead from '../../seo/SEOHead';
 
 interface StudioItem {
   id: string;
@@ -144,6 +145,7 @@ export default function Studio() {
   return (
     <section
       className="studio-section"
+      aria-label="Stüdyom"
       style={{
         minHeight: '80vh',
         padding: '8rem 2rem 4rem',
@@ -153,9 +155,10 @@ export default function Studio() {
         gap: '2rem',
       }}
     >
-      <h2 className="glitch" data-text="Stüdyom" style={{ marginBottom: '0.5rem', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)' }}>
+      <SEOHead page="studio" />
+      <h1 className="glitch" data-text="Stüdyom" style={{ marginBottom: '0.5rem', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)' }}>
         Stüdyom
-      </h2>
+      </h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '3rem', fontStyle: 'italic', textAlign: 'center' }}>
         Ortaya Karışık
       </p>

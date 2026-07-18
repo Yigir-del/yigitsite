@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import SEOHead from '../../seo/SEOHead';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -25,17 +26,18 @@ export default function About() {
   }, []);
 
   return (
-    <section className="about-section" style={{
+    <section className="about-section" aria-label="Hakkımda" style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '4rem 2rem'
     }}>
+      <SEOHead page="about" />
       <div ref={textRef} style={{ maxWidth: '800px', position: 'relative', lineHeight: '1.8', width: '100%' }}>
-        <h2 className="glitch" data-text="Hakkımda" style={{ marginBottom: '3rem', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)', color: 'var(--text-main)' }}>
+        <h1 className="glitch" data-text="Hakkımda" style={{ marginBottom: '3rem', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)', color: 'var(--text-main)' }}>
           Hakkımda
-        </h2>
+        </h1>
         
         <p style={{ fontSize: 'clamp(1rem, 3.5vw, 1.2rem)', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
           Çocukken oyuncakların içindeki çarkları söküp nasıl çalıştığını anlayan o klasik mühendis ruhlu çocuklardan değildim. Ben makinelerin değil, insanların mekaniğini merak eden taraftaydım. İnsanların neden aynı şeye bakıp bambaşka kararlar verdiğini, davranışlarının altındaki o görünmez kodları anlamaya çalışırdım.
