@@ -43,29 +43,13 @@ export default function PageTransition({ children }: { children: ReactNode }) {
 
 export function PageTransitionFallback() {
   return (
-    <motion.div
+    <div
       className="page-transition-fallback"
-      initial={{ opacity: 0, transform: 'translate3d(0, 12px, 0)' }}
-      animate={{ opacity: 1, transform: 'translate3d(0, 0, 0)' }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2, ease }}
       style={{
-        minHeight: '50vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        willChange: 'transform, opacity',
+        minHeight: '40vh',
+        pointerEvents: 'none',
       }}
       aria-hidden
-    >
-      <div
-        style={{
-          width: '1px',
-          height: '40px',
-          background: 'linear-gradient(to top, transparent, var(--text-muted), transparent)',
-          opacity: 0.45,
-        }}
-      />
-    </motion.div>
+    />
   );
 }

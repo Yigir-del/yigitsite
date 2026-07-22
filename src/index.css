@@ -1216,9 +1216,8 @@ html.scene-leaving .app-container.is-quiet {
 }
 
 
-/* GPU page transitions */
+/* GPU page transitions — compositor-friendly, no paint seams */
 .page-transition {
-  contain: layout paint;
-  transform: translateZ(0);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
