@@ -888,7 +888,7 @@ html.scene-leaving .app-container.is-quiet {
   right: 0.85rem;
 }
 
-/* Guardians — side by side, silent */
+/* Guardians — side by side; speak on hover */
 .silent-guardians {
   display: flex;
   align-items: flex-end;
@@ -904,6 +904,9 @@ html.scene-leaving .app-container.is-quiet {
   align-items: center;
   gap: 0.3rem;
   opacity: 0.78;
+  position: relative;
+  pointer-events: auto;
+  cursor: default;
 }
 
 .silent-guardians__face {
@@ -917,6 +920,15 @@ html.scene-leaving .app-container.is-quiet {
   justify-content: center;
   box-shadow: 0 0 12px var(--glow);
   transform: translateY(2px);
+  transition: opacity 0.25s ease, box-shadow 0.25s ease;
+}
+
+.silent-guardians__figure:hover {
+  opacity: 1;
+}
+
+.silent-guardians__figure:hover .silent-guardians__face {
+  box-shadow: 0 0 18px var(--glow-strong);
 }
 
 .silent-guardians__label {
@@ -926,6 +938,58 @@ html.scene-leaving .app-container.is-quiet {
   font-family: var(--font-body);
   color: var(--text-muted);
   opacity: 0.65;
+}
+
+.silent-guardians__bubble {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.72rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--text-main);
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease, transform 0.22s ease;
+  z-index: 20;
+}
+
+.silent-guardians__bubble--sage {
+  left: calc(100% + 0.55rem);
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.silent-guardians__bubble--beggar {
+  left: calc(100% + 0.55rem);
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.silent-guardians__bubble--sage::before,
+.silent-guardians__bubble--beggar::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 5px solid var(--glass-border);
+}
+
+.silent-guardians__figure:hover .silent-guardians__bubble {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
 }
 
 /* Memorial — wider canvas, hero then full Hitabe */

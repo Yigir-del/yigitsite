@@ -1,11 +1,14 @@
 /**
- * Bilge & Dilenci — side by side, equal before Atatürk.
- * Silent. No dialogue. No jokes.
+ * Bilge & Dilenci — side by side before Atatürk.
+ * Quiet by default; speak only on hover.
  */
 export default function SilentGuardians() {
   return (
     <div className="silent-guardians" aria-hidden>
-      <div className="silent-guardians__figure" title="Bilge">
+      <div className="silent-guardians__figure silent-guardians__figure--sage" title="Bilge">
+        <div className="silent-guardians__bubble silent-guardians__bubble--sage">
+          Bu sefer dilenciye katılıyorum
+        </div>
         <div className="silent-guardians__face">
           <svg width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="32" cy="28" r="20" fill="#1e2a32" stroke="var(--accent-pale-gray)" strokeWidth="2" />
@@ -23,7 +26,10 @@ export default function SilentGuardians() {
         <span className="silent-guardians__label">bilge</span>
       </div>
 
-      <div className="silent-guardians__figure" title="Dilenci">
+      <div className="silent-guardians__figure silent-guardians__figure--beggar" title="Dilenci">
+        <div className="silent-guardians__bubble silent-guardians__bubble--beggar">
+          Gözün lider görsün kral
+        </div>
         <div className="silent-guardians__face">
           <svg width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="32" cy="30" r="22" fill="#2a2030" stroke="var(--accent-pale-gray)" strokeWidth="2" />
