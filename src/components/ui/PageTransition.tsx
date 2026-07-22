@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -9,8 +8,6 @@ const ease = [0.22, 1, 0.36, 1] as const;
  * Never animates layout properties (top/left/width/height/margin).
  */
 export default function PageTransition({ children }: { children: ReactNode }) {
-  const { pathname } = useLocation();
-
   return (
     <motion.div
       className="page-transition"
