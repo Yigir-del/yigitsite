@@ -894,7 +894,7 @@ html.scene-leaving .app-container.is-quiet {
   align-items: flex-end;
   justify-content: flex-start;
   gap: 1.35rem;
-  margin: 0.25rem 0 1.75rem;
+  margin: 0.25rem 0 0;
   pointer-events: none;
 }
 
@@ -928,11 +928,11 @@ html.scene-leaving .app-container.is-quiet {
   opacity: 0.65;
 }
 
-/* Memorial — same vocabulary as Projects */
+/* Memorial — wider canvas, hero then full Hitabe */
 .memorial-section {
-  padding: 6rem 2rem;
+  padding: 6rem 2rem 5rem;
   min-height: 100vh;
-  max-width: 1000px;
+  max-width: 1180px;
   margin: 0 auto;
 }
 
@@ -950,23 +950,25 @@ html.scene-leaving .app-container.is-quiet {
   pointer-events: none;
 }
 
-.memorial-block__row {
+.memorial-block__hero {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: 2.5rem;
+  margin-bottom: 3.25rem;
 }
 
-.memorial-block__copy {
+.memorial-block__intro {
   flex: 1 1 280px;
   min-width: 0;
+  max-width: 28rem;
 }
 
 .memorial-block__title {
   font-family: var(--font-title);
   font-weight: 400;
-  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-size: clamp(1.65rem, 4.5vw, 2.6rem);
   line-height: 1.2;
   color: var(--text-main);
   margin: 0 0 0.55rem;
@@ -982,8 +984,12 @@ html.scene-leaving .app-container.is-quiet {
   font-style: italic;
 }
 
+.memorial-block__hitabe-wrap {
+  width: 100%;
+}
+
 .memorial-block__section-label {
-  margin: 0 0 1.1rem;
+  margin: 0 0 1.25rem;
   font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 400;
@@ -991,37 +997,47 @@ html.scene-leaving .app-container.is-quiet {
   letter-spacing: 0.04em;
 }
 
+.memorial-block__hitabe {
+  column-count: 2;
+  column-gap: 2.75rem;
+}
+
 .memorial-block__hitabe p {
-  margin: 0 0 1.35rem;
+  margin: 0 0 1.25rem;
   font-family: var(--font-body);
   font-size: 1.05rem;
   font-weight: 300;
   line-height: 1.8;
   color: var(--text-main);
+  break-inside: avoid;
 }
 
 .memorial-block__hitabe p:first-child,
 .memorial-block__hitabe p:last-child {
   font-family: var(--font-title);
-  font-size: 1.08rem;
+  font-size: 1.1rem;
   font-weight: 400;
   line-height: 1.75;
   color: var(--accent-soft-white);
+  column-span: all;
 }
 
 .memorial-block__hitabe p:last-child {
   margin-bottom: 0;
+  margin-top: 0.35rem;
 }
 
 .memorial-portrait-card {
-  flex: 1 1 300px;
-  min-height: 340px;
+  flex: 1 1 340px;
+  max-width: 420px;
+  min-height: 380px;
   border-radius: 12px;
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: auto;
 }
 
 .memorial-portrait-card.card-surface:hover {
@@ -1029,11 +1045,23 @@ html.scene-leaving .app-container.is-quiet {
   box-shadow: none;
 }
 
+/* Same sweep as Projects cards */
+.memorial-portrait-card__shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 40%, var(--glow) 50%, transparent 60%);
+  background-size: 200% 200%;
+  animation: memorial-shimmer 3s infinite linear;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .memorial-portrait-card__glow {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 50% at 50% 18%, rgba(203, 213, 225, 0.12), transparent 62%);
+    radial-gradient(ellipse 70% 50% at 50% 18%, rgba(203, 213, 225, 0.1), transparent 62%);
   pointer-events: none;
   z-index: 1;
 }
@@ -1042,7 +1070,7 @@ html.scene-leaving .app-container.is-quiet {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding: 1.75rem;
+  padding: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1052,11 +1080,27 @@ html.scene-leaving .app-container.is-quiet {
 .memorial-portrait-card__frame img {
   display: block;
   width: 100%;
-  max-width: 280px;
+  max-width: 300px;
   height: auto;
-  max-height: 400px;
+  max-height: 420px;
   object-fit: contain;
   border-radius: 4px;
+}
+
+@keyframes memorial-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@media (max-width: 900px) {
+  .memorial-block__hitabe {
+    column-count: 1;
+  }
+
+  .memorial-block__hitabe p:first-child,
+  .memorial-block__hitabe p:last-child {
+    column-span: none;
+  }
 }
 
 @media (max-width: 860px) {
@@ -1068,9 +1112,17 @@ html.scene-leaving .app-container.is-quiet {
     display: none;
   }
 
+  .memorial-block__hero {
+    gap: 1.75rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .memorial-block__intro {
+    max-width: none;
+  }
+
   .silent-guardians {
     gap: 1.2rem;
-    justify-content: flex-start;
   }
 
   .silent-guardians__face {
@@ -1084,15 +1136,17 @@ html.scene-leaving .app-container.is-quiet {
   }
 
   .memorial-portrait-card {
-    min-height: 280px;
+    max-width: none;
+    min-height: 300px;
+    margin-left: 0;
   }
 
   .memorial-portrait-card__frame {
-    padding: 1.25rem;
+    padding: 1.35rem;
   }
 
   .memorial-portrait-card__frame img {
-    max-width: 220px;
+    max-width: 240px;
   }
 
   .social-respect__icon {
@@ -1105,6 +1159,10 @@ html.scene-leaving .app-container.is-quiet {
 @media (prefers-reduced-motion: reduce) {
   .site-nav__link--anitkabir {
     transition: none;
+  }
+
+  .memorial-portrait-card__shimmer {
+    animation: none;
   }
 }
 

@@ -19,23 +19,16 @@ export default function Memorial() {
       <div className="memorial-block">
         <div className="memorial-block__line" aria-hidden />
 
-        <div className="memorial-block__row">
-          <div className="memorial-block__copy">
+        {/* Hero: title + guardians | portrait */}
+        <div className="memorial-block__hero">
+          <div className="memorial-block__intro">
             <h1 className="memorial-block__title">Mustafa Kemal Atatürk</h1>
             <p className="memorial-block__lede">Bir milletin kaderini değiştiren lider.</p>
-
             <SilentGuardians />
-
-            <h2 className="memorial-block__section-label">Gençliğe Hitabe</h2>
-
-            <div className="memorial-block__hitabe">
-              {HITABE_PARAGRAPHS.map((paragraph) => (
-                <p key={paragraph.slice(0, 24)}>{paragraph}</p>
-              ))}
-            </div>
           </div>
 
           <div className="card-surface memorial-portrait-card">
+            <div className="memorial-portrait-card__shimmer" aria-hidden />
             <div className="memorial-portrait-card__glow" aria-hidden />
             <div className="memorial-portrait-card__frame">
               <img
@@ -47,6 +40,16 @@ export default function Memorial() {
                 fetchPriority="high"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Full-width Hitabe below the portrait row */}
+        <div className="memorial-block__hitabe-wrap">
+          <h2 className="memorial-block__section-label">Gençliğe Hitabe</h2>
+          <div className="memorial-block__hitabe">
+            {HITABE_PARAGRAPHS.map((paragraph) => (
+              <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+            ))}
           </div>
         </div>
       </div>
