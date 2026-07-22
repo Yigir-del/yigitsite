@@ -18,34 +18,29 @@ const memorialItem = { path: MEMORIAL_PATH, label: '' };
 
 const allItems = [...leftItems, memorialItem, ...rightItems];
 
-/** Minimal Anıtkabir silhouette — Hall of Honor + flanking towers */
+/** Minimal Anıtkabir silhouette — Hall of Honor only (no flanking towers) */
 function AnitkabirIcon() {
   return (
     <svg
       className="site-nav__anitkabir"
-      width="26"
-      height="16"
-      viewBox="0 0 26 16"
+      width="36"
+      height="22"
+      viewBox="0 0 20 14"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      {/* Left tower */}
-      <rect x="1" y="4" width="3.2" height="10" rx="0.4" fill="currentColor" opacity="0.85" />
-      <rect x="1.35" y="2.2" width="2.5" height="1.8" rx="0.3" fill="currentColor" />
-      {/* Right tower */}
-      <rect x="21.8" y="4" width="3.2" height="10" rx="0.4" fill="currentColor" opacity="0.85" />
-      <rect x="22.15" y="2.2" width="2.5" height="1.8" rx="0.3" fill="currentColor" />
       {/* Central hall roof */}
-      <path d="M6.2 5.2 L13 1.6 L19.8 5.2 Z" fill="currentColor" />
+      <path d="M1 5.5 L10 0.8 L19 5.5 Z" fill="currentColor" />
       {/* Columns */}
-      <rect x="7" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
-      <rect x="9.4" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
-      <rect x="11.8" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
-      <rect x="14.2" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
-      <rect x="16.6" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
+      <rect x="2" y="5.5" width="1.6" height="7.2" fill="currentColor" opacity="0.9" />
+      <rect x="5" y="5.5" width="1.6" height="7.2" fill="currentColor" opacity="0.9" />
+      <rect x="8.2" y="5.5" width="1.6" height="7.2" fill="currentColor" opacity="0.9" />
+      <rect x="11.4" y="5.5" width="1.6" height="7.2" fill="currentColor" opacity="0.9" />
+      <rect x="14.6" y="5.5" width="1.6" height="7.2" fill="currentColor" opacity="0.9" />
+      <rect x="17" y="5.5" width="1.6" height="7.2" fill="currentColor" opacity="0.9" />
       {/* Base / steps */}
-      <rect x="0.5" y="14" width="25" height="1.2" rx="0.3" fill="currentColor" opacity="0.7" />
+      <rect x="0.5" y="12.7" width="19" height="1.1" rx="0.3" fill="currentColor" opacity="0.7" />
     </svg>
   );
 }

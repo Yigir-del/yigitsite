@@ -1,13 +1,13 @@
 /**
  * Bilge & Dilenci — side by side, equal before Atatürk.
- * No king. Only respect.
+ * Silent. No dialogue. No jokes.
  */
 export default function SilentGuardians() {
   return (
     <div className="silent-guardians" aria-hidden>
-      <div className="silent-guardians__figure silent-guardians__figure--sage" title="Bilge">
+      <div className="silent-guardians__figure" title="Bilge">
         <div className="silent-guardians__face">
-          <svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="32" cy="28" r="20" fill="#1e2a32" stroke="var(--accent-pale-gray)" strokeWidth="2" />
             <path d="M18 24 L28 22" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
             <path d="M46 24 L36 22" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
@@ -23,9 +23,9 @@ export default function SilentGuardians() {
         <span className="silent-guardians__label">bilge</span>
       </div>
 
-      <div className="silent-guardians__figure silent-guardians__figure--beggar" title="Dilenci">
+      <div className="silent-guardians__figure" title="Dilenci">
         <div className="silent-guardians__face">
-          <svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="32" cy="30" r="22" fill="#2a2030" stroke="var(--accent-pale-gray)" strokeWidth="2" />
             <path d="M18 24 L28 24" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
             <path d="M46 24 L36 24" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />

@@ -13,128 +13,31 @@ const HITABE_PARAGRAPHS = [
 
 export default function Memorial() {
   return (
-    <section
-      className="memorial-section projects-section"
-      aria-label="Mustafa Kemal Atatürk"
-      style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1000px', margin: '0 auto' }}
-    >
+    <section className="memorial-section" aria-label="Mustafa Kemal Atatürk">
       <SEOHead page="memorial" />
 
-      <div className="project-section memorial-project" style={{ position: 'relative' }}>
-        <div
-          className="project-section__line"
-          style={{
-            position: 'absolute',
-            left: '-2rem',
-            top: 0,
-            bottom: 0,
-            width: '1px',
-            background: 'linear-gradient(to bottom, transparent, var(--timeline), transparent)',
-          }}
-        />
+      <div className="memorial-block">
+        <div className="memorial-block__line" aria-hidden />
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            flexWrap: 'wrap',
-            gap: '2rem',
-          }}
-        >
-          <div style={{ flex: '1 1 280px', minWidth: 0 }}>
-            <h1
-              style={{
-                fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
-                marginBottom: '0.5rem',
-                color: 'var(--text-main)',
-                fontFamily: 'var(--font-title)',
-                fontWeight: 400,
-              }}
-            >
-              Mustafa Kemal Atatürk
-            </h1>
-
-            <p
-              style={{
-                marginBottom: '2rem',
-                color: 'var(--text-muted)',
-                fontSize: '0.95rem',
-                fontStyle: 'italic',
-              }}
-            >
-              Bir milletin kaderini değiştiren lider.
-            </p>
+        <div className="memorial-block__row">
+          <div className="memorial-block__copy">
+            <h1 className="memorial-block__title">Mustafa Kemal Atatürk</h1>
+            <p className="memorial-block__lede">Bir milletin kaderini değiştiren lider.</p>
 
             <SilentGuardians />
 
-            <h2
-              style={{
-                fontSize: '1rem',
-                color: 'var(--accent-pale-gray)',
-                marginBottom: '1.25rem',
-                marginTop: '2rem',
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                fontFamily: 'var(--font-title)',
-                fontWeight: 400,
-              }}
-            >
-              Gençliğe Hitabe
-            </h2>
+            <h2 className="memorial-block__section-label">Gençliğe Hitabe</h2>
 
-            {HITABE_PARAGRAPHS.map((paragraph) => (
-              <p
-                key={paragraph.slice(0, 24)}
-                style={{
-                  fontSize: '1.05rem',
-                  lineHeight: 1.8,
-                  marginBottom: '1.5rem',
-                  color: 'var(--text-primary, var(--text-main))',
-                  fontFamily: 'var(--font-title)',
-                }}
-              >
-                {paragraph}
-              </p>
-            ))}
+            <div className="memorial-block__hitabe">
+              {HITABE_PARAGRAPHS.map((paragraph) => (
+                <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+              ))}
+            </div>
           </div>
 
-          <div
-            className="card-surface memorial-portrait-card"
-            style={{
-              flex: '1 1 300px',
-              minHeight: '360px',
-              borderRadius: '12px',
-              position: 'relative',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div
-              className="memorial-portrait-card__light"
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background:
-                  'radial-gradient(ellipse 70% 50% at 50% 20%, rgba(203, 213, 225, 0.12), transparent 60%)',
-                pointerEvents: 'none',
-                zIndex: 2,
-              }}
-              aria-hidden
-            />
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                padding: '1.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxSizing: 'border-box',
-              }}
-            >
+          <div className="card-surface memorial-portrait-card">
+            <div className="memorial-portrait-card__glow" aria-hidden />
+            <div className="memorial-portrait-card__frame">
               <img
                 src="/Ataturk1930s.jpg"
                 alt="Mustafa Kemal Atatürk"
@@ -142,16 +45,6 @@ export default function Memorial() {
                 height={600}
                 decoding="async"
                 fetchPriority="high"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  maxHeight: '420px',
-                  objectFit: 'contain',
-                  position: 'relative',
-                  zIndex: 1,
-                  borderRadius: '6px',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
-                }}
               />
             </div>
           </div>

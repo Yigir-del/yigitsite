@@ -888,13 +888,13 @@ html.scene-leaving .app-container.is-quiet {
   right: 0.85rem;
 }
 
-/* Guardians — side by side, equal before Atatürk */
+/* Guardians — side by side, silent */
 .silent-guardians {
   display: flex;
   align-items: flex-end;
   justify-content: flex-start;
-  gap: 1.5rem;
-  margin: 0 0 0.5rem;
+  gap: 1.35rem;
+  margin: 0.25rem 0 1.75rem;
   pointer-events: none;
 }
 
@@ -902,18 +902,13 @@ html.scene-leaving .app-container.is-quiet {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  opacity: 0.8;
-}
-
-.silent-guardians__figure--sage,
-.silent-guardians__figure--beggar {
-  transform: none;
+  gap: 0.3rem;
+  opacity: 0.78;
 }
 
 .silent-guardians__face {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -928,19 +923,154 @@ html.scene-leaving .app-container.is-quiet {
   font-size: 0.55rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  font-family: var(--font-body);
   color: var(--text-muted);
   opacity: 0.65;
 }
 
-.memorial-section .memorial-portrait-card.card-surface:hover {
+/* Memorial — same vocabulary as Projects */
+.memorial-section {
+  padding: 6rem 2rem;
+  min-height: 100vh;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.memorial-block {
+  position: relative;
+}
+
+.memorial-block__line {
+  position: absolute;
+  left: -2rem;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--timeline), transparent);
+  pointer-events: none;
+}
+
+.memorial-block__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.memorial-block__copy {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.memorial-block__title {
+  font-family: var(--font-title);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  line-height: 1.2;
+  color: var(--text-main);
+  margin: 0 0 0.55rem;
+  letter-spacing: 0.01em;
+}
+
+.memorial-block__lede {
+  margin: 0 0 1.5rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.memorial-block__section-label {
+  margin: 0 0 1.1rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--accent-pale-gray);
+  letter-spacing: 0.04em;
+}
+
+.memorial-block__hitabe p {
+  margin: 0 0 1.35rem;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--text-main);
+}
+
+.memorial-block__hitabe p:first-child,
+.memorial-block__hitabe p:last-child {
+  font-family: var(--font-title);
+  font-size: 1.08rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--accent-soft-white);
+}
+
+.memorial-block__hitabe p:last-child {
+  margin-bottom: 0;
+}
+
+.memorial-portrait-card {
+  flex: 1 1 300px;
+  min-height: 340px;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memorial-portrait-card.card-surface:hover {
   background: var(--card-bg);
   box-shadow: none;
 }
 
+.memorial-portrait-card__glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 18%, rgba(203, 213, 225, 0.12), transparent 62%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.memorial-portrait-card__frame {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.memorial-portrait-card__frame img {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
 @media (max-width: 860px) {
+  .memorial-section {
+    padding: 5.5rem 1.15rem 3.5rem;
+  }
+
+  .memorial-block__line {
+    display: none;
+  }
+
   .silent-guardians {
-    gap: 1.25rem;
-    justify-content: center;
+    gap: 1.2rem;
+    justify-content: flex-start;
   }
 
   .silent-guardians__face {
@@ -951,6 +1081,18 @@ html.scene-leaving .app-container.is-quiet {
   .silent-guardians__face svg {
     width: 26px;
     height: 26px;
+  }
+
+  .memorial-portrait-card {
+    min-height: 280px;
+  }
+
+  .memorial-portrait-card__frame {
+    padding: 1.25rem;
+  }
+
+  .memorial-portrait-card__frame img {
+    max-width: 220px;
   }
 
   .social-respect__icon {
