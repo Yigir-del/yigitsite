@@ -950,12 +950,14 @@ html.scene-quiet {
   font-weight: 500;
   color: var(--text-main);
   line-height: 1.35;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: min(13.5rem, 46vw);
+  text-align: left;
   box-shadow: 0 8px 24px var(--shadow);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.22s ease, visibility 0.22s ease, transform 0.22s ease;
+  transition: opacity 0.28s ease, visibility 0.28s ease, transform 0.28s ease;
   z-index: 20;
 }
 
@@ -979,10 +981,19 @@ html.scene-quiet {
   border-right: none;
 }
 
-.silent-guardians__figure--sage:hover .silent-guardians__bubble--sage {
+.silent-guardians__figure--sage:hover .silent-guardians__bubble--sage,
+.silent-guardians__figure--sage.is-speaking .silent-guardians__bubble--sage {
   opacity: 1;
   visibility: visible;
   transform: translateY(-50%) translateX(0);
+}
+
+.silent-guardians__figure.is-speaking {
+  opacity: 1;
+}
+
+.silent-guardians__figure.is-speaking .silent-guardians__face {
+  box-shadow: 0 0 18px var(--glow-strong);
 }
 
 /* Dilenci — opens to the right */
@@ -1005,7 +1016,8 @@ html.scene-quiet {
   border-left: none;
 }
 
-.silent-guardians__figure--beggar:hover .silent-guardians__bubble--beggar {
+.silent-guardians__figure--beggar:hover .silent-guardians__bubble--beggar,
+.silent-guardians__figure--beggar.is-speaking .silent-guardians__bubble--beggar {
   opacity: 1;
   visibility: visible;
   transform: translateY(-50%) translateX(0);
@@ -1062,6 +1074,16 @@ html.scene-quiet {
 .memorial-block__hitabe-wrap {
   width: 100%;
   max-width: none;
+}
+
+.memorial-block__epigraph {
+  margin: 0 0 1.5rem;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  text-align: left;
 }
 
 .memorial-block__section-label {

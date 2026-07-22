@@ -43,6 +43,7 @@ export default function Memorial() {
         </header>
 
         <div className="memorial-block__hitabe-wrap">
+          <p className="memorial-block__epigraph">Bir millete yol açan lidere — saygı duruşunda.</p>
           <h2 className="memorial-block__section-label">Gençliğe Hitabe</h2>
           <div className="memorial-block__hitabe">
             {HITABE_PARAGRAPHS.map((paragraph) => (
