@@ -145,7 +145,7 @@ Kısa AI özeti:
 
 Projeler de “hikâye + ders” dilinde yazılır; kurumsal bullet list değil.
 
-**Miras kuralı:** Aynı MURYOKUSHO dili (cam, yıldız, lacivert). Dünya değişmez; tempo ve ruh hali değişir. Nav’da ortada taçlı “Miras”. `/atam` → `/miras` yönlendirir.
+**Miras kuralı:** Aynı MURYOKUSHO dili (cam, yıldız, lacivert). Dünya değişmez; tempo ve ruh hali değişir. Nav ortasında yazı yok — iki mavi göz (Atatürk). Bilge ile Dilenci yan yana, aynı seviyede saygı duruşunda. `/atam` → `/miras` yönlendirir.
 
 ---
 

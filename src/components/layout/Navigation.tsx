@@ -2,7 +2,7 @@ import { useEffect, useState, type MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MEMORIAL_PATH, useMemorial } from '../../context/MemorialContext';
 
-/** Miras sits dead-center of the bar */
+/** Center jewel — eyes only, no label */
 const leftItems = [
   { path: '/', label: 'Ana Sayfa' },
   { path: '/hakkimda', label: 'Hakkımda' },
@@ -15,30 +15,29 @@ const rightItems = [
   { path: '/iletisim', label: 'İletişim' },
 ];
 
-const mirasItem = { path: MEMORIAL_PATH, label: 'Miras' };
+const eyesItem = { path: MEMORIAL_PATH, label: '' };
 
-const allItems = [...leftItems, mirasItem, ...rightItems];
+const allItems = [...leftItems, eyesItem, ...rightItems];
 
-function CrownIcon() {
+/** Two blue eyes — Atatürk's gaze */
+function EyesIcon() {
   return (
     <svg
-      className="site-nav__crown"
-      width="14"
+      className="site-nav__eyes"
+      width="28"
       height="12"
-      viewBox="0 0 14 12"
+      viewBox="0 0 28 12"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <path
-        d="M1.2 9.2 L2.1 3.4 L4.8 6.2 L7 1.6 L9.2 6.2 L11.9 3.4 L12.8 9.2 Z"
-        stroke="currentColor"
-        strokeWidth="1.1"
-        strokeLinejoin="round"
-        fill="currentColor"
-        fillOpacity="0.18"
-      />
-      <path d="M1.2 9.2 H12.8" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+      <ellipse cx="7" cy="6" rx="5.2" ry="4.6" fill="#1e3a5f" stroke="#5b8fbf" strokeWidth="1" />
+      <circle cx="7.6" cy="6" r="2.1" fill="#7eb6e8" />
+      <circle cx="8.1" cy="5.4" r="0.7" fill="#e8f4ff" opacity="0.9" />
+
+      <ellipse cx="21" cy="6" rx="5.2" ry="4.6" fill="#1e3a5f" stroke="#5b8fbf" strokeWidth="1" />
+      <circle cx="21.6" cy="6" r="2.1" fill="#7eb6e8" />
+      <circle cx="22.1" cy="5.4" r="0.7" fill="#e8f4ff" opacity="0.9" />
     </svg>
   );
 }
@@ -70,23 +69,24 @@ export default function Navigation() {
   };
 
   const renderLink = (item: { path: string; label: string }, variant: 'desktop' | 'panel') => {
-    const isMiras = item.path === MEMORIAL_PATH;
+    const isEyes = item.path === MEMORIAL_PATH;
     const base = variant === 'desktop' ? 'site-nav__link' : 'site-nav__panel-link';
-    const mirasClass = isMiras
+    const eyesClass = isEyes
       ? variant === 'desktop'
-        ? ' site-nav__link--miras'
-        : ' site-nav__panel-link--miras'
+        ? ' site-nav__link--eyes'
+        : ' site-nav__panel-link--eyes'
       : '';
 
     return (
       <a
         key={item.path}
         href={item.path}
-        className={`${base}${active === item.path ? ' is-active' : ''}${mirasClass}`}
+        className={`${base}${active === item.path ? ' is-active' : ''}${eyesClass}`}
         onClick={handleNav(item.path)}
+        aria-label={isEyes ? 'Atatürk' : undefined}
+        title={isEyes ? 'Atatürk' : undefined}
       >
-        {isMiras && <CrownIcon />}
-        <span>{item.label}</span>
+        {isEyes ? <EyesIcon /> : <span>{item.label}</span>}
       </a>
     );
   };
@@ -95,7 +95,7 @@ export default function Navigation() {
     <nav className={`site-nav${isQuiet ? ' site-nav--quiet' : ''}`} aria-label="Ana menü">
       <div className="site-nav__desktop">
         {leftItems.map((item) => renderLink(item, 'desktop'))}
-        {renderLink(mirasItem, 'desktop')}
+        {renderLink(eyesItem, 'desktop')}
         {rightItems.map((item) => renderLink(item, 'desktop'))}
       </div>
 

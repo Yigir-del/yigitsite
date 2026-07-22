@@ -131,13 +131,12 @@ export const PAGE_SEO: Record<PageKey, PageSEO> = {
     canonical: `${SITE.url}/iletisim`,
   },
   memorial: {
-    title: 'Miras — Mustafa Kemal Atatürk',
+    title: 'Mustafa Kemal Atatürk',
     description:
       'Mustafa Kemal Atatürk anısına saygı. Gençliğe Hitabe.',
     keywords: [
       'Mustafa Kemal Atatürk',
       'Gençliğe Hitabe',
-      'Miras',
       'anıt',
     ].join(', '),
     canonical: `${SITE.url}/miras`,

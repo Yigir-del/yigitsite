@@ -791,56 +791,53 @@ html.scene-leaving .app-container.is-quiet {
   transition: opacity 0.8s ease;
 }
 
-/* Center jewel — Miras */
-.site-nav__link--miras {
+/* Center jewel — two blue eyes */
+.site-nav__link--eyes {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 1rem;
-  letter-spacing: 0.12em;
-  font-weight: 500;
-  color: var(--text-main);
-  padding: 0.2rem 0.55rem;
+  justify-content: center;
+  padding: 0.35rem 0.65rem;
   border-radius: 999px;
-  border: 1px solid rgba(203, 213, 225, 0.28);
-  background: linear-gradient(160deg, rgba(203, 213, 225, 0.08), rgba(75, 107, 139, 0.12));
+  border: 1px solid rgba(91, 143, 191, 0.35);
+  background: linear-gradient(160deg, rgba(126, 182, 232, 0.08), rgba(30, 58, 95, 0.22));
   box-shadow:
-    0 0 18px rgba(148, 163, 184, 0.14),
-    0 1px 0 rgba(255, 255, 255, 0.06);
+    0 0 16px rgba(91, 143, 191, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.05);
   transform: translateY(-1px);
+  line-height: 0;
   transition:
-    color 0.35s ease,
     border-color 0.35s ease,
     box-shadow 0.35s ease,
     background 0.35s ease,
     transform 0.35s ease;
 }
 
-.site-nav__link--miras:hover,
-.site-nav__link--miras.is-active {
-  color: var(--accent-soft-white);
-  border-color: rgba(212, 185, 120, 0.45);
-  background: linear-gradient(160deg, rgba(212, 185, 120, 0.12), rgba(75, 107, 139, 0.16));
+.site-nav__link--eyes:hover,
+.site-nav__link--eyes.is-active {
+  border-color: rgba(126, 182, 232, 0.55);
+  background: linear-gradient(160deg, rgba(126, 182, 232, 0.14), rgba(30, 58, 95, 0.3));
   box-shadow:
-    0 0 22px rgba(148, 163, 184, 0.22),
-    0 0 8px rgba(212, 185, 120, 0.12);
+    0 0 22px rgba(91, 143, 191, 0.28),
+    0 0 8px rgba(126, 182, 232, 0.15);
   transform: translateY(-2px);
 }
 
-.site-nav__crown {
-  flex-shrink: 0;
-  color: rgba(212, 185, 120, 0.85);
+.site-nav__eyes {
+  display: block;
 }
 
-.site-nav__panel-link--miras {
+.site-nav__panel-link--eyes {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  letter-spacing: 0.12em;
+  justify-content: center;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(91, 143, 191, 0.35);
+  background: linear-gradient(160deg, rgba(126, 182, 232, 0.08), rgba(30, 58, 95, 0.22));
 }
 
-.site-nav__panel-link--miras .site-nav__crown {
-  width: 18px;
+.site-nav__panel-link--eyes .site-nav__eyes {
+  width: 36px;
   height: 16px;
 }
 
@@ -887,46 +884,41 @@ html.scene-leaving .app-container.is-quiet {
   right: 0.85rem;
 }
 
-/* Guardians beside the portrait */
+/* Guardians — side by side, equal before Atatürk */
 .silent-guardians {
-  position: absolute;
-  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1.75rem;
+  margin: 1.35rem 0 0.35rem;
   pointer-events: none;
-  z-index: 2;
 }
 
 .silent-guardians__figure {
-  position: absolute;
-  top: 52%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  opacity: 0.78;
+  gap: 0.35rem;
+  opacity: 0.8;
 }
 
-.silent-guardians__figure--sage {
-  left: 0.35rem;
-  transform: translateY(-50%) rotate(-6deg);
-}
-
+.silent-guardians__figure--sage,
 .silent-guardians__figure--beggar {
-  right: 0.35rem;
-  transform: translateY(-50%) rotate(6deg);
+  transform: none;
 }
 
 .silent-guardians__face {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 14px var(--glow);
-  /* Head lowered slightly */
-  transform: rotateX(8deg) translateY(3px);
+  box-shadow: 0 0 12px var(--glow);
+  /* Head lowered — same stance for both */
+  transform: translateY(2px);
 }
 
 .silent-guardians__label {
@@ -949,11 +941,16 @@ html.scene-leaving .app-container.is-quiet {
 }
 
 .memorial-hero {
-  border-radius: 16px;
-  padding: clamp(1.75rem, 4vw, 3rem);
+  border-radius: 14px;
+  padding: clamp(1.15rem, 2.8vw, 1.75rem) clamp(1.15rem, 2.8vw, 1.75rem) clamp(1.35rem, 3vw, 1.9rem);
   text-align: center;
   position: relative;
   overflow: hidden;
+  max-width: 22rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .memorial-hero.card-surface:hover {
@@ -961,20 +958,14 @@ html.scene-leaving .app-container.is-quiet {
   box-shadow: none;
 }
 
-.memorial-hero__stage {
-  position: relative;
-  max-width: min(100%, 20rem);
-  margin: 0 auto 2.25rem;
-  padding: 0 3.5rem;
-}
-
 .memorial-hero__portrait {
-  margin: 0;
+  margin: 0 auto;
   position: relative;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   background: rgba(10, 14, 24, 0.35);
   border: 1px solid var(--glass-border);
+  max-width: 14.5rem;
 }
 
 .memorial-hero__portrait img {
@@ -997,10 +988,10 @@ html.scene-leaving .app-container.is-quiet {
 }
 
 .memorial-hero__title {
-  margin: 0;
+  margin: 1.1rem 0 0;
   font-family: var(--font-title);
   font-weight: 400;
-  font-size: clamp(1.85rem, 5vw, 2.75rem);
+  font-size: clamp(1.35rem, 3.6vw, 1.75rem);
   letter-spacing: 0.04em;
   color: var(--text-main);
   line-height: 1.25;
@@ -1053,16 +1044,8 @@ html.scene-leaving .app-container.is-quiet {
     padding: 5.5rem 1.15rem 3.5rem;
   }
 
-  .memorial-hero__stage {
-    padding: 0 2.4rem;
-  }
-
-  .silent-guardians__figure--sage {
-    left: -0.15rem;
-  }
-
-  .silent-guardians__figure--beggar {
-    right: -0.15rem;
+  .silent-guardians {
+    gap: 1.35rem;
   }
 
   .silent-guardians__face {
@@ -1071,8 +1054,8 @@ html.scene-leaving .app-container.is-quiet {
   }
 
   .silent-guardians__face svg {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
   }
 
   .social-respect__icon {
@@ -1083,7 +1066,7 @@ html.scene-leaving .app-container.is-quiet {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .site-nav__link--miras {
+  .site-nav__link--eyes {
     transition: none;
   }
 }

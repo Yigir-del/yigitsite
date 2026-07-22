@@ -13,25 +13,23 @@ const HITABE_PARAGRAPHS = [
 
 export default function Memorial() {
   return (
-    <section className="memorial-section" aria-label="Miras — Mustafa Kemal Atatürk">
+    <section className="memorial-section" aria-label="Mustafa Kemal Atatürk">
       <SEOHead page="memorial" />
 
       <div className="memorial-hero card-surface">
-        <div className="memorial-hero__stage">
-          <SilentGuardians />
+        <figure className="memorial-hero__portrait">
+          <img
+            src="/Ataturk1930s.jpg"
+            alt="Mustafa Kemal Atatürk"
+            width={640}
+            height={800}
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="memorial-hero__light" aria-hidden />
+        </figure>
 
-          <figure className="memorial-hero__portrait">
-            <img
-              src="/Ataturk1930s.jpg"
-              alt="Mustafa Kemal Atatürk"
-              width={640}
-              height={800}
-              decoding="async"
-              fetchPriority="high"
-            />
-            <div className="memorial-hero__light" aria-hidden />
-          </figure>
-        </div>
+        <SilentGuardians />
 
         <h1 className="memorial-hero__title">Mustafa Kemal Atatürk</h1>
         <p className="memorial-hero__subtitle">Bir milletin kaderini değiştiren lider.</p>
