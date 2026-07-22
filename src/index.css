@@ -1159,6 +1159,101 @@ html.scene-quiet {
   100% { background-position: 200% 0; }
 }
 
+/* Wreath offering — solemn, no card chrome */
+.wreath-offering {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.wreath-offering__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--accent-pale-gray) 35%, transparent);
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+}
+
+.wreath-offering__btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent-pale-gray) 70%, transparent);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+.wreath-offering__btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.wreath-offering__btn:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.wreath-offering__icon {
+  display: flex;
+  color: color-mix(in srgb, #c4a35a 80%, var(--accent-pale-gray));
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wreath-offering.is-placed .wreath-offering__icon {
+  animation: wreath-settle 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wreath-offering__label {
+  font-weight: 400;
+}
+
+.wreath-offering__count {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.wreath-offering__hint {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.wreath-offering__error {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: color-mix(in srgb, #c47878 85%, var(--text-muted));
+}
+
+@keyframes wreath-settle {
+  0% { transform: translateY(-10px) scale(0.86); opacity: 0.4; }
+  55% { transform: translateY(2px) scale(1.06); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@media (max-width: 860px) {
+  .wreath-offering {
+    margin-top: 1.45rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wreath-offering.is-placed .wreath-offering__icon {
+    animation: none;
+  }
+}
+
 @media (max-width: 860px) {
   .memorial-section {
     padding: 5.5rem 1.15rem 3.5rem;

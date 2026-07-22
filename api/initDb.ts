@@ -30,6 +30,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       );
     `;
 
+    await pool.sql`
+      CREATE TABLE IF NOT EXISTS wreath_meta (
+        id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+        total BIGINT NOT NULL DEFAULT 0
+      );
+    `;
+    await pool.sql`
+      INSERT INTO wreath_meta (id, total)
+      VALUES (1, 0)
+      ON CONFLICT (id) DO NOTHING;
+    `;
+    await pool.sql`
+      CREATE TABLE IF NOT EXISTS wreath_daily (
+        visitor_key VARCHAR(64) NOT NULL,
+        day_key DATE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (visitor_key, day_key)
+      );
+    `;
+
     return res.status(200).json({ message: 'Database initialized successfully' });
   } catch (error) {
     console.error('Error initializing database:', error);

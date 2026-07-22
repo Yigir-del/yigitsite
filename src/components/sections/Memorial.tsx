@@ -1,5 +1,6 @@
 import SilentGuardians from '../events/SilentGuardians';
 import SEOHead from '../../seo/SEOHead';
+import WreathOffering from './WreathOffering';
 
 /**
  * Complete text of Gençliğe Hitabe (Atatürk, 20 Ekim 1927).
@@ -17,7 +18,6 @@ export default function Memorial() {
       <SEOHead page="memorial" />
 
       <div className="memorial-block">
-        {/* Atatürk on top */}
         <header className="memorial-block__hero">
           <div className="card-surface memorial-portrait-card">
             <div className="memorial-portrait-card__shimmer" aria-hidden />
@@ -38,10 +38,10 @@ export default function Memorial() {
             <h1 className="memorial-block__title">Mustafa Kemal Atatürk</h1>
             <p className="memorial-block__lede">Bir milletin kaderini değiştiren lider.</p>
             <SilentGuardians />
+            <WreathOffering />
           </div>
         </header>
 
-        {/* Wide Hitabe below */}
         <div className="memorial-block__hitabe-wrap">
           <h2 className="memorial-block__section-label">Gençliğe Hitabe</h2>
           <div className="memorial-block__hitabe">
