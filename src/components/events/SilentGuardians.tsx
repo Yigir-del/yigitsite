@@ -78,67 +78,87 @@ function BeggarFace() {
 
 /**
  * Bilge & Dilenci before Atatürk.
- * Still sharp — but admiration stays visible; bite aims at the world.
+ * Speech sits in-flow under the pair so overflow-x never clips it.
  */
 export default function SilentGuardians() {
-  const [speaker, setSpeaker] = useState<Speaker | null>(null);
-  const [sageLine, setSageLine] = useState(() => SAGE_LINES[0]);
-  const [beggarLine, setBeggarLine] = useState(() => BEGGAR_LINES[0]);
+  const [speaker, setSpeaker] = useState<Speaker>('sage');
+  const [line, setLine] = useState<string>(SAGE_LINES[0]);
+  const [live, setLive] = useState(true);
 
   useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) return;
-
-    let hideTimer: number | undefined;
-    let nextSpeaker: Speaker = Math.random() < 0.5 ? 'sage' : 'beggar';
+    let pauseTimer: number | undefined;
+    let nextSpeaker: Speaker = 'beggar';
 
     const speak = () => {
-      if (nextSpeaker === 'sage') {
-        setSageLine((prev) => pickLine(SAGE_LINES, prev));
-        setSpeaker('sage');
-      } else {
-        setBeggarLine((prev) => pickLine(BEGGAR_LINES, prev));
-        setSpeaker('beggar');
-      }
-      nextSpeaker = nextSpeaker === 'sage' ? 'beggar' : 'sage';
+      const who = nextSpeaker;
+      const pool = who === 'sage' ? SAGE_LINES : BEGGAR_LINES;
+      setSpeaker(who);
+      setLine((prev) => pickLine(pool, prev));
+      setLive(true);
+      nextSpeaker = who === 'sage' ? 'beggar' : 'sage';
 
-      window.clearTimeout(hideTimer);
-      hideTimer = window.setTimeout(() => setSpeaker(null), 4200);
+      window.clearTimeout(pauseTimer);
+      pauseTimer = window.setTimeout(() => setLive(false), 4800);
     };
 
-    const startDelay = window.setTimeout(speak, 1600);
-    const interval = window.setInterval(speak, 7800);
+    const startDelay = window.setTimeout(speak, 2600);
+    const interval = window.setInterval(speak, 6200);
 
     return () => {
       window.clearTimeout(startDelay);
-      window.clearTimeout(hideTimer);
+      window.clearTimeout(pauseTimer);
       window.clearInterval(interval);
     };
   }, []);
 
+  const onSageClick = () => {
+    setSpeaker('sage');
+    setLine((prev) => pickLine(SAGE_LINES, prev));
+    setLive(true);
+  };
+
+  const onBeggarClick = () => {
+    setSpeaker('beggar');
+    setLine((prev) => pickLine(BEGGAR_LINES, prev));
+    setLive(true);
+  };
+
   return (
-    <div className="silent-guardians" aria-hidden>
-      <div
-        className={`silent-guardians__figure silent-guardians__figure--sage${speaker === 'sage' ? ' is-speaking' : ''}`}
-        title="Bilge"
-      >
-        <div className="silent-guardians__bubble silent-guardians__bubble--sage">{sageLine}</div>
-        <div className="silent-guardians__face">
-          <SageFace />
-        </div>
-        <span className="silent-guardians__label">bilge</span>
+    <div className="silent-guardians">
+      <div className="silent-guardians__row">
+        <button
+          type="button"
+          className={`silent-guardians__figure silent-guardians__figure--sage${speaker === 'sage' && live ? ' is-speaking' : ''}`}
+          title="Bilge"
+          aria-label="Bilge konuşsun"
+          onClick={onSageClick}
+        >
+          <div className="silent-guardians__face" aria-hidden>
+            <SageFace />
+          </div>
+          <span className="silent-guardians__label">bilge</span>
+        </button>
+
+        <button
+          type="button"
+          className={`silent-guardians__figure silent-guardians__figure--beggar${speaker === 'beggar' && live ? ' is-speaking' : ''}`}
+          title="Dilenci"
+          aria-label="Dilenci konuşsun"
+          onClick={onBeggarClick}
+        >
+          <div className="silent-guardians__face" aria-hidden>
+            <BeggarFace />
+          </div>
+          <span className="silent-guardians__label">dilenci</span>
+        </button>
       </div>
 
-      <div
-        className={`silent-guardians__figure silent-guardians__figure--beggar${speaker === 'beggar' ? ' is-speaking' : ''}`}
-        title="Dilenci"
-      >
-        <div className="silent-guardians__bubble silent-guardians__bubble--beggar">{beggarLine}</div>
-        <div className="silent-guardians__face">
-          <BeggarFace />
-        </div>
-        <span className="silent-guardians__label">dilenci</span>
-      </div>
+      <p className={`silent-guardians__speech${live ? ' is-live' : ' is-idle'}`} aria-live="polite">
+        <span className="silent-guardians__speech-text">“{line}”</span>
+        <span className="silent-guardians__speech-by">
+          — {speaker === 'sage' ? 'bilge' : 'dilenci'}
+        </span>
+      </p>
     </div>
   );
 }

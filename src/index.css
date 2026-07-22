@@ -887,11 +887,19 @@ html.scene-quiet {
 /* Guardians — side by side; speak on hover */
 .silent-guardians {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0.25rem 0 0;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.silent-guardians__row {
+  display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 1.35rem;
-  margin: 0.25rem 0 0;
-  pointer-events: none;
 }
 
 .silent-guardians__figure {
@@ -901,8 +909,13 @@ html.scene-quiet {
   gap: 0.3rem;
   opacity: 0.78;
   position: relative;
-  pointer-events: auto;
-  cursor: default;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  transition: opacity 0.25s ease;
 }
 
 .silent-guardians__face {
@@ -919,11 +932,13 @@ html.scene-quiet {
   transition: opacity 0.25s ease, box-shadow 0.25s ease;
 }
 
-.silent-guardians__figure:hover {
+.silent-guardians__figure:hover,
+.silent-guardians__figure.is-speaking {
   opacity: 1;
 }
 
-.silent-guardians__figure:hover .silent-guardians__face {
+.silent-guardians__figure:hover .silent-guardians__face,
+.silent-guardians__figure.is-speaking .silent-guardians__face {
   box-shadow: 0 0 18px var(--glow-strong);
 }
 
@@ -936,91 +951,40 @@ html.scene-quiet {
   opacity: 0.65;
 }
 
-.silent-guardians__bubble {
-  position: absolute;
-  top: 50%;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 10px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.72rem;
+.silent-guardians__speech {
+  margin: 0;
+  min-height: 3.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  text-align: center;
+  transition: opacity 0.35s ease;
+}
+
+.silent-guardians__speech.is-live {
+  opacity: 1;
+}
+
+.silent-guardians__speech.is-idle {
+  opacity: 0.55;
+}
+
+.silent-guardians__speech-text {
   font-family: var(--font-body);
+  font-size: 0.86rem;
+  line-height: 1.45;
   font-weight: 500;
   color: var(--text-main);
-  line-height: 1.35;
-  white-space: normal;
-  max-width: min(13.5rem, 46vw);
-  text-align: left;
-  box-shadow: 0 8px 24px var(--shadow);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.28s ease, visibility 0.28s ease, transform 0.28s ease;
-  z-index: 20;
 }
 
-/* Bilge — opens to the left */
-.silent-guardians__bubble--sage {
-  right: calc(100% + 0.6rem);
-  left: auto;
-  transform: translateY(-50%) translateX(6px);
-}
-
-.silent-guardians__bubble--sage::before {
-  content: '';
-  position: absolute;
-  right: -5px;
-  left: auto;
-  top: 50%;
-  transform: translateY(-50%);
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-left: 5px solid var(--glass-border);
-  border-right: none;
-}
-
-.silent-guardians__figure--sage:hover .silent-guardians__bubble--sage,
-.silent-guardians__figure--sage.is-speaking .silent-guardians__bubble--sage {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(-50%) translateX(0);
-}
-
-.silent-guardians__figure.is-speaking {
-  opacity: 1;
-}
-
-.silent-guardians__figure.is-speaking .silent-guardians__face {
-  box-shadow: 0 0 18px var(--glow-strong);
-}
-
-/* Dilenci — opens to the right */
-.silent-guardians__bubble--beggar {
-  left: calc(100% + 0.6rem);
-  right: auto;
-  transform: translateY(-50%) translateX(-6px);
-}
-
-.silent-guardians__bubble--beggar::before {
-  content: '';
-  position: absolute;
-  left: -5px;
-  right: auto;
-  top: 50%;
-  transform: translateY(-50%);
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-right: 5px solid var(--glass-border);
-  border-left: none;
-}
-
-.silent-guardians__figure--beggar:hover .silent-guardians__bubble--beggar,
-.silent-guardians__figure--beggar.is-speaking .silent-guardians__bubble--beggar {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(-50%) translateX(0);
+.silent-guardians__speech-by {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.8;
 }
 
 /* Memorial — wider canvas, hero then full Hitabe */
