@@ -3,14 +3,17 @@ import { useFrame } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
 
-function MovingStars({ frozen }: { frozen: boolean }) {
+function MovingStars({ hushed }: { hushed: boolean }) {
   const starsRef = useRef<THREE.Group>(null);
 
   useFrame((state, delta) => {
-    if (frozen || !starsRef.current) return;
+    if (!starsRef.current) return;
 
-    starsRef.current.rotation.x -= delta * 0.02;
-    starsRef.current.rotation.y -= delta * 0.025;
+    const speed = hushed ? 0.04 : 1;
+    starsRef.current.rotation.x -= delta * 0.02 * speed;
+    starsRef.current.rotation.y -= delta * 0.025 * speed;
+
+    if (hushed) return;
 
     starsRef.current.position.x = THREE.MathUtils.lerp(
       starsRef.current.position.x,
@@ -33,35 +36,39 @@ function MovingStars({ frozen }: { frozen: boolean }) {
         factor={3}
         saturation={0}
         fade
-        speed={frozen ? 0 : 1}
+        speed={hushed ? 0.08 : 1}
       />
     </group>
   );
 }
 
-function Moon({ frozen }: { frozen: boolean }) {
+function Moon({ hushed }: { hushed: boolean }) {
   const [clickCount, setClickCount] = useState(0);
 
   return (
     <mesh
       position={[5, 3, -10]}
-      onClick={frozen ? undefined : () => setClickCount((c) => c + 1)}
+      onClick={hushed ? undefined : () => setClickCount((c) => c + 1)}
       onPointerOver={
-        frozen ? undefined : () => {
-          document.body.style.cursor = 'pointer';
-        }
+        hushed
+          ? undefined
+          : () => {
+              document.body.style.cursor = 'pointer';
+            }
       }
       onPointerOut={
-        frozen ? undefined : () => {
-          document.body.style.cursor = 'auto';
-        }
+        hushed
+          ? undefined
+          : () => {
+              document.body.style.cursor = 'auto';
+            }
       }
     >
       <sphereGeometry args={[1.5, 32, 32]} />
       <meshStandardMaterial
         color={clickCount > 5 ? '#ff4444' : '#ffffff'}
         emissive={clickCount > 5 ? '#ff0000' : '#444444'}
-        emissiveIntensity={0.5}
+        emissiveIntensity={hushed ? 0.35 : 0.5}
         roughness={0.8}
       />
       {clickCount > 5 && <pointLight color="#ff0000" intensity={2} distance={20} />}
@@ -69,15 +76,15 @@ function Moon({ frozen }: { frozen: boolean }) {
   );
 }
 
-export default function Muryokusho({ frozen = false }: { frozen?: boolean }) {
+export default function Muryokusho({ hushed = false }: { hushed?: boolean }) {
   return (
     <>
-      <color attach="background" args={[frozen ? '#050505' : '#0d131f']} />
-      <ambientLight intensity={frozen ? 0.25 : 0.5} />
-      <directionalLight position={[-10, 10, 5]} intensity={frozen ? 0.4 : 1} />
-      <MovingStars frozen={frozen} />
-      <Moon frozen={frozen} />
-      <fog attach="fog" args={[frozen ? '#050505' : '#0d131f', 5, 15]} />
+      <color attach="background" args={['#0d131f']} />
+      <ambientLight intensity={hushed ? 0.42 : 0.5} />
+      <directionalLight position={[-10, 10, 5]} intensity={hushed ? 0.85 : 1} />
+      <MovingStars hushed={hushed} />
+      <Moon hushed={hushed} />
+      <fog attach="fog" args={['#0d131f', 5, 15]} />
     </>
   );
 }

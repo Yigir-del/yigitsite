@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react';
 import SEOHead from '../../seo/SEOHead';
+import SilentGuardians from '../events/SilentGuardians';
 
 /**
  * Complete text of Gençliğe Hitabe (Atatürk, 20 Ekim 1927).
@@ -13,39 +13,36 @@ const HITABE_PARAGRAPHS = [
 
 export default function Memorial() {
   return (
-    <section className="memorial" aria-label="Anıt — Mustafa Kemal Atatürk">
+    <section className="memorial-section" aria-label="Miras — Mustafa Kemal Atatürk">
       <SEOHead page="memorial" />
 
-      <div className="memorial__atmosphere" aria-hidden>
-        <div className="memorial__rays" />
-        <div className="memorial__dust">
-          {Array.from({ length: 18 }, (_, i) => (
-            <span key={i} className="memorial__mote" style={{ '--i': i } as CSSProperties} />
-          ))}
+      <div className="memorial-hero card-surface">
+        <div className="memorial-hero__stage">
+          <SilentGuardians />
+
+          <figure className="memorial-hero__portrait">
+            <img
+              src="/Ataturk1930s.jpg"
+              alt="Mustafa Kemal Atatürk"
+              width={640}
+              height={800}
+              decoding="async"
+              fetchPriority="high"
+            />
+            <div className="memorial-hero__light" aria-hidden />
+          </figure>
         </div>
+
+        <h1 className="memorial-hero__title">Mustafa Kemal Atatürk</h1>
+        <p className="memorial-hero__subtitle">Bir milletin kaderini değiştiren lider.</p>
       </div>
 
-      <div className="memorial__inner">
-        <figure className="memorial__portrait">
-          <img
-            src="/Ataturk1930s.jpg"
-            alt="Mustafa Kemal Atatürk"
-            width={480}
-            height={600}
-            decoding="async"
-            fetchPriority="high"
-          />
-        </figure>
-
-        <h1 className="memorial__title">Mustafa Kemal Atatürk</h1>
-
-        <article className="memorial__hitabe" aria-label="Gençliğe Hitabe">
-          <h2 className="visually-hidden">Gençliğe Hitabe</h2>
-          {HITABE_PARAGRAPHS.map((paragraph) => (
-            <p key={paragraph.slice(0, 24)}>{paragraph}</p>
-          ))}
-        </article>
-      </div>
+      <article className="memorial-hitabe card-surface" aria-label="Gençliğe Hitabe">
+        <h2 className="memorial-hitabe__heading">Gençliğe Hitabe</h2>
+        {HITABE_PARAGRAPHS.map((paragraph) => (
+          <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+        ))}
+      </article>
     </section>
   );
 }

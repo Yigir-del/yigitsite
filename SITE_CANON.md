@@ -141,11 +141,11 @@ Kısa AI özeti:
 | `/dusunceler` | Düşünceler | Dağınık düşünce kartları |
 | `/studyom` | Stüdyom | Foto ızgara + admin yükleme |
 | `/iletisim` | İletişim | Terminal benzeri form |
-| `/atam` | ATAM | Anıt — Atatürk portresi + Gençliğe Hitabe. Sessizlik. Hareket yok. |
+| `/miras` | Miras | Atatürk portresi + Gençliğe Hitabe. Aynı evren, daha sessiz oda. |
 
 Projeler de “hikâye + ders” dilinde yazılır; kurumsal bullet list değil.
 
-**ATAM kuralı:** Site’nin geri kalanı canlı ve absürt; `/atam` bir anıttır. Geçişte dünya donar, anıtta Bilge ile Dilenci saygı duruşunda durur, şaka/easter egg/chaos yoktur.
+**Miras kuralı:** Aynı MURYOKUSHO dili (cam, yıldız, lacivert). Dünya değişmez; tempo ve ruh hali değişir. Nav’da ortada taçlı “Miras”. `/atam` → `/miras` yönlendirir.
 
 ---
 

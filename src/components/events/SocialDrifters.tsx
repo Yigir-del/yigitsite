@@ -6,6 +6,7 @@ import {
   type AnimationPlaybackControls,
 } from 'framer-motion';
 import { pointOnEdge, randomEdge, type Edge } from '../../utils/flightPath';
+import { useMemorial } from '../../context/MemorialContext';
 
 interface Drifter {
   id: string;
@@ -156,10 +157,18 @@ function ThrowableDrifter({
 }
 
 export default function SocialDrifters() {
+  const { isQuiet } = useMemorial();
   const [drifters, setDrifters] = useState<Drifter[]>([]);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
+    if (isQuiet) {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+      setDrifters([]);
+      return;
+    }
+
     let cancelled = false;
 
     const spawnDrifter = () => {
@@ -202,11 +211,36 @@ export default function SocialDrifters() {
       timersRef.current.forEach(clearTimeout);
       timersRef.current = [];
     };
-  }, []);
+  }, [isQuiet]);
 
   const expire = (id: string) => {
     setDrifters((prev) => prev.filter((d) => d.id !== id));
   };
+
+  if (isQuiet) {
+    return (
+      <div className="social-respect">
+        <a
+          className="social-respect__icon social-respect__icon--github"
+          href="https://github.com/Yigir-del"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="GitHub"
+        >
+          <GithubIcon />
+        </a>
+        <a
+          className="social-respect__icon social-respect__icon--linkedin"
+          href="https://www.linkedin.com/in/yigit-efe-altuntas/"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="LinkedIn"
+        >
+          <LinkedinIcon />
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 50, overflow: 'hidden' }}>

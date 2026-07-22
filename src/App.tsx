@@ -15,8 +15,6 @@ import NotesWall from './pages/NotesWall';
 import { ThemeProvider } from './context/ThemeContext';
 import { MemorialProvider, useMemorial } from './context/MemorialContext';
 import ThemeSelector from './components/ui/ThemeSelector';
-import MemorialVeil from './components/memorial/MemorialVeil';
-import SilentGuardians from './components/events/SilentGuardians';
 import { useIsMobilePerf } from './hooks/useIsMobilePerf';
 import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
 import { trackPageView } from './utils/analytics';
@@ -41,10 +39,6 @@ function ScrollToTop() {
   return null;
 }
 
-/**
- * GA4 SPA sayfa takibi — her route değişiminde
- * requestIdleCallback ile ana thread boştayken gönderir.
- */
 function Analytics() {
   const location = useLocation();
 
@@ -91,6 +85,7 @@ function AnimatedRoutes() {
             <Route path="/dusunceler" element={<Thoughts />} />
             <Route path="/studyom" element={<Studio />} />
             <Route path="/iletisim" element={<Contact />} />
+            <Route path="/miras" element={<Memorial />} />
             <Route path="/atam" element={<Memorial />} />
           </Routes>
         </PageTransition>
@@ -102,7 +97,7 @@ function AnimatedRoutes() {
 function AppShell() {
   const [upsideDown, setUpsideDown] = useState(false);
   const isMobilePerf = useIsMobilePerf();
-  const { isQuiet, phase } = useMemorial();
+  const { isQuiet } = useMemorial();
 
   const toggleWorld = useCallback(() => {
     if (isQuiet) return;
@@ -114,7 +109,6 @@ function AppShell() {
     return () => window.removeEventListener('world-flip', toggleWorld);
   }, [toggleWorld]);
 
-  // Memorial silence cancels any upside-down chaos
   useEffect(() => {
     if (isQuiet && upsideDown) setUpsideDown(false);
   }, [isQuiet, upsideDown]);
@@ -148,48 +142,37 @@ function AppShell() {
     };
   }, [upsideDown]);
 
-  const showBackground = phase === 'alive' || phase === 'freezing' || phase === 'thawing';
-  const showLivingChaos = phase === 'alive';
-  const showFlyers = phase === 'alive' || phase === 'freezing';
-  const showGuardians = phase === 'memorial';
-  const freezing = phase === 'freezing';
-
   return (
     <>
-      <div
-        className={`atmosphere-fill${isQuiet ? ' atmosphere-fill--memorial' : ''}`}
-        aria-hidden
-      />
-      {showBackground ? <Background frozen={freezing} /> : null}
-      {!isQuiet && <ThemeSelector />}
+      <div className="atmosphere-fill" aria-hidden />
+      <Background hushed={isQuiet} />
+      <ThemeSelector />
 
       <Shell>
         <ScrollToTop />
         <Analytics />
-        <div className={`app-container${freezing ? ' is-freezing' : ''}`}>
-          {showLivingChaos && (
+        <div className={`app-container${isQuiet ? ' is-quiet' : ''}`}>
+          {!isQuiet && (
             <>
               <ChaosManager />
               <EasterEggs />
               <FakeMenu />
+              <FlyingPen />
+              <FlyingMusic />
             </>
           )}
 
-          {showFlyers && (
-            <>
-              {!isMobilePerf && (
-                <Suspense fallback={null}>
+          {!isMobilePerf && (
+            <Suspense fallback={null}>
+              {!isQuiet && (
+                <>
                   <FlyingBeggar />
                   <FlyingSage />
-                  <SocialDrifters />
-                </Suspense>
+                </>
               )}
-              <FlyingPen />
-            </>
+              <SocialDrifters />
+            </Suspense>
           )}
-          {showLivingChaos && <FlyingMusic />}
-
-          {showGuardians && <SilentGuardians />}
 
           <Navigation />
 
@@ -204,18 +187,16 @@ function AppShell() {
             <AnimatedRoutes />
           </main>
 
-          {!isQuiet && <Footer />}
+          <Footer />
         </div>
       </Shell>
-
-      <MemorialVeil />
 
       {!isMobilePerf && !isQuiet && (
         <Suspense fallback={null}>
           <CustomCursor />
         </Suspense>
       )}
-      {!isMobilePerf && !isQuiet && (
+      {!isMobilePerf && (
         <div className="noise-overlay" style={{ mixBlendMode: 'overlay', pointerEvents: 'none' }} />
       )}
     </>

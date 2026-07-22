@@ -10,15 +10,17 @@ import {
 } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-export const MEMORIAL_PATH = '/atam';
+/** Canonical quiet-room path */
+export const MEMORIAL_PATH = '/miras';
+/** Legacy alias kept for old links */
+export const MEMORIAL_LEGACY_PATH = '/atam';
 
-export type MemorialPhase = 'alive' | 'freezing' | 'memorial' | 'thawing';
+export type MemorialPhase = 'alive' | 'entering' | 'memorial' | 'leaving';
 
 interface MemorialContextValue {
   phase: MemorialPhase;
-  /** Chaos, jokes, motion layers should be silent */
+  /** Chaos / jokes / loud motion should hush */
   isQuiet: boolean;
-  /** Fully inside the memorial (route content visible) */
   isMemorial: boolean;
   enterMemorial: () => void;
   exitMemorial: (to: string) => void;
@@ -27,8 +29,8 @@ interface MemorialContextValue {
 
 const MemorialContext = createContext<MemorialContextValue | null>(null);
 
-const FREEZE_MS = 1600;
-const THAW_MS = 1100;
+const ENTER_MS = 700;
+const LEAVE_MS = 550;
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => {
@@ -36,14 +38,18 @@ function wait(ms: number) {
   });
 }
 
+function isMemorialPath(pathname: string) {
+  return pathname === MEMORIAL_PATH || pathname === MEMORIAL_LEGACY_PATH;
+}
+
 function syncHtmlPhase(phase: MemorialPhase) {
   const root = document.documentElement;
-  root.classList.toggle('scene-freezing', phase === 'freezing');
+  root.classList.toggle('scene-entering', phase === 'entering');
   root.classList.toggle('scene-memorial', phase === 'memorial');
-  root.classList.toggle('scene-thawing', phase === 'thawing');
+  root.classList.toggle('scene-leaving', phase === 'leaving');
   root.classList.toggle(
     'scene-quiet',
-    phase === 'freezing' || phase === 'memorial' || phase === 'thawing',
+    phase === 'entering' || phase === 'memorial' || phase === 'leaving',
   );
 }
 
@@ -51,7 +57,7 @@ export function MemorialProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [phase, setPhase] = useState<MemorialPhase>(() =>
-    location.pathname === MEMORIAL_PATH ? 'memorial' : 'alive',
+    isMemorialPath(location.pathname) ? 'memorial' : 'alive',
   );
   const lockRef = useRef(false);
 
@@ -62,25 +68,31 @@ export function MemorialProvider({ children }: { children: ReactNode }) {
     };
   }, [phase]);
 
-  // Browser back/forward without our choreographed transition
+  // Normalize legacy /atam → /miras
+  useEffect(() => {
+    if (location.pathname === MEMORIAL_LEGACY_PATH) {
+      navigate(MEMORIAL_PATH, { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
   useEffect(() => {
     if (lockRef.current) return;
-    if (location.pathname === MEMORIAL_PATH) {
+    if (isMemorialPath(location.pathname)) {
       setPhase('memorial');
-    } else if (phase !== 'alive' && phase !== 'thawing') {
+    } else if (phase !== 'alive' && phase !== 'leaving') {
       setPhase('alive');
     }
   }, [location.pathname, phase]);
 
   const enterMemorial = useCallback(() => {
     if (lockRef.current) return;
-    if (location.pathname === MEMORIAL_PATH) return;
+    if (isMemorialPath(location.pathname)) return;
 
     lockRef.current = true;
-    setPhase('freezing');
+    setPhase('entering');
 
     void (async () => {
-      await wait(FREEZE_MS);
+      await wait(ENTER_MS);
       navigate(MEMORIAL_PATH);
       window.scrollTo(0, 0);
       setPhase('memorial');
@@ -92,16 +104,16 @@ export function MemorialProvider({ children }: { children: ReactNode }) {
     (to: string) => {
       if (lockRef.current) return;
 
-      if (location.pathname !== MEMORIAL_PATH) {
+      if (!isMemorialPath(location.pathname)) {
         navigate(to);
         return;
       }
 
       lockRef.current = true;
-      setPhase('thawing');
+      setPhase('leaving');
 
       void (async () => {
-        await wait(THAW_MS);
+        await wait(LEAVE_MS);
         navigate(to);
         window.scrollTo(0, 0);
         setPhase('alive');
@@ -113,11 +125,11 @@ export function MemorialProvider({ children }: { children: ReactNode }) {
 
   const navigateRespectfully = useCallback(
     (to: string) => {
-      if (to === MEMORIAL_PATH) {
+      if (to === MEMORIAL_PATH || to === MEMORIAL_LEGACY_PATH) {
         enterMemorial();
         return;
       }
-      if (location.pathname === MEMORIAL_PATH || phase === 'memorial') {
+      if (isMemorialPath(location.pathname) || phase === 'memorial') {
         exitMemorial(to);
         return;
       }
@@ -129,7 +141,7 @@ export function MemorialProvider({ children }: { children: ReactNode }) {
   const value = useMemo<MemorialContextValue>(
     () => ({
       phase,
-      isQuiet: phase === 'freezing' || phase === 'memorial' || phase === 'thawing',
+      isQuiet: phase === 'entering' || phase === 'memorial' || phase === 'leaving',
       isMemorial: phase === 'memorial',
       enterMemorial,
       exitMemorial,

@@ -7,14 +7,14 @@ const DesktopBackground = lazy(() => import('./DesktopBackground'));
  * Mobile: CSS starfield (no WebGL).
  * Desktop: identical Canvas path as before (lazy-chunked).
  */
-export default function Background({ frozen = false }: { frozen?: boolean }) {
+export default function Background({ hushed = false }: { hushed?: boolean }) {
   const isMobilePerf = useIsMobilePerf();
 
   if (isMobilePerf) {
     return (
       <div
         id="canvas-container"
-        className={`mobile-starfield${frozen ? ' is-frozen' : ''}`}
+        className={`mobile-starfield${hushed ? ' is-hushed' : ''}`}
         aria-hidden
       />
     );
@@ -30,7 +30,7 @@ export default function Background({ frozen = false }: { frozen?: boolean }) {
         />
       }
     >
-      <DesktopBackground frozen={frozen} />
+      <DesktopBackground hushed={hushed} />
     </Suspense>
   );
 }
