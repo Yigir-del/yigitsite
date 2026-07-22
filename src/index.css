@@ -778,15 +778,13 @@ html.scene-quiet {
   --cursor-glow: transparent;
 }
 
-html.scene-entering .app-container.is-quiet,
-html.scene-leaving .app-container.is-quiet {
-  transition: filter 0.7s ease;
-  filter: saturate(0.92) brightness(0.96);
-}
-
 .mobile-starfield.is-hushed {
   opacity: 0.85;
-  transition: opacity 0.8s ease;
+  transition: opacity 0.35s ease;
+}
+
+.site-nav__link--anitkabir:active {
+  transform: translateY(0) scale(0.96);
 }
 
 /* Center jewel — Anıtkabir */

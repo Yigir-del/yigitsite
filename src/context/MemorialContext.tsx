@@ -4,8 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
-  useState,
+  useTransition,
   type ReactNode,
 } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -15,112 +14,99 @@ export const MEMORIAL_PATH = '/miras';
 /** Legacy alias kept for old links */
 export const MEMORIAL_LEGACY_PATH = '/atam';
 
-export type MemorialPhase = 'alive' | 'entering' | 'memorial' | 'leaving';
-
 interface MemorialContextValue {
-  phase: MemorialPhase;
-  /** Chaos / jokes / loud motion should hush */
+  /** On memorial route (or legacy alias) */
   isQuiet: boolean;
   isMemorial: boolean;
   enterMemorial: () => void;
   exitMemorial: (to: string) => void;
   navigateRespectfully: (to: string) => void;
+  prefetchMemorial: () => void;
 }
 
 const MemorialContext = createContext<MemorialContextValue | null>(null);
-
-const ENTER_MS = 700;
-const LEAVE_MS = 550;
-
-function wait(ms: number) {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-}
 
 function isMemorialPath(pathname: string) {
   return pathname === MEMORIAL_PATH || pathname === MEMORIAL_LEGACY_PATH;
 }
 
-function syncHtmlPhase(phase: MemorialPhase) {
-  const root = document.documentElement;
-  root.classList.toggle('scene-entering', phase === 'entering');
-  root.classList.toggle('scene-memorial', phase === 'memorial');
-  root.classList.toggle('scene-leaving', phase === 'leaving');
-  root.classList.toggle(
-    'scene-quiet',
-    phase === 'entering' || phase === 'memorial' || phase === 'leaving',
-  );
+let memorialPrefetch: Promise<unknown> | null = null;
+
+export function prefetchMemorialChunk() {
+  if (!memorialPrefetch) {
+    memorialPrefetch = Promise.all([
+      import('../components/sections/Memorial'),
+      // Warm portrait so first paint after click isn’t waiting on the JPEG
+      new Promise<void>((resolve) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = '/Ataturk1930s.jpg';
+      }),
+    ]);
+  }
+  return memorialPrefetch;
 }
 
 export function MemorialProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [phase, setPhase] = useState<MemorialPhase>(() =>
-    isMemorialPath(location.pathname) ? 'memorial' : 'alive',
-  );
-  const lockRef = useRef(false);
+  const [, startTransition] = useTransition();
+
+  const onMemorial = isMemorialPath(location.pathname);
 
   useEffect(() => {
-    syncHtmlPhase(phase);
+    const root = document.documentElement;
+    root.classList.toggle('scene-quiet', onMemorial);
+    root.classList.toggle('scene-memorial', onMemorial);
     return () => {
-      syncHtmlPhase('alive');
+      root.classList.remove('scene-quiet', 'scene-memorial');
     };
-  }, [phase]);
+  }, [onMemorial]);
 
-  // Normalize legacy /atam → /miras
   useEffect(() => {
     if (location.pathname === MEMORIAL_LEGACY_PATH) {
       navigate(MEMORIAL_PATH, { replace: true });
     }
   }, [location.pathname, navigate]);
 
+  // Warm memorial chunk so Anıtkabir click feels instant
   useEffect(() => {
-    if (lockRef.current) return;
-    if (isMemorialPath(location.pathname)) {
-      setPhase('memorial');
-    } else if (phase !== 'alive' && phase !== 'leaving') {
-      setPhase('alive');
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(() => {
+        void prefetchMemorialChunk();
+      }, { timeout: 1200 });
+    } else {
+      timeoutId = window.setTimeout(() => {
+        void prefetchMemorialChunk();
+      }, 600);
     }
-  }, [location.pathname, phase]);
+
+    return () => {
+      if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   const enterMemorial = useCallback(() => {
-    if (lockRef.current) return;
     if (isMemorialPath(location.pathname)) return;
-
-    lockRef.current = true;
-    setPhase('entering');
-
-    void (async () => {
-      await wait(ENTER_MS);
+    void prefetchMemorialChunk();
+    startTransition(() => {
       navigate(MEMORIAL_PATH);
-      window.scrollTo(0, 0);
-      setPhase('memorial');
-      lockRef.current = false;
-    })();
-  }, [location.pathname, navigate]);
+    });
+  }, [location.pathname, navigate, startTransition]);
 
   const exitMemorial = useCallback(
     (to: string) => {
-      if (lockRef.current) return;
-
-      if (!isMemorialPath(location.pathname)) {
-        navigate(to);
-        return;
-      }
-
-      lockRef.current = true;
-      setPhase('leaving');
-
-      void (async () => {
-        await wait(LEAVE_MS);
-        navigate(to);
-        window.scrollTo(0, 0);
-        setPhase('alive');
-        lockRef.current = false;
-      })();
+      startTransition(() => navigate(to));
     },
-    [location.pathname, navigate],
+    [navigate, startTransition],
   );
 
   const navigateRespectfully = useCallback(
@@ -129,25 +115,29 @@ export function MemorialProvider({ children }: { children: ReactNode }) {
         enterMemorial();
         return;
       }
-      if (isMemorialPath(location.pathname) || phase === 'memorial') {
+      if (isMemorialPath(location.pathname)) {
         exitMemorial(to);
         return;
       }
-      navigate(to);
+      startTransition(() => navigate(to));
     },
-    [enterMemorial, exitMemorial, location.pathname, navigate, phase],
+    [enterMemorial, exitMemorial, location.pathname, navigate, startTransition],
   );
+
+  const prefetchMemorial = useCallback(() => {
+    void prefetchMemorialChunk();
+  }, []);
 
   const value = useMemo<MemorialContextValue>(
     () => ({
-      phase,
-      isQuiet: phase === 'entering' || phase === 'memorial' || phase === 'leaving',
-      isMemorial: phase === 'memorial',
+      isQuiet: onMemorial,
+      isMemorial: onMemorial,
       enterMemorial,
       exitMemorial,
       navigateRespectfully,
+      prefetchMemorial,
     }),
-    [phase, enterMemorial, exitMemorial, navigateRespectfully],
+    [onMemorial, enterMemorial, exitMemorial, navigateRespectfully, prefetchMemorial],
   );
 
   return <MemorialContext.Provider value={value}>{children}</MemorialContext.Provider>;

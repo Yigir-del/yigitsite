@@ -47,7 +47,7 @@ function AnitkabirIcon() {
 
 export default function Navigation() {
   const location = useLocation();
-  const { navigateRespectfully, isQuiet } = useMemorial();
+  const { navigateRespectfully, isQuiet, prefetchMemorial } = useMemorial();
   const [active, setActive] = useState(location.pathname);
   const [open, setOpen] = useState(false);
 
@@ -86,6 +86,8 @@ export default function Navigation() {
         href={item.path}
         className={`${base}${active === item.path ? ' is-active' : ''}${memorialClass}`}
         onClick={handleNav(item.path)}
+        onPointerEnter={isMemorial ? prefetchMemorial : undefined}
+        onFocus={isMemorial ? prefetchMemorial : undefined}
         aria-label={isMemorial ? 'Anıtkabir — Atatürk' : undefined}
         title={isMemorial ? 'Anıtkabir' : undefined}
       >
