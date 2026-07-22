@@ -2,7 +2,6 @@ import { useEffect, useState, type MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MEMORIAL_PATH, useMemorial } from '../../context/MemorialContext';
 
-/** Center jewel — eyes only, no label */
 const leftItems = [
   { path: '/', label: 'Ana Sayfa' },
   { path: '/hakkimda', label: 'Hakkımda' },
@@ -15,29 +14,38 @@ const rightItems = [
   { path: '/iletisim', label: 'İletişim' },
 ];
 
-const eyesItem = { path: MEMORIAL_PATH, label: '' };
+const memorialItem = { path: MEMORIAL_PATH, label: '' };
 
-const allItems = [...leftItems, eyesItem, ...rightItems];
+const allItems = [...leftItems, memorialItem, ...rightItems];
 
-/** Two blue eyes — Atatürk's gaze */
-function EyesIcon() {
+/** Minimal Anıtkabir silhouette — Hall of Honor + flanking towers */
+function AnitkabirIcon() {
   return (
     <svg
-      className="site-nav__eyes"
-      width="28"
-      height="12"
-      viewBox="0 0 28 12"
+      className="site-nav__anitkabir"
+      width="26"
+      height="16"
+      viewBox="0 0 26 16"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <ellipse cx="7" cy="6" rx="5.2" ry="4.6" fill="#1e3a5f" stroke="#5b8fbf" strokeWidth="1" />
-      <circle cx="7.6" cy="6" r="2.1" fill="#7eb6e8" />
-      <circle cx="8.1" cy="5.4" r="0.7" fill="#e8f4ff" opacity="0.9" />
-
-      <ellipse cx="21" cy="6" rx="5.2" ry="4.6" fill="#1e3a5f" stroke="#5b8fbf" strokeWidth="1" />
-      <circle cx="21.6" cy="6" r="2.1" fill="#7eb6e8" />
-      <circle cx="22.1" cy="5.4" r="0.7" fill="#e8f4ff" opacity="0.9" />
+      {/* Left tower */}
+      <rect x="1" y="4" width="3.2" height="10" rx="0.4" fill="currentColor" opacity="0.85" />
+      <rect x="1.35" y="2.2" width="2.5" height="1.8" rx="0.3" fill="currentColor" />
+      {/* Right tower */}
+      <rect x="21.8" y="4" width="3.2" height="10" rx="0.4" fill="currentColor" opacity="0.85" />
+      <rect x="22.15" y="2.2" width="2.5" height="1.8" rx="0.3" fill="currentColor" />
+      {/* Central hall roof */}
+      <path d="M6.2 5.2 L13 1.6 L19.8 5.2 Z" fill="currentColor" />
+      {/* Columns */}
+      <rect x="7" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
+      <rect x="9.4" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
+      <rect x="11.8" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
+      <rect x="14.2" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
+      <rect x="16.6" y="5.2" width="1.35" height="8.8" fill="currentColor" opacity="0.9" />
+      {/* Base / steps */}
+      <rect x="0.5" y="14" width="25" height="1.2" rx="0.3" fill="currentColor" opacity="0.7" />
     </svg>
   );
 }
@@ -69,24 +77,24 @@ export default function Navigation() {
   };
 
   const renderLink = (item: { path: string; label: string }, variant: 'desktop' | 'panel') => {
-    const isEyes = item.path === MEMORIAL_PATH;
+    const isMemorial = item.path === MEMORIAL_PATH;
     const base = variant === 'desktop' ? 'site-nav__link' : 'site-nav__panel-link';
-    const eyesClass = isEyes
+    const memorialClass = isMemorial
       ? variant === 'desktop'
-        ? ' site-nav__link--eyes'
-        : ' site-nav__panel-link--eyes'
+        ? ' site-nav__link--anitkabir'
+        : ' site-nav__panel-link--anitkabir'
       : '';
 
     return (
       <a
         key={item.path}
         href={item.path}
-        className={`${base}${active === item.path ? ' is-active' : ''}${eyesClass}`}
+        className={`${base}${active === item.path ? ' is-active' : ''}${memorialClass}`}
         onClick={handleNav(item.path)}
-        aria-label={isEyes ? 'Atatürk' : undefined}
-        title={isEyes ? 'Atatürk' : undefined}
+        aria-label={isMemorial ? 'Anıtkabir — Atatürk' : undefined}
+        title={isMemorial ? 'Anıtkabir' : undefined}
       >
-        {isEyes ? <EyesIcon /> : <span>{item.label}</span>}
+        {isMemorial ? <AnitkabirIcon /> : <span>{item.label}</span>}
       </a>
     );
   };
@@ -95,7 +103,7 @@ export default function Navigation() {
     <nav className={`site-nav${isQuiet ? ' site-nav--quiet' : ''}`} aria-label="Ana menü">
       <div className="site-nav__desktop">
         {leftItems.map((item) => renderLink(item, 'desktop'))}
-        {renderLink(eyesItem, 'desktop')}
+        {renderLink(memorialItem, 'desktop')}
         {rightItems.map((item) => renderLink(item, 'desktop'))}
       </div>
 

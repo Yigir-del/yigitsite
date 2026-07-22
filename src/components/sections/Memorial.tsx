@@ -1,5 +1,5 @@
-import SEOHead from '../../seo/SEOHead';
 import SilentGuardians from '../events/SilentGuardians';
+import SEOHead from '../../seo/SEOHead';
 
 /**
  * Complete text of Gençliğe Hitabe (Atatürk, 20 Ekim 1927).
@@ -13,34 +13,150 @@ const HITABE_PARAGRAPHS = [
 
 export default function Memorial() {
   return (
-    <section className="memorial-section" aria-label="Mustafa Kemal Atatürk">
+    <section
+      className="memorial-section projects-section"
+      aria-label="Mustafa Kemal Atatürk"
+      style={{ padding: '6rem 2rem', minHeight: '100vh', maxWidth: '1000px', margin: '0 auto' }}
+    >
       <SEOHead page="memorial" />
 
-      <div className="memorial-hero card-surface">
-        <figure className="memorial-hero__portrait">
-          <img
-            src="/Ataturk1930s.jpg"
-            alt="Mustafa Kemal Atatürk"
-            width={640}
-            height={800}
-            decoding="async"
-            fetchPriority="high"
-          />
-          <div className="memorial-hero__light" aria-hidden />
-        </figure>
+      <div className="project-section memorial-project" style={{ position: 'relative' }}>
+        <div
+          className="project-section__line"
+          style={{
+            position: 'absolute',
+            left: '-2rem',
+            top: 0,
+            bottom: 0,
+            width: '1px',
+            background: 'linear-gradient(to bottom, transparent, var(--timeline), transparent)',
+          }}
+        />
 
-        <SilentGuardians />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexWrap: 'wrap',
+            gap: '2rem',
+          }}
+        >
+          <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+            <h1
+              style={{
+                fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
+                marginBottom: '0.5rem',
+                color: 'var(--text-main)',
+                fontFamily: 'var(--font-title)',
+                fontWeight: 400,
+              }}
+            >
+              Mustafa Kemal Atatürk
+            </h1>
 
-        <h1 className="memorial-hero__title">Mustafa Kemal Atatürk</h1>
-        <p className="memorial-hero__subtitle">Bir milletin kaderini değiştiren lider.</p>
+            <p
+              style={{
+                marginBottom: '2rem',
+                color: 'var(--text-muted)',
+                fontSize: '0.95rem',
+                fontStyle: 'italic',
+              }}
+            >
+              Bir milletin kaderini değiştiren lider.
+            </p>
+
+            <SilentGuardians />
+
+            <h2
+              style={{
+                fontSize: '1rem',
+                color: 'var(--accent-pale-gray)',
+                marginBottom: '1.25rem',
+                marginTop: '2rem',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                fontFamily: 'var(--font-title)',
+                fontWeight: 400,
+              }}
+            >
+              Gençliğe Hitabe
+            </h2>
+
+            {HITABE_PARAGRAPHS.map((paragraph) => (
+              <p
+                key={paragraph.slice(0, 24)}
+                style={{
+                  fontSize: '1.05rem',
+                  lineHeight: 1.8,
+                  marginBottom: '1.5rem',
+                  color: 'var(--text-primary, var(--text-main))',
+                  fontFamily: 'var(--font-title)',
+                }}
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+
+          <div
+            className="card-surface memorial-portrait-card"
+            style={{
+              flex: '1 1 300px',
+              minHeight: '360px',
+              borderRadius: '12px',
+              position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              className="memorial-portrait-card__light"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background:
+                  'radial-gradient(ellipse 70% 50% at 50% 20%, rgba(203, 213, 225, 0.12), transparent 60%)',
+                pointerEvents: 'none',
+                zIndex: 2,
+              }}
+              aria-hidden
+            />
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                padding: '1.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box',
+              }}
+            >
+              <img
+                src="/Ataturk1930s.jpg"
+                alt="Mustafa Kemal Atatürk"
+                width={480}
+                height={600}
+                decoding="async"
+                fetchPriority="high"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  maxHeight: '420px',
+                  objectFit: 'contain',
+                  position: 'relative',
+                  zIndex: 1,
+                  borderRadius: '6px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
+                }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
-
-      <article className="memorial-hitabe" aria-label="Gençliğe Hitabe">
-        <h2 className="memorial-hitabe__heading">Gençliğe Hitabe</h2>
-        {HITABE_PARAGRAPHS.map((paragraph) => (
-          <p key={paragraph.slice(0, 24)}>{paragraph}</p>
-        ))}
-      </article>
     </section>
   );
 }

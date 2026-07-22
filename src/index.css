@@ -791,54 +791,58 @@ html.scene-leaving .app-container.is-quiet {
   transition: opacity 0.8s ease;
 }
 
-/* Center jewel — two blue eyes */
-.site-nav__link--eyes {
+/* Center jewel — Anıtkabir */
+.site-nav__link--anitkabir {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.35rem 0.65rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid rgba(91, 143, 191, 0.35);
-  background: linear-gradient(160deg, rgba(126, 182, 232, 0.08), rgba(30, 58, 95, 0.22));
+  border: 1px solid rgba(203, 213, 225, 0.28);
+  background: linear-gradient(160deg, rgba(203, 213, 225, 0.08), rgba(75, 107, 139, 0.14));
   box-shadow:
-    0 0 16px rgba(91, 143, 191, 0.18),
+    0 0 16px rgba(148, 163, 184, 0.14),
     0 1px 0 rgba(255, 255, 255, 0.05);
   transform: translateY(-1px);
   line-height: 0;
+  color: var(--accent-pale-gray);
   transition:
     border-color 0.35s ease,
     box-shadow 0.35s ease,
     background 0.35s ease,
-    transform 0.35s ease;
+    transform 0.35s ease,
+    color 0.35s ease;
 }
 
-.site-nav__link--eyes:hover,
-.site-nav__link--eyes.is-active {
-  border-color: rgba(126, 182, 232, 0.55);
-  background: linear-gradient(160deg, rgba(126, 182, 232, 0.14), rgba(30, 58, 95, 0.3));
+.site-nav__link--anitkabir:hover,
+.site-nav__link--anitkabir.is-active {
+  color: var(--accent-soft-white);
+  border-color: rgba(203, 213, 225, 0.45);
+  background: linear-gradient(160deg, rgba(203, 213, 225, 0.14), rgba(75, 107, 139, 0.2));
   box-shadow:
-    0 0 22px rgba(91, 143, 191, 0.28),
-    0 0 8px rgba(126, 182, 232, 0.15);
+    0 0 22px rgba(148, 163, 184, 0.24),
+    0 0 8px rgba(203, 213, 225, 0.1);
   transform: translateY(-2px);
 }
 
-.site-nav__eyes {
+.site-nav__anitkabir {
   display: block;
 }
 
-.site-nav__panel-link--eyes {
+.site-nav__panel-link--anitkabir {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 0.85rem;
+  padding: 0.55rem 1rem;
   border-radius: 999px;
-  border: 1px solid rgba(91, 143, 191, 0.35);
-  background: linear-gradient(160deg, rgba(126, 182, 232, 0.08), rgba(30, 58, 95, 0.22));
+  border: 1px solid rgba(203, 213, 225, 0.28);
+  background: linear-gradient(160deg, rgba(203, 213, 225, 0.08), rgba(75, 107, 139, 0.14));
+  color: var(--accent-pale-gray);
 }
 
-.site-nav__panel-link--eyes .site-nav__eyes {
-  width: 36px;
-  height: 16px;
+.site-nav__panel-link--anitkabir .site-nav__anitkabir {
+  width: 34px;
+  height: 20px;
 }
 
 .site-nav--quiet .site-nav__desktop {
@@ -888,9 +892,9 @@ html.scene-leaving .app-container.is-quiet {
 .silent-guardians {
   display: flex;
   align-items: flex-end;
-  justify-content: center;
-  gap: 1.75rem;
-  margin: 1.35rem 0 0.35rem;
+  justify-content: flex-start;
+  gap: 1.5rem;
+  margin: 0 0 0.5rem;
   pointer-events: none;
 }
 
@@ -917,7 +921,6 @@ html.scene-leaving .app-container.is-quiet {
   align-items: center;
   justify-content: center;
   box-shadow: 0 0 12px var(--glow);
-  /* Head lowered — same stance for both */
   transform: translateY(2px);
 }
 
@@ -929,123 +932,15 @@ html.scene-leaving .app-container.is-quiet {
   opacity: 0.65;
 }
 
-/* Miras page — Projects-family layout */
-.memorial-section {
-  padding: 6rem 2rem;
-  min-height: 100vh;
-  max-width: 1000px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(2.5rem, 6vw, 4.5rem);
-}
-
-.memorial-hero {
-  border-radius: 14px;
-  padding: clamp(1.15rem, 2.8vw, 1.75rem) clamp(1.15rem, 2.8vw, 1.75rem) clamp(1.35rem, 3vw, 1.9rem);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  max-width: 22rem;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.memorial-hero.card-surface:hover {
+.memorial-section .memorial-portrait-card.card-surface:hover {
   background: var(--card-bg);
   box-shadow: none;
 }
 
-.memorial-hero__portrait {
-  margin: 0 auto;
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  background: rgba(10, 14, 24, 0.35);
-  border: 1px solid var(--glass-border);
-  max-width: 14.5rem;
-}
-
-.memorial-hero__portrait img {
-  display: block;
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-  position: relative;
-  z-index: 1;
-}
-
-.memorial-hero__light {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 70% 45% at 50% 12%, rgba(203, 213, 225, 0.14), transparent 55%),
-    linear-gradient(to top, rgba(13, 19, 31, 0.35), transparent 40%);
-}
-
-.memorial-hero__title {
-  margin: 1.1rem 0 0;
-  font-family: var(--font-title);
-  font-weight: 400;
-  font-size: clamp(1.35rem, 3.6vw, 1.75rem);
-  letter-spacing: 0.04em;
-  color: var(--text-main);
-  line-height: 1.25;
-}
-
-.memorial-hero__subtitle {
-  margin: 1rem 0 0;
-  font-family: var(--font-body);
-  font-size: clamp(0.98rem, 2.4vw, 1.15rem);
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
-  font-style: italic;
-}
-
-.memorial-hitabe {
-  padding: 0.25rem 0.5rem 1rem;
-  max-width: 42rem;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-  background: transparent;
-  border: none;
-}
-
-.memorial-hitabe__heading {
-  margin: 0 0 1.75rem;
-  font-family: var(--font-title);
-  font-weight: 400;
-  font-size: clamp(1.15rem, 3vw, 1.35rem);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent-pale-gray);
-  text-align: center;
-}
-
-.memorial-hitabe p {
-  margin: 0 0 1.6rem;
-  font-family: var(--font-title);
-  font-size: clamp(1.02rem, 2.3vw, 1.12rem);
-  line-height: 1.9;
-  color: var(--text-primary, var(--text-main));
-}
-
-.memorial-hitabe p:last-child {
-  margin-bottom: 0;
-}
-
 @media (max-width: 860px) {
-  .memorial-section {
-    padding: 5.5rem 1.15rem 3.5rem;
-  }
-
   .silent-guardians {
-    gap: 1.35rem;
+    gap: 1.25rem;
+    justify-content: center;
   }
 
   .silent-guardians__face {
@@ -1066,7 +961,7 @@ html.scene-leaving .app-container.is-quiet {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .site-nav__link--eyes {
+  .site-nav__link--anitkabir {
     transition: none;
   }
 }
