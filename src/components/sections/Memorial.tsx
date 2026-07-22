@@ -17,8 +17,6 @@ export default function Memorial() {
       <SEOHead page="memorial" />
 
       <div className="memorial-block">
-        <div className="memorial-block__line" aria-hidden />
-
         {/* Atatürk on top */}
         <header className="memorial-block__hero">
           <div className="card-surface memorial-portrait-card">
