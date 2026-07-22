@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState, type MouseEvent } from 'react';
+import { useLocation } from 'react-router-dom';
+import { MEMORIAL_PATH, useMemorial } from '../../context/MemorialContext';
 
 const navItems = [
   { path: '/', label: 'Ana Sayfa' },
@@ -8,10 +9,12 @@ const navItems = [
   { path: '/dusunceler', label: 'Düşünceler' },
   { path: '/studyom', label: 'Stüdyom' },
   { path: '/iletisim', label: 'İletişim' },
+  { path: MEMORIAL_PATH, label: 'ATAM' },
 ];
 
 export default function Navigation() {
   const location = useLocation();
+  const { navigateRespectfully, isQuiet } = useMemorial();
   const [active, setActive] = useState(location.pathname);
   const [open, setOpen] = useState(false);
 
@@ -29,18 +32,27 @@ export default function Navigation() {
     };
   }, [open]);
 
+  const handleNav = (path: string) => (e: MouseEvent) => {
+    e.preventDefault();
+    setOpen(false);
+    navigateRespectfully(path);
+  };
+
   return (
-    <nav className="site-nav" aria-label="Ana menü">
+    <nav className={`site-nav${isQuiet ? ' site-nav--memorial' : ''}`} aria-label="Ana menü">
       {/* Desktop pill */}
       <div className="site-nav__desktop">
         {navItems.map((item) => (
-          <Link
+          <a
             key={item.path}
-            to={item.path}
-            className={`site-nav__link${active === item.path ? ' is-active' : ''}`}
+            href={item.path}
+            className={`site-nav__link${active === item.path ? ' is-active' : ''}${
+              item.path === MEMORIAL_PATH ? ' site-nav__link--atam' : ''
+            }`}
+            onClick={handleNav(item.path)}
           >
             {item.label}
-          </Link>
+          </a>
         ))}
       </div>
 
@@ -68,14 +80,16 @@ export default function Navigation() {
       >
         <div className="site-nav__panel-inner">
           {navItems.map((item) => (
-            <Link
+            <a
               key={item.path}
-              to={item.path}
-              className={`site-nav__panel-link${active === item.path ? ' is-active' : ''}`}
-              onClick={() => setOpen(false)}
+              href={item.path}
+              className={`site-nav__panel-link${active === item.path ? ' is-active' : ''}${
+                item.path === MEMORIAL_PATH ? ' site-nav__panel-link--atam' : ''
+              }`}
+              onClick={handleNav(item.path)}
             >
               {item.label}
-            </Link>
+            </a>
           ))}
         </div>
       </div>

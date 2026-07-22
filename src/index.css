@@ -772,3 +772,280 @@ html.world-flipped body {
   }
 }
 
+/* ═══════════════════════════════════════════
+   ATAM — Memorial atmosphere
+   Restraint over spectacle. Silence made visible.
+   ═══════════════════════════════════════════ */
+
+.atmosphere-fill--memorial {
+  background-color: #030303;
+  transition: background-color 1.4s ease;
+}
+
+html.scene-quiet {
+  --cursor-glow: transparent;
+}
+
+html.scene-freezing .app-container.is-freezing {
+  filter: saturate(0.55) brightness(0.72);
+  transition: filter 1.4s ease;
+}
+
+html.scene-freezing .mobile-starfield.is-frozen,
+.mobile-starfield.is-frozen {
+  animation: none !important;
+  opacity: 0.35;
+  transition: opacity 1.4s ease;
+}
+
+/* Full-screen silence veil */
+.memorial-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  pointer-events: none;
+  background: #020202;
+  opacity: 0;
+  transition: opacity 1.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.memorial-veil--freezing.is-active,
+.memorial-veil--thawing.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.memorial-veil--memorial.is-active {
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: 1.6s;
+  transition-delay: 0.15s;
+}
+
+/* Nav softens inside the memorial */
+.site-nav--memorial .site-nav__desktop {
+  background: rgba(0, 0, 0, 0.55);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.site-nav__link--atam,
+.site-nav__panel-link--atam {
+  letter-spacing: 0.18em;
+  font-weight: 500;
+}
+
+.site-nav--memorial .site-nav__link,
+.site-nav--memorial .site-nav__panel-link {
+  color: rgba(220, 220, 220, 0.45);
+}
+
+.site-nav--memorial .site-nav__link.is-active,
+.site-nav--memorial .site-nav__link:hover,
+.site-nav--memorial .site-nav__panel-link.is-active,
+.site-nav--memorial .site-nav__panel-link:hover {
+  color: rgba(245, 245, 245, 0.92);
+}
+
+/* Silent guardians — Bilge & Dilenci at attention */
+.silent-guardians {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.silent-guardians__figure {
+  position: absolute;
+  bottom: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0.72;
+}
+
+.silent-guardians__figure--sage {
+  left: 1.25rem;
+}
+
+.silent-guardians__figure--beggar {
+  right: 1.25rem;
+}
+
+.silent-guardians__face {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(12, 12, 14, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.silent-guardians__label {
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(180, 180, 180, 0.45);
+}
+
+/* Memorial page */
+.memorial {
+  position: relative;
+  min-height: 100vh;
+  padding: 7.5rem 1.5rem 6rem;
+  color: rgba(236, 236, 236, 0.92);
+  background: transparent;
+}
+
+.memorial__atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.memorial__rays {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(ellipse 55% 40% at 50% 18%, rgba(255, 255, 255, 0.055), transparent 62%),
+    conic-gradient(from 200deg at 50% 10%, transparent 0deg, rgba(255, 255, 255, 0.03) 18deg, transparent 42deg, transparent 180deg, rgba(255, 255, 255, 0.025) 210deg, transparent 250deg);
+  animation: memorial-rays 48s linear infinite;
+  opacity: 0.85;
+}
+
+.memorial__dust {
+  position: absolute;
+  inset: 0;
+}
+
+.memorial__mote {
+  --i: 0;
+  position: absolute;
+  left: calc(6% + (var(--i) * 5.1%));
+  top: calc(8% + (var(--i) * 4.7%));
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  opacity: 0.15;
+  animation: memorial-dust 36s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -1.7s);
+}
+
+.memorial__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 42rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.memorial__portrait {
+  margin: 0;
+  padding: 0;
+  max-width: min(100%, 22rem);
+  width: 100%;
+}
+
+.memorial__portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: contrast(1.02) brightness(0.96);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 24px 80px rgba(0, 0, 0, 0.55);
+}
+
+.memorial__title {
+  margin: 2.75rem 0 0;
+  font-family: var(--font-title), 'Playfair Display', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1.55rem, 4.2vw, 2.15rem);
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  color: rgba(245, 245, 245, 0.94);
+}
+
+.memorial__hitabe {
+  margin-top: 3.5rem;
+  text-align: left;
+  width: 100%;
+}
+
+.memorial__hitabe p {
+  margin: 0 0 1.75rem;
+  font-family: var(--font-title), 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.02rem, 2.4vw, 1.15rem);
+  line-height: 1.95;
+  letter-spacing: 0.01em;
+  color: rgba(220, 220, 220, 0.82);
+  font-weight: 400;
+}
+
+.memorial__hitabe p:last-child {
+  margin-bottom: 0;
+}
+
+@keyframes memorial-rays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes memorial-dust {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.08;
+  }
+  50% {
+    transform: translate3d(6px, -18px, 0);
+    opacity: 0.28;
+  }
+}
+
+@media (max-width: 860px) {
+  .memorial {
+    padding: 6.5rem 1.15rem 5.5rem;
+  }
+
+  .silent-guardians__figure--sage {
+    left: 0.65rem;
+  }
+
+  .silent-guardians__figure--beggar {
+    right: 0.65rem;
+  }
+
+  .silent-guardians__figure {
+    bottom: 1rem;
+    opacity: 0.55;
+  }
+
+  .silent-guardians__face {
+    width: 44px;
+    height: 44px;
+  }
+
+  .silent-guardians__face svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memorial__rays,
+  .memorial__mote,
+  .memorial-veil {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+

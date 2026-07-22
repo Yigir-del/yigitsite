@@ -1,16 +1,29 @@
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
+import { MEMORIAL_PATH } from '../../context/MemorialContext';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-/** Soft bottom→up page enter — smooth glide, quick exit so it never feels delayed */
+/** Soft bottom→up page enter — quiet fade for the memorial */
 export default function PageTransition({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
+  const memorial = pathname === MEMORIAL_PATH;
+
   return (
     <motion.div
       className="page-transition"
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0, transition: { duration: 0.6, ease } }}
-      exit={{ opacity: 0, y: -12, transition: { duration: 0.22, ease } }}
+      initial={memorial ? { opacity: 0 } : { opacity: 0, y: 40 }}
+      animate={
+        memorial
+          ? { opacity: 1, transition: { duration: 0.9, ease } }
+          : { opacity: 1, y: 0, transition: { duration: 0.6, ease } }
+      }
+      exit={
+        memorial
+          ? { opacity: 0, transition: { duration: 0.45, ease } }
+          : { opacity: 0, y: -12, transition: { duration: 0.22, ease } }
+      }
     >
       {children}
     </motion.div>

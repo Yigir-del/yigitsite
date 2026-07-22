@@ -43,7 +43,8 @@ export type PageKey =
   | 'projects'
   | 'thoughts'
   | 'studio'
-  | 'contact';
+  | 'contact'
+  | 'memorial';
 
 export interface PageSEO {
   title: string;
@@ -128,5 +129,17 @@ export const PAGE_SEO: Record<PageKey, PageSEO> = {
       'contact',
     ].join(', '),
     canonical: `${SITE.url}/iletisim`,
+  },
+  memorial: {
+    title: 'ATAM — Mustafa Kemal Atatürk',
+    description:
+      'Mustafa Kemal Atatürk anısına saygı duruşu. Gençliğe Hitabe.',
+    keywords: [
+      'Mustafa Kemal Atatürk',
+      'Gençliğe Hitabe',
+      'ATAM',
+      'anıt',
+    ].join(', '),
+    canonical: `${SITE.url}/atam`,
   },
 };

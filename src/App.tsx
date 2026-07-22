@@ -13,7 +13,10 @@ import Footer from './components/layout/Footer';
 import Hero from './components/sections/Hero';
 import NotesWall from './pages/NotesWall';
 import { ThemeProvider } from './context/ThemeContext';
+import { MemorialProvider, useMemorial } from './context/MemorialContext';
 import ThemeSelector from './components/ui/ThemeSelector';
+import MemorialVeil from './components/memorial/MemorialVeil';
+import SilentGuardians from './components/events/SilentGuardians';
 import { useIsMobilePerf } from './hooks/useIsMobilePerf';
 import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
 import { trackPageView } from './utils/analytics';
@@ -23,6 +26,7 @@ const Projects = lazy(() => import('./components/sections/Projects'));
 const Thoughts = lazy(() => import('./components/sections/Thoughts'));
 const Studio = lazy(() => import('./components/sections/Studio'));
 const Contact = lazy(() => import('./components/sections/Contact'));
+const Memorial = lazy(() => import('./components/sections/Memorial'));
 
 const FlyingBeggar = lazy(() => import('./components/events/FlyingBeggar'));
 const FlyingSage = lazy(() => import('./components/events/FlyingSage'));
@@ -47,7 +51,6 @@ function Analytics() {
   useEffect(() => {
     const send = () => trackPageView(location.pathname + location.search);
 
-    // Ana thread boştayken gönder; requestIdleCallback yoksa 300ms sonra
     if (typeof window.requestIdleCallback === 'function') {
       const id = window.requestIdleCallback(send, { timeout: 300 });
       return () => window.cancelIdleCallback(id);
@@ -88,6 +91,7 @@ function AnimatedRoutes() {
             <Route path="/dusunceler" element={<Thoughts />} />
             <Route path="/studyom" element={<Studio />} />
             <Route path="/iletisim" element={<Contact />} />
+            <Route path="/atam" element={<Memorial />} />
           </Routes>
         </PageTransition>
       </AnimatePresence>
@@ -95,18 +99,25 @@ function AnimatedRoutes() {
   );
 }
 
-function App() {
+function AppShell() {
   const [upsideDown, setUpsideDown] = useState(false);
   const isMobilePerf = useIsMobilePerf();
+  const { isQuiet, phase } = useMemorial();
 
   const toggleWorld = useCallback(() => {
+    if (isQuiet) return;
     setUpsideDown((v) => !v);
-  }, []);
+  }, [isQuiet]);
 
   useEffect(() => {
     window.addEventListener('world-flip', toggleWorld);
     return () => window.removeEventListener('world-flip', toggleWorld);
   }, [toggleWorld]);
+
+  // Memorial silence cancels any upside-down chaos
+  useEffect(() => {
+    if (isQuiet && upsideDown) setUpsideDown(false);
+  }, [isQuiet, upsideDown]);
 
   useEffect(() => {
     const stage = document.querySelector('.app-container') as HTMLElement | null;
@@ -137,46 +148,86 @@ function App() {
     };
   }, [upsideDown]);
 
+  const showBackground = phase === 'alive' || phase === 'freezing' || phase === 'thawing';
+  const showLivingChaos = phase === 'alive';
+  const showFlyers = phase === 'alive' || phase === 'freezing';
+  const showGuardians = phase === 'memorial';
+  const freezing = phase === 'freezing';
+
   return (
-    <ThemeProvider>
-      <div className="atmosphere-fill" aria-hidden />
-      <Background />
-      <ThemeSelector />
+    <>
+      <div
+        className={`atmosphere-fill${isQuiet ? ' atmosphere-fill--memorial' : ''}`}
+        aria-hidden
+      />
+      {showBackground ? <Background frozen={freezing} /> : null}
+      {!isQuiet && <ThemeSelector />}
 
       <Shell>
         <ScrollToTop />
         <Analytics />
-        <div className="app-container">
-          <ChaosManager />
-          <EasterEggs />
-          {!isMobilePerf && (
-            <Suspense fallback={null}>
-              <FlyingBeggar />
-              <FlyingSage />
-              <SocialDrifters />
-            </Suspense>
+        <div className={`app-container${freezing ? ' is-freezing' : ''}`}>
+          {showLivingChaos && (
+            <>
+              <ChaosManager />
+              <EasterEggs />
+              <FakeMenu />
+            </>
           )}
-          <FlyingPen />
-          <FlyingMusic />
-          <FakeMenu />
+
+          {showFlyers && (
+            <>
+              {!isMobilePerf && (
+                <Suspense fallback={null}>
+                  <FlyingBeggar />
+                  <FlyingSage />
+                  <SocialDrifters />
+                </Suspense>
+              )}
+              <FlyingPen />
+            </>
+          )}
+          {showLivingChaos && <FlyingMusic />}
+
+          {showGuardians && <SilentGuardians />}
+
           <Navigation />
 
-          <main style={{ position: 'relative', zIndex: 10, minHeight: '100vh', transition: 'color 1.5s ease' }}>
+          <main
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              minHeight: '100vh',
+              transition: 'color 1.5s ease',
+            }}
+          >
             <AnimatedRoutes />
           </main>
 
-          <Footer />
+          {!isQuiet && <Footer />}
         </div>
       </Shell>
-      {/* Cursor stays outside flipped stage so glow + tip never invert */}
-      {!isMobilePerf && (
+
+      <MemorialVeil />
+
+      {!isMobilePerf && !isQuiet && (
         <Suspense fallback={null}>
           <CustomCursor />
         </Suspense>
       )}
-      {!isMobilePerf && (
+      {!isMobilePerf && !isQuiet && (
         <div className="noise-overlay" style={{ mixBlendMode: 'overlay', pointerEvents: 'none' }} />
       )}
+    </>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <MemorialProvider>
+        <AppShell />
+      </MemorialProvider>
     </ThemeProvider>
   );
 }
