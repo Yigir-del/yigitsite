@@ -37,7 +37,7 @@ export default function Memorial() {
         <p className="memorial-hero__subtitle">Bir milletin kaderini değiştiren lider.</p>
       </div>
 
-      <article className="memorial-hitabe card-surface" aria-label="Gençliğe Hitabe">
+      <article className="memorial-hitabe" aria-label="Gençliğe Hitabe">
         <h2 className="memorial-hitabe__heading">Gençliğe Hitabe</h2>
         {HITABE_PARAGRAPHS.map((paragraph) => (
           <p key={paragraph.slice(0, 24)}>{paragraph}</p>
