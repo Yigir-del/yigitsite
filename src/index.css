@@ -943,7 +943,8 @@ html.scene-leaving .app-container.is-quiet {
 .silent-guardians__bubble {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%) translateX(4px);
+  left: calc(100% + 0.6rem);
+  right: auto;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(10px);
@@ -960,22 +961,12 @@ html.scene-leaving .app-container.is-quiet {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transform: translateY(-50%) translateX(-6px);
   transition: opacity 0.22s ease, visibility 0.22s ease, transform 0.22s ease;
   z-index: 20;
 }
 
-.silent-guardians__bubble--sage {
-  left: calc(100% + 0.55rem);
-  transform: translateY(-50%) translateX(-4px);
-}
-
-.silent-guardians__bubble--beggar {
-  left: calc(100% + 0.55rem);
-  transform: translateY(-50%) translateX(-4px);
-}
-
-.silent-guardians__bubble--sage::before,
-.silent-guardians__bubble--beggar::before {
+.silent-guardians__bubble::before {
   content: '';
   position: absolute;
   left: -5px;
