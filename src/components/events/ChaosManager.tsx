@@ -13,8 +13,16 @@ export default function ChaosManager() {
 
   useEffect(() => {
     const mobile = getIsMobilePerf();
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+    const track = (fn: () => void, ms: number) => {
+      const id = setTimeout(() => {
+        timers.delete(id);
+        fn();
+      }, ms);
+      timers.add(id);
+      return id;
+    };
 
-    // Mobile: skip random chaos loops (major timer/UI pressure)
     if (mobile) {
       let idleTimer: ReturnType<typeof setTimeout>;
       const resetIdleTimer = () => {
@@ -35,55 +43,62 @@ export default function ChaosManager() {
     const triggerChaos = () => {
       const events: EventType[] = ['ufo', 'popup', 'achievement'];
       const randomEvent = events[Math.floor(Math.random() * events.length)];
-      
+
       setActiveEvent(randomEvent);
 
       if (randomEvent === 'popup') {
         setShowPopup(true);
-        setTimeout(() => setShowPopup(false), 3000);
+        track(() => setShowPopup(false), 3000);
       } else if (randomEvent === 'achievement') {
         setShowAchievement(true);
-        setTimeout(() => setShowAchievement(false), 4000);
+        track(() => setShowAchievement(false), 4000);
       } else if (randomEvent === 'gravity') {
         window.dispatchEvent(new Event('world-flip'));
-        setTimeout(() => {
-          window.dispatchEvent(new Event('world-flip'));
-        }, 5000);
+        track(() => window.dispatchEvent(new Event('world-flip')), 5000);
       } else {
-        setTimeout(() => {
-          setActiveEvent('none');
-        }, 8000);
+        track(() => setActiveEvent('none'), 8000);
       }
 
       const nextTime = Math.random() * (90000 - 30000) + 30000;
-      setTimeout(triggerChaos, nextTime);
+      track(triggerChaos, nextTime);
     };
 
-    const initialTimeout = setTimeout(triggerChaos, 20000);
+    track(triggerChaos, 20000);
 
     let idleTimer: ReturnType<typeof setTimeout>;
-    const resetIdleTimer = () => {
+    let idleRaf = 0;
+    const scheduleIdle = () => {
       clearTimeout(idleTimer);
       setIdleQuote(null);
       idleTimer = setTimeout(() => {
         const quotes = [
-          "Bazen hiçbir şey yapmamak, yapabileceğin en iyi şeydir.",
-          "Burada çok sessizleştin... İyi misin?",
-          "Zaman geçiyor. Kodlar eskiyor. Sen nasılsın?",
-          "Boşluğa ne kadar uzun süre bakarsan, boşluk da sana o kadar bakar."
+          'Bazen hiçbir şey yapmamak, yapabileceğin en iyi şeydir.',
+          'Burada çok sessizleştin... İyi misin?',
+          'Zaman geçiyor. Kodlar eskiyor. Sen nasılsın?',
+          'Boşluğa ne kadar uzun süre bakarsan, boşluk da sana o kadar bakar.',
         ];
         setIdleQuote(quotes[Math.floor(Math.random() * quotes.length)]);
-      }, 120000); 
+      }, 120000);
     };
 
-    window.addEventListener('mousemove', resetIdleTimer);
+    const resetIdleTimer = () => {
+      if (idleRaf) return;
+      idleRaf = requestAnimationFrame(() => {
+        idleRaf = 0;
+        scheduleIdle();
+      });
+    };
+
+    window.addEventListener('mousemove', resetIdleTimer, { passive: true });
     window.addEventListener('keydown', resetIdleTimer);
-    window.addEventListener('scroll', resetIdleTimer);
-    resetIdleTimer();
+    window.addEventListener('scroll', resetIdleTimer, { passive: true });
+    scheduleIdle();
 
     return () => {
-      clearTimeout(initialTimeout);
+      timers.forEach(clearTimeout);
+      timers.clear();
       clearTimeout(idleTimer);
+      cancelAnimationFrame(idleRaf);
       window.removeEventListener('mousemove', resetIdleTimer);
       window.removeEventListener('keydown', resetIdleTimer);
       window.removeEventListener('scroll', resetIdleTimer);

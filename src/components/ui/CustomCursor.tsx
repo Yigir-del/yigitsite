@@ -1,38 +1,59 @@
 import { useEffect, useRef } from 'react';
 
-/** DOM-driven cursor — no React re-render per mousemove */
+/** DOM-driven cursor — rAF only while the pointer is moving. */
 export default function CustomCursor() {
   const glowRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
-  const pos = useRef({ x: 0, y: 0 });
+  const pos = useRef({ x: -100, y: -100 });
   const raf = useRef(0);
+  const running = useRef(false);
+  const idleTimer = useRef(0);
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.add('has-custom-cursor');
 
-    const onMove = (e: MouseEvent) => {
-      pos.current.x = e.clientX;
-      pos.current.y = e.clientY;
+    const stop = () => {
+      running.current = false;
+      cancelAnimationFrame(raf.current);
+      raf.current = 0;
+      if (glowRef.current) glowRef.current.style.willChange = 'auto';
+      if (dotRef.current) dotRef.current.style.willChange = 'auto';
     };
 
     const tick = () => {
       const { x, y } = pos.current;
       if (glowRef.current) {
-        glowRef.current.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+        glowRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
       }
       if (dotRef.current) {
-        dotRef.current.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+        dotRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
       }
       raf.current = requestAnimationFrame(tick);
     };
 
+    const start = () => {
+      if (running.current) return;
+      running.current = true;
+      if (glowRef.current) glowRef.current.style.willChange = 'transform';
+      if (dotRef.current) dotRef.current.style.willChange = 'transform';
+      raf.current = requestAnimationFrame(tick);
+    };
+
+    const onMove = (e: MouseEvent) => {
+      pos.current.x = e.clientX;
+      pos.current.y = e.clientY;
+      start();
+      window.clearTimeout(idleTimer.current);
+      idleTimer.current = window.setTimeout(stop, 120);
+    };
+
     window.addEventListener('mousemove', onMove, { passive: true });
-    raf.current = requestAnimationFrame(tick);
     return () => {
       root.classList.remove('has-custom-cursor');
       window.removeEventListener('mousemove', onMove);
-      cancelAnimationFrame(raf.current);
+      window.clearTimeout(idleTimer.current);
+      stop();
     };
   }, []);
 
@@ -52,7 +73,7 @@ export default function CustomCursor() {
           zIndex: 9998,
           background: 'radial-gradient(circle, var(--cursor-glow) 0%, transparent 70%)',
           opacity: 0.45,
-          willChange: 'transform',
+          transform: 'translate3d(-100px, -100px, 0) translate(-50%, -50%)',
         }}
       />
       <div
@@ -70,7 +91,7 @@ export default function CustomCursor() {
           zIndex: 9999,
           boxShadow: '0 0 10px var(--cursor-glow)',
           mixBlendMode: 'difference',
-          willChange: 'transform',
+          transform: 'translate3d(-100px, -100px, 0) translate(-50%, -50%)',
         }}
       />
     </>

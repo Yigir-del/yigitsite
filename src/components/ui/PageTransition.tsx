@@ -5,7 +5,10 @@ import { MEMORIAL_PATH, MEMORIAL_LEGACY_PATH } from '../../context/MemorialConte
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-/** Soft bottom→up page enter — quieter fade for Miras */
+/**
+ * GPU-only page transition — opacity + translate3d.
+ * Never animates layout properties (top/left/width/height/margin).
+ */
 export default function PageTransition({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const memorial = pathname === MEMORIAL_PATH || pathname === MEMORIAL_LEGACY_PATH;
@@ -13,17 +16,25 @@ export default function PageTransition({ children }: { children: ReactNode }) {
   return (
     <motion.div
       className="page-transition"
-      initial={memorial ? { opacity: 0 } : { opacity: 0, y: 40 }}
-      animate={
+      initial={
         memorial
-          ? { opacity: 1, transition: { duration: 0.85, ease } }
-          : { opacity: 1, y: 0, transition: { duration: 0.6, ease } }
+          ? { opacity: 0, transform: 'translate3d(0, 0, 0)' }
+          : { opacity: 0, transform: 'translate3d(0, 28px, 0)' }
       }
-      exit={
-        memorial
-          ? { opacity: 0, transition: { duration: 0.4, ease } }
-          : { opacity: 0, y: -12, transition: { duration: 0.22, ease } }
-      }
+      animate={{
+        opacity: 1,
+        transform: 'translate3d(0, 0, 0)',
+        transition: { duration: memorial ? 0.55 : 0.42, ease },
+      }}
+      exit={{
+        opacity: 0,
+        transform: memorial ? 'translate3d(0, 0, 0)' : 'translate3d(0, -8px, 0)',
+        transition: { duration: memorial ? 0.28 : 0.16, ease },
+      }}
+      style={{
+        willChange: 'transform, opacity',
+        backfaceVisibility: 'hidden',
+      }}
     >
       {children}
     </motion.div>
@@ -34,15 +45,16 @@ export function PageTransitionFallback() {
   return (
     <motion.div
       className="page-transition-fallback"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, transform: 'translate3d(0, 12px, 0)' }}
+      animate={{ opacity: 1, transform: 'translate3d(0, 0, 0)' }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.25, ease }}
+      transition={{ duration: 0.2, ease }}
       style={{
         minHeight: '50vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        willChange: 'transform, opacity',
       }}
       aria-hidden
     >

@@ -13,21 +13,31 @@ export default function Projects() {
 
   useEffect(() => {
     if (getIsMobilePerf()) return;
-    if (containerRef.current) {
-      const cards = containerRef.current.querySelectorAll('.project-section');
+    const root = containerRef.current;
+    if (!root) return;
+
+    const ctx = gsap.context(() => {
+      const cards = root.querySelectorAll('.project-section');
       cards.forEach((card) => {
-        gsap.fromTo(card, 
+        gsap.fromTo(
+          card,
           { y: 150, opacity: 0 },
-          { 
-            y: 0, opacity: 1, duration: 1.5, ease: 'power3.out',
+          {
+            y: 0,
+            opacity: 1,
+            duration: 1.5,
+            ease: 'power3.out',
             scrollTrigger: {
               trigger: card,
               start: 'top 85%',
-            }
-          }
+              toggleActions: 'play none none none',
+            },
+          },
         );
       });
-    }
+    }, root);
+
+    return () => ctx.revert();
   }, []);
 
   return (

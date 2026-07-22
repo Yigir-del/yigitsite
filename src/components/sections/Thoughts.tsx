@@ -31,19 +31,31 @@ export default function Thoughts() {
 
   useEffect(() => {
     if (getIsMobilePerf()) return;
-    if (containerRef.current && myThoughts.length > 0) {
-      const cards = containerRef.current.querySelectorAll('.thought-paper');
-      gsap.fromTo(cards, 
+    const root = containerRef.current;
+    if (!root || myThoughts.length === 0) return;
+
+    const ctx = gsap.context(() => {
+      const cards = root.querySelectorAll('.thought-paper');
+      gsap.fromTo(
+        cards,
         { y: 50, opacity: 0, scale: 0.9 },
-        { 
-          y: 0, opacity: 1, scale: 1, stagger: 0.15, duration: 1.2, ease: 'power2.out',
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          stagger: 0.15,
+          duration: 1.2,
+          ease: 'power2.out',
           scrollTrigger: {
-            trigger: containerRef.current,
+            trigger: root,
             start: 'top 80%',
-          }
-        }
+            toggleActions: 'play none none none',
+          },
+        },
       );
-    }
+    }, root);
+
+    return () => ctx.revert();
   }, [myThoughts.length]);
 
   const addThought = () => {

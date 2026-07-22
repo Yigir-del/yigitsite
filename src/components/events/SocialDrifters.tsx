@@ -173,30 +173,35 @@ export default function SocialDrifters() {
 
     const spawnDrifter = () => {
       if (cancelled) return;
-      const type = Math.random() > 0.5 ? 'github' : 'linkedin';
-      const tooltip = type === 'github' ? "GitHub'a uğra." : 'LinkedIn tarafı.';
-      const link =
-        type === 'github'
-          ? 'https://github.com/Yigir-del'
-          : 'https://www.linkedin.com/in/yigit-efe-altuntas/';
+      setDrifters((prev) => {
+        if (prev.length >= 2) return prev;
 
-      const { start, end } = randomFlightPath(window.innerWidth, window.innerHeight);
-      const duration = 18 + Math.random() * 16;
+        const type = Math.random() > 0.5 ? 'github' : 'linkedin';
+        const tooltip = type === 'github' ? "GitHub'a uğra." : 'LinkedIn tarafı.';
+        const link =
+          type === 'github'
+            ? 'https://github.com/Yigir-del'
+            : 'https://www.linkedin.com/in/yigit-efe-altuntas/';
 
-      const newDrifter: Drifter = {
-        id: Math.random().toString(36).slice(2, 11),
-        type,
-        startX: start.x,
-        startY: start.y,
-        endX: end.x,
-        endY: end.y,
-        duration,
-        rotation: Math.random() * 360,
-        tooltip,
-        link,
-      };
+        const { start, end } = randomFlightPath(window.innerWidth, window.innerHeight);
+        const duration = 18 + Math.random() * 16;
 
-      setDrifters((prev) => [...prev, newDrifter]);
+        return [
+          ...prev,
+          {
+            id: Math.random().toString(36).slice(2, 11),
+            type,
+            startX: start.x,
+            startY: start.y,
+            endX: end.x,
+            endY: end.y,
+            duration,
+            rotation: Math.random() * 360,
+            tooltip,
+            link,
+          } satisfies Drifter,
+        ];
+      });
     };
 
     const first = setTimeout(function loop() {

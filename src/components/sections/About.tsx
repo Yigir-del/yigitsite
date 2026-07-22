@@ -11,18 +11,29 @@ export default function About() {
 
   useEffect(() => {
     if (getIsMobilePerf()) return;
-    if (textRef.current) {
-      gsap.fromTo(textRef.current.children, 
+    const el = textRef.current;
+    if (!el) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        el.children,
         { y: 50, opacity: 0 },
-        { 
-          y: 0, opacity: 1, stagger: 0.2, duration: 1,
+        {
+          y: 0,
+          opacity: 1,
+          stagger: 0.2,
+          duration: 1,
+          ease: 'power2.out',
           scrollTrigger: {
-            trigger: textRef.current,
+            trigger: el,
             start: 'top 80%',
-          }
-        }
+            toggleActions: 'play none none none',
+          },
+        },
       );
-    }
+    }, el);
+
+    return () => ctx.revert();
   }, []);
 
   return (
