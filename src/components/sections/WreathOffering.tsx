@@ -39,24 +39,75 @@ function WreathIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      width="28"
-      height="28"
+      width="30"
+      height="30"
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <path
-        d="M32 8c-6 7-16 10-20 18 5 2 10 1 14-2-1 6-5 12-4 18 6-3 11-8 14-14 3 6 8 11 14 14 1-6-3-12-4-18 4 3 9 4 14 2-4-8-14-11-20-18Z"
-        fill="currentColor"
-        opacity="0.92"
-      />
-      <path
-        d="M20 44c4 6 9 10 12 12 3-2 8-6 12-12-5 1-9 1-12 0-3 1-7 1-12 0Z"
-        fill="currentColor"
-        opacity="0.55"
-      />
-      <circle cx="32" cy="36" r="3.2" fill="currentColor" opacity="0.75" />
+      {/* Outer ring */}
+      <circle cx="32" cy="32" r="22" stroke="currentColor" strokeWidth="2.2" opacity="0.35" />
+      <circle cx="32" cy="32" r="14.5" stroke="currentColor" strokeWidth="1.4" opacity="0.22" />
+
+      {/* Leaf clusters around the circle */}
+      <g fill="currentColor">
+        {/* top */}
+        <ellipse cx="32" cy="8.5" rx="4.2" ry="6.2" opacity="0.9" />
+        <ellipse cx="25.5" cy="10.5" rx="3.4" ry="5.2" transform="rotate(-28 25.5 10.5)" opacity="0.75" />
+        <ellipse cx="38.5" cy="10.5" rx="3.4" ry="5.2" transform="rotate(28 38.5 10.5)" opacity="0.75" />
+
+        {/* top-right */}
+        <ellipse cx="48" cy="16" rx="3.5" ry="5.4" transform="rotate(48 48 16)" opacity="0.88" />
+        <ellipse cx="52.5" cy="22.5" rx="3.2" ry="5" transform="rotate(68 52.5 22.5)" opacity="0.72" />
+
+        {/* right */}
+        <ellipse cx="55.5" cy="32" rx="4.2" ry="6.2" transform="rotate(90 55.5 32)" opacity="0.9" />
+        <ellipse cx="53" cy="39.5" rx="3.3" ry="5.1" transform="rotate(112 53 39.5)" opacity="0.74" />
+
+        {/* bottom-right */}
+        <ellipse cx="48" cy="48" rx="3.5" ry="5.4" transform="rotate(138 48 48)" opacity="0.86" />
+        <ellipse cx="41" cy="52.5" rx="3.2" ry="5" transform="rotate(158 41 52.5)" opacity="0.7" />
+
+        {/* bottom */}
+        <ellipse cx="32" cy="55.5" rx="4.2" ry="6.2" opacity="0.9" />
+        <ellipse cx="25.5" cy="53.5" rx="3.4" ry="5.2" transform="rotate(28 25.5 53.5)" opacity="0.75" />
+        <ellipse cx="38.5" cy="53.5" rx="3.4" ry="5.2" transform="rotate(-28 38.5 53.5)" opacity="0.75" />
+
+        {/* bottom-left */}
+        <ellipse cx="16" cy="48" rx="3.5" ry="5.4" transform="rotate(-138 16 48)" opacity="0.86" />
+        <ellipse cx="11.5" cy="41" rx="3.2" ry="5" transform="rotate(-112 11.5 41)" opacity="0.7" />
+
+        {/* left */}
+        <ellipse cx="8.5" cy="32" rx="4.2" ry="6.2" transform="rotate(-90 8.5 32)" opacity="0.9" />
+        <ellipse cx="11" cy="24.5" rx="3.3" ry="5.1" transform="rotate(-68 11 24.5)" opacity="0.74" />
+
+        {/* top-left */}
+        <ellipse cx="16" cy="16" rx="3.5" ry="5.4" transform="rotate(-48 16 16)" opacity="0.88" />
+        <ellipse cx="11.5" cy="22.5" rx="3.2" ry="5" transform="rotate(-68 11.5 22.5)" opacity="0.72" />
+      </g>
+
+      {/* Small flower buds on the ring */}
+      <g fill="currentColor">
+        <circle cx="32" cy="12" r="2.1" opacity="0.95" />
+        <circle cx="47.5" cy="18.5" r="1.8" opacity="0.85" />
+        <circle cx="52" cy="32" r="2.1" opacity="0.95" />
+        <circle cx="47.5" cy="45.5" r="1.8" opacity="0.85" />
+        <circle cx="32" cy="52" r="2.1" opacity="0.95" />
+        <circle cx="16.5" cy="45.5" r="1.8" opacity="0.85" />
+        <circle cx="12" cy="32" r="2.1" opacity="0.95" />
+        <circle cx="16.5" cy="18.5" r="1.8" opacity="0.85" />
+      </g>
+
+      {/* Center flower */}
+      <g fill="currentColor" opacity="0.88">
+        <circle cx="32" cy="28.5" r="2.4" />
+        <circle cx="35.6" cy="30.8" r="2.4" />
+        <circle cx="34.2" cy="34.8" r="2.4" />
+        <circle cx="29.8" cy="34.8" r="2.4" />
+        <circle cx="28.4" cy="30.8" r="2.4" />
+        <circle cx="32" cy="32" r="2" opacity="1" />
+      </g>
     </svg>
   );
 }
