@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { ReactLenis } from '@studio-freight/react-lenis';
+import { ReactLenis, useLenis } from '@studio-freight/react-lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Background from './components/canvas/Background';
@@ -19,6 +19,10 @@ import PageTransition, { PageTransitionFallback } from './components/ui/PageTran
 import { trackPageView } from './utils/analytics';
 
 gsap.registerPlugin(ScrollTrigger);
+
+if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual';
+}
 
 const About = lazy(() => import('./components/sections/About'));
 const Projects = lazy(() => import('./components/sections/Projects'));
@@ -38,9 +42,32 @@ const CustomCursor = lazy(() => import('./components/ui/CustomCursor'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
+  const lenis = useLenis();
+
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    const reset = () => {
+      // Lenis owns scroll on desktop — window.scrollTo alone is ignored next frame
+      if (lenis) {
+        lenis.scrollTo(0, { immediate: true });
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    reset();
+    const raf = requestAnimationFrame(reset);
+    const later = window.setTimeout(() => {
+      reset();
+      ScrollTrigger.refresh();
+    }, 80);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(later);
+    };
+  }, [pathname, lenis]);
+
   return null;
 }
 
