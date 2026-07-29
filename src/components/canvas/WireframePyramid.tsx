@@ -200,10 +200,10 @@ export default function WireframePyramid() {
     let curParallaxY = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const dist = Math.hypot(e.clientX, e.clientY);
-      if (dist < 380) {
-        const factor = (1 - dist / 380) * 2.5;
-        targetParallaxX = (e.clientX / window.innerWidth - 0.08) * factor;
+      const distToTopRight = Math.hypot(window.innerWidth - e.clientX, e.clientY);
+      if (distToTopRight < 380) {
+        const factor = (1 - distToTopRight / 380) * 2.5;
+        targetParallaxX = ((e.clientX - (window.innerWidth - 60)) / 400) * factor;
         targetParallaxY = (e.clientY / window.innerHeight - 0.08) * factor;
       } else {
         targetParallaxX = 0;
@@ -330,7 +330,7 @@ export default function WireframePyramid() {
       style={{
         position: 'fixed',
         top: '14px',
-        left: '20px',
+        right: '20px',
         width: '110px',
         height: '110px',
         zIndex: 5,
