@@ -15,10 +15,26 @@ export default function WireframePyramid() {
   const { theme } = useTheme();
   const themeRef = useRef(theme);
   const [mounted, setMounted] = useState(false);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const inspectRef = useRef(isInspecting);
+
+  useEffect(() => {
+    inspectRef.current = isInspecting;
+  }, [isInspecting]);
 
   useEffect(() => {
     themeRef.current = theme;
   }, [theme]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && inspectRef.current) {
+        setIsInspecting(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     // 2.5s gentle atmospheric emergence
@@ -43,7 +59,8 @@ export default function WireframePyramid() {
       antialias: true,
       powerPreference: 'high-performance',
     });
-    renderer.setSize(110, 110);
+    // Render at 4x resolution so CSS scale(4) stays sharp
+    renderer.setSize(440, 440, false);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     // --- Sacred Geometry Construction ---
@@ -200,6 +217,11 @@ export default function WireframePyramid() {
     let curParallaxY = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
+      if (inspectRef.current) {
+        targetParallaxX = 0;
+        targetParallaxY = 0;
+        return;
+      }
       const distToTopRight = Math.hypot(window.innerWidth - e.clientX, e.clientY);
       if (distToTopRight < 380) {
         const factor = (1 - distToTopRight / 380) * 2.5;
@@ -302,7 +324,13 @@ export default function WireframePyramid() {
       const floatY = Math.sin(timeSec * 1.1) * 1.5;
 
       if (containerRef.current) {
-        containerRef.current.style.transform = `translate3d(${curParallaxX.toFixed(2)}px, ${(floatY + curParallaxY).toFixed(2)}px, 0)`;
+        if (inspectRef.current) {
+          const tx = (window.innerWidth / 2) - (window.innerWidth - 75);
+          const ty = (window.innerHeight / 2) - 69;
+          containerRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(4)`;
+        } else {
+          containerRef.current.style.transform = `translate3d(${curParallaxX.toFixed(2)}px, ${(floatY + curParallaxY).toFixed(2)}px, 0) scale(1)`;
+        }
       }
 
       renderer.render(scene, camera);
@@ -323,27 +351,46 @@ export default function WireframePyramid() {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="sacred-pyramid-wrapper"
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        top: '14px',
-        right: '20px',
-        width: '110px',
-        height: '110px',
-        zIndex: 5,
-        pointerEvents: 'none',
-        userSelect: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: mounted ? 1 : 0,
-        transition: 'opacity 2.5s ease-out, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-        willChange: 'transform, opacity',
-      }}
-    >
+    <>
+      {/* Cinematic Inspection Backdrop */}
+      <div
+        onClick={() => setIsInspecting(false)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 4,
+          backgroundColor: 'rgba(5, 7, 14, 0.75)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          opacity: isInspecting ? 1 : 0,
+          pointerEvents: isInspecting ? 'auto' : 'none',
+          transition: 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      />
+
+      <div
+        ref={containerRef}
+        onClick={() => setIsInspecting(true)}
+        className="sacred-pyramid-wrapper"
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          top: '14px',
+          right: '20px',
+          width: '110px',
+          height: '110px',
+          zIndex: 5,
+          cursor: isInspecting ? 'default' : 'pointer',
+          pointerEvents: 'auto',
+          userSelect: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: mounted ? 1 : 0,
+          transition: 'opacity 2.5s ease-out, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          willChange: 'transform, opacity',
+        }}
+      >
       {/* Soft Ambient Background Glow */}
       <div
         ref={glowRef}
@@ -384,5 +431,6 @@ export default function WireframePyramid() {
         }}
       />
     </div>
+    </>
   );
 }
