@@ -5,6 +5,7 @@ import { ReactLenis, useLenis } from '@studio-freight/react-lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Background from './components/canvas/Background';
+import WireframePyramid from './components/canvas/WireframePyramid';
 import FakeMenu from './components/ui/FakeMenu';
 import Navigation from './components/layout/Navigation';
 import Footer from './components/layout/Footer';
@@ -202,7 +203,9 @@ function AppShell() {
     <>
       <div className="atmosphere-fill" aria-hidden />
       <Background hushed={isQuiet} />
+      <WireframePyramid />
       <ThemeSelector />
+
 
       <Shell>
         <ScrollToTop />
