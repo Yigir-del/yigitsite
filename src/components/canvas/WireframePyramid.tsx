@@ -1,16 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useTheme } from '../../context/ThemeContext';
 
 /**
  * Sacred Geometry 3D Wireframe Pyramid Component.
- * Features:
- * - Dual Tetrahedral Merkaba & Diamond Core Sacred Geometry.
- * - Custom WebGL Energy Line Shader (traveling white light pulse).
- * - Central Glowing Energy Orb (breathing core point).
- * - Rotating Energy Halo Ring backdrop.
- * - Organic precession motion & floating sine wave.
- * - Dynamic theme behaviors (Muryokusho serene, Fukuma Mizushi red jitter, Kango An'eitei purple shadow).
+ * Apple-grade micro-subtlety ambient design.
+ * Designed to reward user discovery without attracting unwanted attention.
  */
 export default function WireframePyramid() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,10 +14,17 @@ export default function WireframePyramid() {
   const glowRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const themeRef = useRef(theme);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     themeRef.current = theme;
   }, [theme]);
+
+  useEffect(() => {
+    // 2.5s gentle atmospheric emergence
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -31,8 +33,8 @@ export default function WireframePyramid() {
     // --- Three.js Setup ---
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
-    camera.position.set(0, 0.1, 5.8);
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+    camera.position.set(0, 0.1, 6.0);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
@@ -59,12 +61,11 @@ export default function WireframePyramid() {
       }
     };
 
-    const H = 2.3;
-    const yApex = H / 2; // +1.15
-    const yBase = -H / 2; // -1.15
-    const R_base = 1.15;
+    const H = 2.2;
+    const yApex = H / 2; // +1.1
+    const yBase = -H / 2; // -1.1
+    const R_base = 1.1;
 
-    // 1. Primary Outer Pyramid Levels
     const getLevelVerts = (t: number, rotOffset = 0) => {
       const y = yApex * (1 - t) + yBase * t;
       const r = R_base * t;
@@ -92,7 +93,7 @@ export default function WireframePyramid() {
     addPolygon(level2);
     addPolygon(level3);
 
-    // 2. Inverted Merkaba Dual Inner Geometry
+    // Inverted Merkaba Dual Inner Geometry
     const invLevel1 = getLevelVerts(0.66, Math.PI / 3);
     const invLevel2 = getLevelVerts(0.33, Math.PI / 3);
     invLevel1.forEach((v) => (v.y = -v.y));
@@ -106,7 +107,7 @@ export default function WireframePyramid() {
     addPolygon(invLevel1);
     addPolygon(invLevel2);
 
-    // 3. Central Core Diamond Struts
+    // Central Core Diamond Struts
     for (let k = 0; k < 3; k++) {
       addEdge(level1[k], centerCore);
       addEdge(level2[k], centerCore);
@@ -118,15 +119,15 @@ export default function WireframePyramid() {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('aProgress', new THREE.Float32BufferAttribute(lineProgress, 1));
 
-    // --- Custom Energy Line Shader ---
+    // --- Whisper-Soft Custom Line Shader ---
     const lineShaderMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uColor: { value: new THREE.Color('#d8e6ff') },
         uPulseColor: { value: new THREE.Color('#ffffff') },
-        uEnergySpeed: { value: 2.2 },
+        uEnergySpeed: { value: 1.6 },
         uJitter: { value: 0 },
-        uOpacity: { value: 0.28 },
+        uOpacity: { value: 0.18 },
       },
       vertexShader: `
         attribute float aProgress;
@@ -139,8 +140,8 @@ export default function WireframePyramid() {
           vProgress = aProgress;
           vec3 pos = position;
           if (uJitter > 0.0) {
-            float jitterX = sin(uTime * 35.0 + pos.y * 12.0) * uJitter;
-            float jitterY = cos(uTime * 35.0 + pos.x * 12.0) * uJitter;
+            float jitterX = sin(uTime * 25.0 + pos.y * 10.0) * uJitter;
+            float jitterY = cos(uTime * 25.0 + pos.x * 10.0) * uJitter;
             pos.x += jitterX;
             pos.y += jitterY;
           }
@@ -158,12 +159,12 @@ export default function WireframePyramid() {
         uniform float uOpacity;
 
         void main() {
-          // Traveling light energy pulse along edge lines
-          float wave = sin(vProgress * 14.0 - uTime * uEnergySpeed + vPos.y * 3.0);
-          float pulse = pow(0.5 + 0.5 * wave, 5.0);
+          // Extremely subtle, silky traveling starlight shimmer along wireframe edges
+          float wave = sin(vProgress * 10.0 - uTime * uEnergySpeed + vPos.y * 2.5);
+          float pulse = pow(0.5 + 0.5 * wave, 4.0);
 
-          vec3 finalColor = mix(uColor, uPulseColor, pulse * 0.7);
-          float alpha = uOpacity * (1.0 + pulse * 0.5);
+          vec3 finalColor = mix(uColor, uPulseColor, pulse * 0.25);
+          float alpha = uOpacity * (0.85 + pulse * 0.3);
 
           gl_FragColor = vec4(finalColor, alpha);
         }
@@ -176,23 +177,23 @@ export default function WireframePyramid() {
     const wireframeMesh = new THREE.LineSegments(geometry, lineShaderMaterial);
     scene.add(wireframeMesh);
 
-    // --- Central Glowing Energy Core Orb ---
-    const coreGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+    // --- Central Core Point (Whisper Orb) ---
+    const coreGeometry = new THREE.SphereGeometry(0.08, 16, 16);
     const coreMaterial = new THREE.MeshBasicMaterial({
       color: new THREE.Color('#ffffff'),
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.45,
       blending: THREE.AdditiveBlending,
     });
     const coreOrb = new THREE.Mesh(coreGeometry, coreMaterial);
     scene.add(coreOrb);
 
-    // --- Animation Variables ---
+    // --- Animation State ---
     let animId = 0;
     let prevTime = performance.now();
     let yRot = 0;
 
-    // Smooth Parallax
+    // Smooth Parallax State (Damped)
     let targetParallaxX = 0;
     let targetParallaxY = 0;
     let curParallaxX = 0;
@@ -200,10 +201,10 @@ export default function WireframePyramid() {
 
     const handleMouseMove = (e: MouseEvent) => {
       const dist = Math.hypot(e.clientX, e.clientY);
-      if (dist < 420) {
-        const factor = (1 - dist / 420) * 4.0;
-        targetParallaxX = (e.clientX / window.innerWidth - 0.1) * factor;
-        targetParallaxY = (e.clientY / window.innerHeight - 0.1) * factor;
+      if (dist < 380) {
+        const factor = (1 - dist / 380) * 2.5;
+        targetParallaxX = (e.clientX / window.innerWidth - 0.08) * factor;
+        targetParallaxY = (e.clientY / window.innerHeight - 0.08) * factor;
       } else {
         targetParallaxX = 0;
         targetParallaxY = 0;
@@ -212,92 +213,93 @@ export default function WireframePyramid() {
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // Helper for Theme Config
+    // Domain Theme Configurations (Apple-level subtlety)
     const getThemeConfig = (domId: string) => {
       if (domId === 'FukumaMizushi') {
         return {
           stroke: '#ff5555',
-          pulse: '#ffe0e0',
-          glow: 'rgba(255, 40, 40, 0.45)',
-          haloBorder: 'rgba(255, 60, 60, 0.3)',
-          speed: 3.5,
-          jitter: 0.01,
-          opacity: 0.32,
+          pulse: '#ffcccc',
+          glow: 'rgba(255, 40, 40, 0.25)',
+          haloBorder: 'rgba(255, 60, 60, 0.15)',
+          speed: 2.2,
+          jitter: 0.006,
+          opacity: 0.22,
         };
       }
       if (domId === 'KangoAneitei') {
         return {
           stroke: '#b866ff',
-          pulse: '#f3e8ff',
-          glow: 'rgba(160, 60, 240, 0.45)',
-          haloBorder: 'rgba(180, 90, 255, 0.25)',
-          speed: 1.5,
-          jitter: 0.002,
-          opacity: 0.25,
+          pulse: '#e9d5ff',
+          glow: 'rgba(160, 60, 240, 0.25)',
+          haloBorder: 'rgba(180, 90, 255, 0.14)',
+          speed: 1.2,
+          jitter: 0.001,
+          opacity: 0.16,
         };
       }
-      // Default: Muryokusho
+      // Muryokusho
       return {
         stroke: '#d8e6ff',
         pulse: '#ffffff',
-        glow: 'rgba(100, 170, 255, 0.4)',
-        haloBorder: 'rgba(140, 190, 255, 0.25)',
-        speed: 2.2,
+        glow: 'rgba(100, 170, 255, 0.25)',
+        haloBorder: 'rgba(140, 190, 255, 0.15)',
+        speed: 1.6,
         jitter: 0.0,
-        opacity: 0.28,
+        opacity: 0.18,
       };
     };
 
     const targetColor = new THREE.Color();
     const targetPulseColor = new THREE.Color();
 
-    // --- Main Render Loop ---
+    // --- Main Frame Loop ---
     const tick = (now: number) => {
       const dt = Math.min((now - prevTime) / 1000, 0.1);
       prevTime = now;
       const timeSec = now / 1000;
 
-      // 1. Organic Precession & Rotation
-      const baseSpeed = (2 * Math.PI) / 30; // ~30 sec per revolution
-      const organicSpeed = baseSpeed + Math.sin(timeSec * 0.3) * 0.003;
+      // 1. Organic Precession: ~36s slow revolution with harmonic wave
+      const baseSpeed = (2 * Math.PI) / 36;
+      const organicSpeed = baseSpeed + Math.sin(timeSec * 0.2) * 0.0015;
       yRot += organicSpeed * dt;
 
       wireframeMesh.rotation.y = yRot;
-      wireframeMesh.rotation.x = 0.24 + Math.sin(timeSec * 0.4) * 0.07;
-      wireframeMesh.rotation.z = Math.sin(timeSec * 0.25) * 0.04;
+      wireframeMesh.rotation.x = 0.22 + Math.sin(timeSec * 0.3) * 0.04;
+      wireframeMesh.rotation.z = Math.sin(timeSec * 0.18) * 0.025;
 
-      // 2. Central Core Orb Pulse
-      const corePulse = 1.0 + Math.sin(timeSec * 2.8) * 0.25;
+      // 2. Slow 8.5s Natural Resting Breath Rhythm
+      const breathPhase = Math.sin(timeSec * 0.74);
+      const corePulse = 1.0 + breathPhase * 0.18;
       coreOrb.scale.setScalar(corePulse);
-      coreMaterial.opacity = 0.6 + Math.sin(timeSec * 2.8) * 0.2;
+      coreMaterial.opacity = 0.35 + breathPhase * 0.15;
 
-      // 3. Update Shader Uniforms & Theme Smooth Interpolation
+      // 3. Theme Uniform Interpolation
       const config = getThemeConfig(themeRef.current);
       targetColor.set(config.stroke);
       targetPulseColor.set(config.pulse);
 
       lineShaderMaterial.uniforms.uTime.value = timeSec;
-      lineShaderMaterial.uniforms.uColor.value.lerp(targetColor, 0.05);
-      lineShaderMaterial.uniforms.uPulseColor.value.lerp(targetPulseColor, 0.05);
+      lineShaderMaterial.uniforms.uColor.value.lerp(targetColor, 0.04);
+      lineShaderMaterial.uniforms.uPulseColor.value.lerp(targetPulseColor, 0.04);
       lineShaderMaterial.uniforms.uEnergySpeed.value = config.speed;
       lineShaderMaterial.uniforms.uJitter.value = config.jitter;
       lineShaderMaterial.uniforms.uOpacity.value = config.opacity;
 
       coreMaterial.color.copy(lineShaderMaterial.uniforms.uPulseColor.value);
 
-      // 4. Update Halo & Glow Elements
+      // 4. Ultra-Faint Halo & Glow
       if (haloRef.current) {
         haloRef.current.style.borderColor = config.haloBorder;
-        haloRef.current.style.transform = `rotate(${-yRot * 40}deg) scale(${1.0 + Math.sin(timeSec * 1.2) * 0.04})`;
+        haloRef.current.style.transform = `rotate(${-yRot * 25}deg) scale(${1.0 + breathPhase * 0.02})`;
       }
       if (glowRef.current) {
-        glowRef.current.style.boxShadow = `0 0 36px 10px ${config.glow}`;
+        glowRef.current.style.boxShadow = `0 0 28px 6px ${config.glow}`;
       }
 
-      // 5. Parallax & Floating Breathing Motion
-      curParallaxX += (targetParallaxX - curParallaxX) * 0.05;
-      curParallaxY += (targetParallaxY - curParallaxY) * 0.05;
-      const floatY = Math.sin(timeSec * 1.5) * 2.0;
+      // 5. Soft Damped Parallax & 1.5px Floating Motion
+      curParallaxX += (targetParallaxX - curParallaxX) * 0.03;
+      curParallaxY += (targetParallaxY - curParallaxY) * 0.03;
+      const floatY = Math.sin(timeSec * 1.1) * 1.5;
 
       if (containerRef.current) {
         containerRef.current.style.transform = `translate3d(${curParallaxX.toFixed(2)}px, ${(floatY + curParallaxY).toFixed(2)}px, 0)`;
@@ -337,40 +339,42 @@ export default function WireframePyramid() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        willChange: 'transform',
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 2.5s ease-out, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+        willChange: 'transform, opacity',
       }}
     >
-      {/* Background Energy Glow */}
+      {/* Soft Ambient Background Glow */}
       <div
         ref={glowRef}
         style={{
           position: 'absolute',
-          width: '45px',
-          height: '45px',
+          width: '40px',
+          height: '40px',
           borderRadius: '50%',
-          opacity: 0.5,
+          opacity: 0.35,
           pointerEvents: 'none',
-          transition: 'box-shadow 0.8s ease',
-          filter: 'blur(10px)',
+          transition: 'box-shadow 1s ease',
+          filter: 'blur(12px)',
         }}
       />
 
-      {/* Rotating Sacred Energy Halo Ring */}
+      {/* Rotating Ambient Halo Ring */}
       <div
         ref={haloRef}
         style={{
           position: 'absolute',
-          width: '76px',
-          height: '76px',
+          width: '74px',
+          height: '74px',
           borderRadius: '50%',
-          border: '1px dashed rgba(140, 190, 255, 0.25)',
-          opacity: 0.4,
+          border: '1px dashed rgba(140, 190, 255, 0.15)',
+          opacity: 0.25,
           pointerEvents: 'none',
-          transition: 'border-color 0.8s ease',
+          transition: 'border-color 1s ease',
         }}
       />
 
-      {/* 3D WebGL Sacred Canvas */}
+      {/* 3D WebGL Canvas */}
       <canvas
         ref={canvasRef}
         style={{
