@@ -5,23 +5,20 @@ import { useTheme } from '../../context/ThemeContext';
 type InspectState = 'IDLE' | 'ENTERING' | 'INSPECTING' | 'EXITING';
 
 /**
- * Smooth 4x Inspect Glide — 3D Sacred Geometry Wireframe Pyramid Component.
+ * Unified 3D Travel & Continuous Growth — 3D Sacred Geometry Wireframe Pyramid.
  *
- * Ambient Mode:
- * - Keeps current small top-right pyramid (96px, top: 14px, right: 20px, whisper opacity ~18%).
- * - Rotates slowly in 36s cycle with 8.5s resting breath.
+ * All components (Pyramid, Core Orb, 3D Halo Ring, 3D Glow Aura) are children
+ * of a single master 3D group.
  *
- * Click / Inspect Mode:
- * - Glides smoothly from top-right to screen center over 1.4s while expanding to ~4x scale.
- * - Backdrop blur (10px) & vignette overlay fade in smoothly.
- * - Interactive left-click drag rotation with smooth momentum.
- * - Clicking backdrop or pressing ESC glides pyramid smoothly back to top-right ambient state.
+ * Behavior:
+ * - In top-right base position, the object stays at its exact small base size (scale 0.65).
+ * - On click, it glides to screen center while growing continuously along its travel path (from 1.0x to 4.0x).
+ * - On close/ESC, it glides back to top-right while shrinking continuously back to base size.
+ * - Zero DOM element scaling or jumps at base position.
  */
 export default function WireframePyramid() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const haloRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const themeRef = useRef(theme);
 
@@ -90,7 +87,11 @@ export default function WireframePyramid() {
     };
     window.addEventListener('resize', handleResize);
 
-    // --- Sacred Geometry Construction ---
+    // --- Master 3D Group ---
+    const masterGroup = new THREE.Group();
+    scene.add(masterGroup);
+
+    // --- 1. Sacred Geometry Wireframe Mesh ---
     const positions: number[] = [];
     const lineProgress: number[] = [];
 
@@ -127,7 +128,6 @@ export default function WireframePyramid() {
     const level2 = getLevelVerts(0.66);
     const level3 = getLevelVerts(1.0);
 
-    // Primary Outer Tetrahedron & Rings
     for (let k = 0; k < 3; k++) {
       addEdge(apexTop, level1[k]);
       addEdge(level1[k], level2[k]);
@@ -137,7 +137,6 @@ export default function WireframePyramid() {
     addPolygon(level2);
     addPolygon(level3);
 
-    // Inverted Merkaba Dual Inner Geometry
     const invLevel1 = getLevelVerts(0.66, Math.PI / 3);
     const invLevel2 = getLevelVerts(0.33, Math.PI / 3);
     invLevel1.forEach((v) => (v.y = -v.y));
@@ -151,7 +150,6 @@ export default function WireframePyramid() {
     addPolygon(invLevel1);
     addPolygon(invLevel2);
 
-    // Central Core Diamond Struts
     for (let k = 0; k < 3; k++) {
       addEdge(level1[k], centerCore);
       addEdge(level2[k], centerCore);
@@ -163,7 +161,6 @@ export default function WireframePyramid() {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('aProgress', new THREE.Float32BufferAttribute(lineProgress, 1));
 
-    // --- Custom Line Energy Shader ---
     const lineShaderMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -219,11 +216,10 @@ export default function WireframePyramid() {
       blending: THREE.AdditiveBlending,
     });
 
-    const pyramidGroup = new THREE.Group();
     const wireframeMesh = new THREE.LineSegments(geometry, lineShaderMaterial);
-    pyramidGroup.add(wireframeMesh);
+    masterGroup.add(wireframeMesh);
 
-    // Central Core Orb
+    // --- 2. Central Core Orb ---
     const coreGeometry = new THREE.SphereGeometry(0.065, 16, 16);
     const coreMaterial = new THREE.MeshBasicMaterial({
       color: new THREE.Color('#ffffff'),
@@ -232,9 +228,61 @@ export default function WireframePyramid() {
       blending: THREE.AdditiveBlending,
     });
     const coreOrb = new THREE.Mesh(coreGeometry, coreMaterial);
-    pyramidGroup.add(coreOrb);
+    masterGroup.add(coreOrb);
 
-    scene.add(pyramidGroup);
+    // --- 3. 3D Rotating Halo Ring (Child of Master Group) ---
+    const haloPoints: number[] = [];
+    const HALO_SEGMENTS = 64;
+    const HALO_RADIUS = 1.15;
+    for (let i = 0; i <= HALO_SEGMENTS; i++) {
+      const angle = (i / HALO_SEGMENTS) * Math.PI * 2;
+      haloPoints.push(HALO_RADIUS * Math.cos(angle), 0, HALO_RADIUS * Math.sin(angle));
+    }
+    const haloGeometry = new THREE.BufferGeometry();
+    haloGeometry.setAttribute('position', new THREE.Float32BufferAttribute(haloPoints, 3));
+
+    const haloMaterial = new THREE.LineDashedMaterial({
+      color: new THREE.Color('#8cbeff'),
+      dashSize: 0.15,
+      gapSize: 0.1,
+      transparent: true,
+      opacity: 0.20,
+      blending: THREE.AdditiveBlending,
+    });
+    const haloRingMesh = new THREE.Line(haloGeometry, haloMaterial);
+    haloRingMesh.computeLineDistances();
+    haloRingMesh.rotation.x = Math.PI / 2; // Flat horizontal ring
+    haloRingMesh.position.z = -0.05;
+    masterGroup.add(haloRingMesh);
+
+    // --- 4. 3D Soft Glow Sprite (Child of Master Group) ---
+    const createGlowTexture = () => {
+      const gCanvas = document.createElement('canvas');
+      gCanvas.width = 128;
+      gCanvas.height = 128;
+      const ctx = gCanvas.getContext('2d');
+      if (ctx) {
+        const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(0.3, 'rgba(140, 190, 255, 0.5)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 128, 128);
+      }
+      return new THREE.CanvasTexture(gCanvas);
+    };
+
+    const glowSpriteMaterial = new THREE.SpriteMaterial({
+      map: createGlowTexture(),
+      color: new THREE.Color('#64a0ff'),
+      transparent: true,
+      opacity: 0.30,
+      blending: THREE.AdditiveBlending,
+    });
+    const glowSprite = new THREE.Sprite(glowSpriteMaterial);
+    glowSprite.scale.set(3.2, 3.2, 1);
+    glowSprite.position.z = -0.15;
+    masterGroup.add(glowSprite);
 
     // --- Helper: World Coordinates for Top-Right Corner ---
     const getTopRightWorldPos = () => {
@@ -259,7 +307,7 @@ export default function WireframePyramid() {
     let prevTime = performance.now();
 
     const BASE_AMBIENT_SCALE = 0.65;
-    const TARGET_INSPECT_SCALE = 2.60; // Exactly 4x scale (0.65 * 4 = 2.60)
+    const TARGET_INSPECT_SCALE = 2.60; // 4x scale (0.65 * 4 = 2.60)
 
     const curPos = getTopRightWorldPos();
     let targetPos = curPos.clone();
@@ -339,46 +387,54 @@ export default function WireframePyramid() {
         return {
           stroke: '#ff5555',
           pulse: '#ffcccc',
-          glow: isInspect ? 'rgba(255, 40, 40, 0.55)' : 'rgba(255, 40, 40, 0.22)',
-          haloBorder: isInspect ? 'rgba(255, 60, 60, 0.35)' : 'rgba(255, 60, 60, 0.14)',
+          glow: '#ff3333',
+          halo: '#ff5555',
           speed: isInspect ? 3.6 : 2.2,
           jitter: isInspect ? 0.012 : 0.006,
           opacity: isInspect ? 0.55 : 0.22,
           pulseIntensity: isInspect ? 0.5 : 0.25,
+          haloOpacity: isInspect ? 0.40 : 0.18,
+          glowOpacity: isInspect ? 0.55 : 0.28,
         };
       }
       if (domId === 'KangoAneitei') {
         return {
           stroke: '#b866ff',
           pulse: '#e9d5ff',
-          glow: isInspect ? 'rgba(160, 60, 240, 0.55)' : 'rgba(160, 60, 240, 0.22)',
-          haloBorder: isInspect ? 'rgba(180, 90, 255, 0.32)' : 'rgba(180, 90, 255, 0.12)',
+          glow: '#a855f7',
+          halo: '#c084fc',
           speed: isInspect ? 1.8 : 1.2,
           jitter: isInspect ? 0.002 : 0.001,
           opacity: isInspect ? 0.48 : 0.16,
           pulseIntensity: isInspect ? 0.45 : 0.25,
+          haloOpacity: isInspect ? 0.35 : 0.15,
+          glowOpacity: isInspect ? 0.48 : 0.24,
         };
       }
       // Muryokusho
       return {
         stroke: '#d8e6ff',
         pulse: '#ffffff',
-        glow: isInspect ? 'rgba(100, 170, 255, 0.55)' : 'rgba(100, 170, 255, 0.22)',
-        haloBorder: isInspect ? 'rgba(140, 190, 255, 0.32)' : 'rgba(140, 190, 255, 0.14)',
+        glow: '#64a0ff',
+        halo: '#8cbeff',
         speed: isInspect ? 2.4 : 1.6,
         jitter: 0.0,
         opacity: isInspect ? 0.52 : 0.18,
         pulseIntensity: isInspect ? 0.5 : 0.25,
+        haloOpacity: isInspect ? 0.38 : 0.16,
+        glowOpacity: isInspect ? 0.50 : 0.25,
       };
     };
 
     const targetColor = new THREE.Color();
     const targetPulseColor = new THREE.Color();
+    const targetGlowColor = new THREE.Color();
+    const targetHaloColor = new THREE.Color();
 
     const easeInOutCubic = (x: number) =>
       x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
-    // --- Main Render Loop ---
+    // --- Main Unified 3D Frame Loop ---
     const tick = (now: number) => {
       const dt = Math.min((now - prevTime) / 1000, 0.1);
       prevTime = now;
@@ -388,13 +444,13 @@ export default function WireframePyramid() {
 
       // --- Progress Interpolation ---
       if (state === 'ENTERING') {
-        transitionProgress += dt / 1.4; // 1.4s entrance glide
+        transitionProgress += dt / 1.4;
         if (transitionProgress >= 1.0) {
           transitionProgress = 1.0;
           setInspectState('INSPECTING');
         }
       } else if (state === 'EXITING') {
-        transitionProgress -= dt / 1.3; // 1.3s exit glide
+        transitionProgress -= dt / 1.3;
         if (transitionProgress <= 0.0) {
           transitionProgress = 0.0;
           setInspectState('IDLE');
@@ -408,18 +464,19 @@ export default function WireframePyramid() {
 
       const p = easeInOutCubic(transitionProgress);
 
-      // --- 3D Position & 4x Scale Lerp ---
+      // --- Unified Position & Smooth Continuous 4x Scale Lerp ---
       const trPos = getTopRightWorldPos();
       const inspectPos = new THREE.Vector3(0, 0, 0);
 
+      // Position lerps continuously from top-right to center
       targetPos.copy(trPos).lerp(inspectPos, p);
       curPos.lerp(targetPos, 0.12);
-      pyramidGroup.position.copy(curPos);
+      masterGroup.position.copy(curPos);
 
-      // Smooth Scale lerp from BASE_AMBIENT_SCALE (0.65) to TARGET_INSPECT_SCALE (2.60 = 4x)
+      // Scale lerps CONTINUOUSLY along travel path (0.65 -> 2.60)
       targetScale = THREE.MathUtils.lerp(BASE_AMBIENT_SCALE, TARGET_INSPECT_SCALE, p);
       curScale += (targetScale - curScale) * 0.12;
-      pyramidGroup.scale.setScalar(curScale);
+      masterGroup.scale.setScalar(curScale);
 
       camera.position.z += (targetCamZ - camera.position.z) * 0.1;
 
@@ -442,17 +499,20 @@ export default function WireframePyramid() {
         velY *= 0.85;
       }
 
-      // Parallax shift
+      // Parallax shift for ambient state
       curParallaxX += (targetParallaxX - curParallaxX) * 0.05;
       curParallaxY += (targetParallaxY - curParallaxY) * 0.05;
       const floatY = Math.sin(timeSec * 1.1) * (1 - p) * 0.12;
 
-      pyramidGroup.position.x += curParallaxX;
-      pyramidGroup.position.y += floatY + curParallaxY;
+      masterGroup.position.x += curParallaxX;
+      masterGroup.position.y += floatY + curParallaxY;
 
-      pyramidGroup.rotation.x = rotX;
-      pyramidGroup.rotation.y = rotY;
-      pyramidGroup.rotation.z = rotZ;
+      masterGroup.rotation.x = rotX;
+      masterGroup.rotation.y = rotY;
+      masterGroup.rotation.z = rotZ;
+
+      // Rotate 3D Halo Ring independently in reverse
+      haloRingMesh.rotation.z = -rotY * 0.5;
 
       // --- Core Orb & Breathing ---
       const breathPhase = Math.sin(timeSec * (0.74 + p * 0.4));
@@ -460,10 +520,12 @@ export default function WireframePyramid() {
       coreOrb.scale.setScalar(coreScaleFactor);
       coreMaterial.opacity = (0.35 + breathPhase * 0.12) * (1 + p * 0.4);
 
-      // --- Uniform Interpolation ---
+      // --- Uniform & Material Theme Interpolation ---
       const config = getThemeConfig(themeRef.current, p > 0.3);
       targetColor.set(config.stroke);
       targetPulseColor.set(config.pulse);
+      targetGlowColor.set(config.glow);
+      targetHaloColor.set(config.halo);
 
       lineShaderMaterial.uniforms.uTime.value = timeSec;
       lineShaderMaterial.uniforms.uColor.value.lerp(targetColor, 0.06);
@@ -491,18 +553,15 @@ export default function WireframePyramid() {
 
       coreMaterial.color.copy(lineShaderMaterial.uniforms.uPulseColor.value);
 
-      // --- Halo DOM Sync ---
-      if (haloRef.current) {
-        haloRef.current.style.borderColor = config.haloBorder;
-        haloRef.current.style.opacity = `${(0.22 + p * 0.30).toFixed(2)}`;
-        haloRef.current.style.transform = `rotate(${-rotY * 25}deg) scale(${(1.0 + breathPhase * 0.03 + p * 0.5).toFixed(2)})`;
-      }
-      if (glowRef.current) {
-        const glowBlur = 24 + p * 36;
-        const glowSpread = 4 + p * 14;
-        glowRef.current.style.boxShadow = `0 0 ${glowBlur}px ${glowSpread}px ${config.glow}`;
-        glowRef.current.style.opacity = `${(0.30 + p * 0.30).toFixed(2)}`;
-      }
+      haloMaterial.color.lerp(targetHaloColor, 0.06);
+      haloMaterial.opacity = THREE.MathUtils.lerp(haloMaterial.opacity, config.haloOpacity, 0.08);
+
+      glowSpriteMaterial.color.lerp(targetGlowColor, 0.06);
+      glowSpriteMaterial.opacity = THREE.MathUtils.lerp(
+        glowSpriteMaterial.opacity,
+        config.glowOpacity,
+        0.08
+      );
 
       renderer.render(scene, camera);
       animId = requestAnimationFrame(tick);
@@ -522,6 +581,9 @@ export default function WireframePyramid() {
       lineShaderMaterial.dispose();
       coreGeometry.dispose();
       coreMaterial.dispose();
+      haloGeometry.dispose();
+      haloMaterial.dispose();
+      glowSpriteMaterial.dispose();
       renderer.dispose();
     };
   }, []);
@@ -575,7 +637,7 @@ export default function WireframePyramid() {
         }}
       />
 
-      {/* Full-Screen WebGL Canvas Wrapper */}
+      {/* Full-Screen Unified WebGL Canvas Wrapper */}
       <div
         ref={containerRef}
         className="sacred-pyramid-container"
@@ -591,47 +653,6 @@ export default function WireframePyramid() {
           willChange: 'transform, opacity',
         }}
       >
-        {/* Ambient Glow Backdrop */}
-        <div
-          ref={glowRef}
-          style={{
-            position: 'absolute',
-            top: inspectState === 'IDLE' ? '50px' : '50%',
-            right: inspectState === 'IDLE' ? '55px' : 'auto',
-            left: inspectState === 'IDLE' ? 'auto' : '50%',
-            transform: inspectState === 'IDLE' ? 'none' : 'translate(-50%, -50%)',
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            opacity: 0.30,
-            pointerEvents: 'none',
-            transition: 'top 1.3s ease, right 1.3s ease, left 1.3s ease, box-shadow 1s ease',
-            filter: 'blur(12px)',
-          }}
-        />
-
-        {/* Rotating Halo Ring */}
-        <div
-          ref={haloRef}
-          style={{
-            position: 'absolute',
-            top: inspectState === 'IDLE' ? '50px' : '50%',
-            right: inspectState === 'IDLE' ? '55px' : 'auto',
-            left: inspectState === 'IDLE' ? 'auto' : '50%',
-            marginTop: inspectState === 'IDLE' ? '-34px' : '-75px',
-            marginRight: inspectState === 'IDLE' ? '-34px' : 'auto',
-            marginLeft: inspectState === 'IDLE' ? 'auto' : '-75px',
-            width: inspectState === 'IDLE' ? '68px' : '150px',
-            height: inspectState === 'IDLE' ? '68px' : '150px',
-            borderRadius: '50%',
-            border: '1px dashed rgba(140, 190, 255, 0.14)',
-            opacity: 0.22,
-            pointerEvents: 'none',
-            transition: 'all 1.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-        />
-
-        {/* Full-Screen WebGL Canvas */}
         <canvas
           ref={canvasRef}
           style={{
