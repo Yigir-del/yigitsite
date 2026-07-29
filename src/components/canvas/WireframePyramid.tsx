@@ -216,10 +216,12 @@ export default function WireframePyramid() {
     let isDragging = false;
     let lastPointerX = 0;
     let lastPointerY = 0;
+    let dragDistance = 0;
 
     const onPointerDown = (e: PointerEvent) => {
       if (!inspectRef.current) return;
       isDragging = true;
+      dragDistance = 0;
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
     };
@@ -228,18 +230,23 @@ export default function WireframePyramid() {
       if (!isDragging || !inspectRef.current) return;
       const dx = e.clientX - lastPointerX;
       const dy = e.clientY - lastPointerY;
+      dragDistance += Math.sqrt(dx * dx + dy * dy);
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
-      velY += dx * 0.003;
-      velX += dy * 0.003;
+      velY += dx * 0.004;
+      velX += dy * 0.004;
     };
     
     const onPointerUp = () => {
+      if (isDragging && dragDistance < 5 && inspectRef.current) {
+        // It was a tap, not a drag. Close the inspection mode.
+        setIsInspecting(false);
+      }
       isDragging = false;
     };
 
     window.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
     window.addEventListener('pointerup', onPointerUp);
 
     // Smooth Parallax State (Damped)
@@ -363,12 +370,15 @@ export default function WireframePyramid() {
       const floatY = Math.sin(timeSec * 1.1) * 1.5;
 
       if (containerRef.current) {
+        const isMobile = window.innerWidth < 768;
         if (inspectRef.current) {
           const tx = (window.innerWidth / 2) - (window.innerWidth - 75);
           const ty = (window.innerHeight / 2) - 69;
-          containerRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(4)`;
+          const inspectScale = isMobile ? 2.6 : 4;
+          containerRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${inspectScale})`;
         } else {
-          containerRef.current.style.transform = `translate3d(${curParallaxX.toFixed(2)}px, ${(floatY + curParallaxY).toFixed(2)}px, 0) scale(1)`;
+          const ambientScale = isMobile ? 0.75 : 1;
+          containerRef.current.style.transform = `translate3d(${curParallaxX.toFixed(2)}px, ${(floatY + curParallaxY).toFixed(2)}px, 0) scale(${ambientScale})`;
         }
       }
 
@@ -429,6 +439,7 @@ export default function WireframePyramid() {
           alignItems: 'center',
           justifyContent: 'center',
           opacity: mounted ? 1 : 0,
+          touchAction: 'none',
           transition: 'opacity 2.5s ease-out, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'transform, opacity',
         }}
