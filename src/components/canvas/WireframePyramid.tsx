@@ -10,7 +10,6 @@ import { useTheme } from '../../context/ThemeContext';
 export default function WireframePyramid() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const haloRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const themeRef = useRef(theme);
@@ -209,6 +208,39 @@ export default function WireframePyramid() {
     let animId = 0;
     let prevTime = performance.now();
     let yRot = 0;
+    
+    // Drag State
+    let dragRotX = 0;
+    let velX = 0;
+    let velY = 0;
+    let isDragging = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (!inspectRef.current) return;
+      isDragging = true;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+    };
+    
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging || !inspectRef.current) return;
+      const dx = e.clientX - lastPointerX;
+      const dy = e.clientY - lastPointerY;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      velY += dx * 0.003;
+      velX += dy * 0.003;
+    };
+    
+    const onPointerUp = () => {
+      isDragging = false;
+    };
+
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
 
     // Smooth Parallax State (Damped)
     let targetParallaxX = 0;
@@ -242,7 +274,6 @@ export default function WireframePyramid() {
           stroke: '#ff5555',
           pulse: '#ffcccc',
           glow: 'rgba(255, 40, 40, 0.25)',
-          haloBorder: 'rgba(255, 60, 60, 0.15)',
           speed: 2.2,
           jitter: 0.006,
           opacity: 0.22,
@@ -253,7 +284,6 @@ export default function WireframePyramid() {
           stroke: '#b866ff',
           pulse: '#e9d5ff',
           glow: 'rgba(160, 60, 240, 0.25)',
-          haloBorder: 'rgba(180, 90, 255, 0.14)',
           speed: 1.2,
           jitter: 0.001,
           opacity: 0.16,
@@ -264,7 +294,6 @@ export default function WireframePyramid() {
         stroke: '#d8e6ff',
         pulse: '#ffffff',
         glow: 'rgba(100, 170, 255, 0.25)',
-        haloBorder: 'rgba(140, 190, 255, 0.15)',
         speed: 1.6,
         jitter: 0.0,
         opacity: 0.18,
@@ -280,13 +309,27 @@ export default function WireframePyramid() {
       prevTime = now;
       const timeSec = now / 1000;
 
-      // 1. Organic Precession: ~36s slow revolution with harmonic wave
-      const baseSpeed = (2 * Math.PI) / 36;
-      const organicSpeed = baseSpeed + Math.sin(timeSec * 0.2) * 0.0015;
-      yRot += organicSpeed * dt;
+      // 1. Organic Precession & Drag Rotation
+      if (inspectRef.current) {
+        velY *= 0.92;
+        velX *= 0.92;
+        yRot += velY;
+        dragRotX += velX;
+        
+        if (!isDragging && Math.abs(velY) < 0.001) {
+           yRot += 0.003 * dt * 60; // slow auto-rotation
+        }
+      } else {
+        velY *= 0.85;
+        velX *= 0.85;
+        dragRotX += (0 - dragRotX) * 0.08;
+        const baseSpeed = (2 * Math.PI) / 36;
+        const organicSpeed = baseSpeed + Math.sin(timeSec * 0.2) * 0.0015;
+        yRot += organicSpeed * dt + velY;
+      }
 
       wireframeMesh.rotation.y = yRot;
-      wireframeMesh.rotation.x = 0.22 + Math.sin(timeSec * 0.3) * 0.04;
+      wireframeMesh.rotation.x = 0.22 + dragRotX + Math.sin(timeSec * 0.3) * 0.04;
       wireframeMesh.rotation.z = Math.sin(timeSec * 0.18) * 0.025;
 
       // 2. Slow 8.5s Natural Resting Breath Rhythm
@@ -309,11 +352,7 @@ export default function WireframePyramid() {
 
       coreMaterial.color.copy(lineShaderMaterial.uniforms.uPulseColor.value);
 
-      // 4. Ultra-Faint Halo & Glow
-      if (haloRef.current) {
-        haloRef.current.style.borderColor = config.haloBorder;
-        haloRef.current.style.transform = `rotate(${-yRot * 25}deg) scale(${1.0 + breathPhase * 0.02})`;
-      }
+      // 4. Ultra-Faint Glow
       if (glowRef.current) {
         glowRef.current.style.boxShadow = `0 0 28px 6px ${config.glow}`;
       }
@@ -341,6 +380,9 @@ export default function WireframePyramid() {
 
     return () => {
       cancelAnimationFrame(animId);
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('mousemove', handleMouseMove);
       geometry.dispose();
       lineShaderMaterial.dispose();
@@ -403,21 +445,6 @@ export default function WireframePyramid() {
           pointerEvents: 'none',
           transition: 'box-shadow 1s ease',
           filter: 'blur(12px)',
-        }}
-      />
-
-      {/* Rotating Ambient Halo Ring */}
-      <div
-        ref={haloRef}
-        style={{
-          position: 'absolute',
-          width: '74px',
-          height: '74px',
-          borderRadius: '50%',
-          border: '1px dashed rgba(140, 190, 255, 0.15)',
-          opacity: 0.25,
-          pointerEvents: 'none',
-          transition: 'border-color 1s ease',
         }}
       />
 
