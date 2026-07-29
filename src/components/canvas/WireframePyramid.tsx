@@ -1,11 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { useTheme } from '../../context/ThemeContext';
 
+type InspectState = 'IDLE' | 'ENTERING' | 'INSPECTING' | 'EXITING';
+
 /**
- * Sacred Geometry 3D Wireframe Pyramid Component.
- * Apple-grade micro-subtlety ambient design.
- * Designed to reward user discovery without attracting unwanted attention.
+ * AAA-Grade Artifact Inspection Mode — 3D Sacred Geometry Wireframe Pyramid.
+ *
+ * Ambient Mode:
+ * - Positioned at top-right (quiet, whisper-soft opacity ~18%, slow 36s rotation).
+ * - Clicking top-right mini zone initiates 1.5s cinematic camera & object glide.
+ *
+ * Inspect Mode:
+ * - Glides smoothly to screen center (~38% viewport size) with zero pixelation/teleportation.
+ * - Backdrop overlays with subtle blur (12px), vignette radial gradient, and lower contrast.
+ * - Full interactive physics: Left-click drag rotation with smooth momentum/inertia, clamped wheel zoom.
+ * - ESC key or backdrop click triggers 1.4s smooth reverse glide back to ambient state.
  */
 export default function WireframePyramid() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -14,17 +24,46 @@ export default function WireframePyramid() {
   const glowRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const themeRef = useRef(theme);
+
   const [mounted, setMounted] = useState(false);
+  const [inspectState, setInspectState] = useState<InspectState>('IDLE');
+  const inspectStateRef = useRef<InspectState>('IDLE');
+
+  // Sync state ref
+  useEffect(() => {
+    inspectStateRef.current = inspectState;
+  }, [inspectState]);
 
   useEffect(() => {
     themeRef.current = theme;
   }, [theme]);
 
   useEffect(() => {
-    // 2.5s gentle atmospheric emergence
     const timer = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Handlers for starting and closing inspection
+  const startInspect = useCallback(() => {
+    if (inspectStateRef.current !== 'IDLE') return;
+    setInspectState('ENTERING');
+  }, []);
+
+  const closeInspect = useCallback(() => {
+    if (inspectStateRef.current !== 'INSPECTING' && inspectStateRef.current !== 'ENTERING') return;
+    setInspectState('EXITING');
+  }, []);
+
+  // Keyboard ESC listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeInspect();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [closeInspect]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,8 +72,8 @@ export default function WireframePyramid() {
     // --- Three.js Setup ---
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-    camera.position.set(0, 0.1, 6.0);
+    const camera = new THREE.PerspectiveCamera(32, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 6.0);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
@@ -43,8 +82,15 @@ export default function WireframePyramid() {
       antialias: true,
       powerPreference: 'high-performance',
     });
-    renderer.setSize(110, 110);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
 
     // --- Sacred Geometry Construction ---
     const positions: number[] = [];
@@ -62,8 +108,8 @@ export default function WireframePyramid() {
     };
 
     const H = 2.2;
-    const yApex = H / 2; // +1.1
-    const yBase = -H / 2; // -1.1
+    const yApex = H / 2;
+    const yBase = -H / 2;
     const R_base = 1.1;
 
     const getLevelVerts = (t: number, rotOffset = 0) => {
@@ -119,7 +165,7 @@ export default function WireframePyramid() {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('aProgress', new THREE.Float32BufferAttribute(lineProgress, 1));
 
-    // --- Whisper-Soft Custom Line Shader ---
+    // --- Custom Energy Line Shader ---
     const lineShaderMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -128,6 +174,7 @@ export default function WireframePyramid() {
         uEnergySpeed: { value: 1.6 },
         uJitter: { value: 0 },
         uOpacity: { value: 0.18 },
+        uPulseIntensity: { value: 0.25 },
       },
       vertexShader: `
         attribute float aProgress;
@@ -140,8 +187,8 @@ export default function WireframePyramid() {
           vProgress = aProgress;
           vec3 pos = position;
           if (uJitter > 0.0) {
-            float jitterX = sin(uTime * 25.0 + pos.y * 10.0) * uJitter;
-            float jitterY = cos(uTime * 25.0 + pos.x * 10.0) * uJitter;
+            float jitterX = sin(uTime * 28.0 + pos.y * 10.0) * uJitter;
+            float jitterY = cos(uTime * 28.0 + pos.x * 10.0) * uJitter;
             pos.x += jitterX;
             pos.y += jitterY;
           }
@@ -157,14 +204,14 @@ export default function WireframePyramid() {
         uniform float uTime;
         uniform float uEnergySpeed;
         uniform float uOpacity;
+        uniform float uPulseIntensity;
 
         void main() {
-          // Extremely subtle, silky traveling starlight shimmer along wireframe edges
-          float wave = sin(vProgress * 10.0 - uTime * uEnergySpeed + vPos.y * 2.5);
+          float wave = sin(vProgress * 11.0 - uTime * uEnergySpeed + vPos.y * 2.5);
           float pulse = pow(0.5 + 0.5 * wave, 4.0);
 
-          vec3 finalColor = mix(uColor, uPulseColor, pulse * 0.25);
-          float alpha = uOpacity * (0.85 + pulse * 0.3);
+          vec3 finalColor = mix(uColor, uPulseColor, pulse * uPulseIntensity);
+          float alpha = uOpacity * (0.85 + pulse * 0.35);
 
           gl_FragColor = vec4(finalColor, alpha);
         }
@@ -174,10 +221,12 @@ export default function WireframePyramid() {
       blending: THREE.AdditiveBlending,
     });
 
+    // 3D Master Group
+    const pyramidGroup = new THREE.Group();
     const wireframeMesh = new THREE.LineSegments(geometry, lineShaderMaterial);
-    scene.add(wireframeMesh);
+    pyramidGroup.add(wireframeMesh);
 
-    // --- Central Core Point (Whisper Orb) ---
+    // Central Core Orb
     const coreGeometry = new THREE.SphereGeometry(0.08, 16, 16);
     const coreMaterial = new THREE.MeshBasicMaterial({
       color: new THREE.Color('#ffffff'),
@@ -186,24 +235,104 @@ export default function WireframePyramid() {
       blending: THREE.AdditiveBlending,
     });
     const coreOrb = new THREE.Mesh(coreGeometry, coreMaterial);
-    scene.add(coreOrb);
+    pyramidGroup.add(coreOrb);
 
-    // --- Animation State ---
+    scene.add(pyramidGroup);
+
+    // --- Helper: World Coordinates for Top-Right Corner ---
+    const getTopRightWorldPos = () => {
+      const vec = new THREE.Vector3();
+      // Target top-right pixel: (innerWidth - 75, 75)
+      const screenX = window.innerWidth - 75;
+      const screenY = 75;
+
+      vec.set(
+        (screenX / window.innerWidth) * 2 - 1,
+        -(screenY / window.innerHeight) * 2 + 1,
+        0.5
+      );
+      vec.unproject(camera);
+
+      const dir = vec.sub(camera.position).normalize();
+      const distance = -camera.position.z / dir.z;
+      const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+      return pos;
+    };
+
+    // --- State Variables for Animation & Drag Physics ---
     let animId = 0;
     let prevTime = performance.now();
-    let yRot = 0;
 
-    // Smooth Parallax State (Damped)
+    // 3D Positions & Scale Lerp Targets
+    const curPos = getTopRightWorldPos();
+    let targetPos = curPos.clone();
+    let curScale = 1.0;
+    let targetScale = 1.0;
+
+    // Rotation Angles & Velocities
+    let rotX = 0.22;
+    let rotY = 0;
+    let rotZ = 0;
+    let velX = 0;
+    let velY = 0;
+
+    // Camera Zoom Target
+    let targetCamZ = 6.0;
+
+    // Mouse Drag State
+    let isDragging = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    // Transition progress timer (0 to 1)
+    let transitionProgress = 0;
+
+    // Drag Pointer Events
+    const onPointerDown = (e: PointerEvent) => {
+      if (inspectStateRef.current !== 'INSPECTING') return;
+      isDragging = true;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging || inspectStateRef.current !== 'INSPECTING') return;
+      const dx = e.clientX - lastPointerX;
+      const dy = e.clientY - lastPointerY;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+
+      velY += dx * 0.0035;
+      velX += dy * 0.0035;
+    };
+
+    const onPointerUp = () => {
+      isDragging = false;
+    };
+
+    // Mouse Wheel Zoom
+    const onWheel = (e: WheelEvent) => {
+      if (inspectStateRef.current !== 'INSPECTING') return;
+      targetCamZ = Math.min(8.5, Math.max(3.8, targetCamZ + e.deltaY * 0.0035));
+    };
+
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('wheel', onWheel, { passive: true });
+
+    // Ambient Mouse Parallax (top-right proximity)
     let targetParallaxX = 0;
     let targetParallaxY = 0;
     let curParallaxX = 0;
     let curParallaxY = 0;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleAmbientMouseMove = (e: MouseEvent) => {
+      if (inspectStateRef.current !== 'IDLE') return;
       const distToTopRight = Math.hypot(window.innerWidth - e.clientX, e.clientY);
       if (distToTopRight < 380) {
-        const factor = (1 - distToTopRight / 380) * 2.5;
-        targetParallaxX = ((e.clientX - (window.innerWidth - 60)) / 400) * factor;
+        const factor = (1 - distToTopRight / 380) * 0.15;
+        targetParallaxX = ((e.clientX - (window.innerWidth - 65)) / 400) * factor;
         targetParallaxY = (e.clientY / window.innerHeight - 0.08) * factor;
       } else {
         targetParallaxX = 0;
@@ -211,98 +340,184 @@ export default function WireframePyramid() {
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('mousemove', handleAmbientMouseMove, { passive: true });
 
-    // Domain Theme Configurations (Apple-level subtlety)
-    const getThemeConfig = (domId: string) => {
+    // Theme Config Helper
+    const getThemeConfig = (domId: string, isInspect: boolean) => {
       if (domId === 'FukumaMizushi') {
         return {
           stroke: '#ff5555',
           pulse: '#ffcccc',
-          glow: 'rgba(255, 40, 40, 0.25)',
-          haloBorder: 'rgba(255, 60, 60, 0.15)',
-          speed: 2.2,
-          jitter: 0.006,
-          opacity: 0.22,
+          glow: isInspect ? 'rgba(255, 40, 40, 0.65)' : 'rgba(255, 40, 40, 0.25)',
+          haloBorder: isInspect ? 'rgba(255, 60, 60, 0.45)' : 'rgba(255, 60, 60, 0.15)',
+          speed: isInspect ? 4.2 : 2.2,
+          jitter: isInspect ? 0.015 : 0.006,
+          opacity: isInspect ? 0.65 : 0.22,
+          pulseIntensity: isInspect ? 0.6 : 0.25,
         };
       }
       if (domId === 'KangoAneitei') {
         return {
           stroke: '#b866ff',
           pulse: '#e9d5ff',
-          glow: 'rgba(160, 60, 240, 0.25)',
-          haloBorder: 'rgba(180, 90, 255, 0.14)',
-          speed: 1.2,
-          jitter: 0.001,
-          opacity: 0.16,
+          glow: isInspect ? 'rgba(160, 60, 240, 0.65)' : 'rgba(160, 60, 240, 0.25)',
+          haloBorder: isInspect ? 'rgba(180, 90, 255, 0.4)' : 'rgba(180, 90, 255, 0.14)',
+          speed: isInspect ? 2.2 : 1.2,
+          jitter: isInspect ? 0.003 : 0.001,
+          opacity: isInspect ? 0.52 : 0.16,
+          pulseIntensity: isInspect ? 0.5 : 0.25,
         };
       }
       // Muryokusho
       return {
         stroke: '#d8e6ff',
         pulse: '#ffffff',
-        glow: 'rgba(100, 170, 255, 0.25)',
-        haloBorder: 'rgba(140, 190, 255, 0.15)',
-        speed: 1.6,
+        glow: isInspect ? 'rgba(100, 170, 255, 0.65)' : 'rgba(100, 170, 255, 0.25)',
+        haloBorder: isInspect ? 'rgba(140, 190, 255, 0.4)' : 'rgba(140, 190, 255, 0.15)',
+        speed: isInspect ? 2.8 : 1.6,
         jitter: 0.0,
-        opacity: 0.18,
+        opacity: isInspect ? 0.55 : 0.18,
+        pulseIntensity: isInspect ? 0.55 : 0.25,
       };
     };
 
     const targetColor = new THREE.Color();
     const targetPulseColor = new THREE.Color();
 
-    // --- Main Frame Loop ---
+    // Smooth cubic easing (cinematic)
+    const easeInOutCubic = (x: number) =>
+      x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+
+    // --- Main WebGL Animation Loop ---
     const tick = (now: number) => {
       const dt = Math.min((now - prevTime) / 1000, 0.1);
       prevTime = now;
       const timeSec = now / 1000;
 
-      // 1. Organic Precession: ~36s slow revolution with harmonic wave
-      const baseSpeed = (2 * Math.PI) / 36;
-      const organicSpeed = baseSpeed + Math.sin(timeSec * 0.2) * 0.0015;
-      yRot += organicSpeed * dt;
+      const state = inspectStateRef.current;
 
-      wireframeMesh.rotation.y = yRot;
-      wireframeMesh.rotation.x = 0.22 + Math.sin(timeSec * 0.3) * 0.04;
-      wireframeMesh.rotation.z = Math.sin(timeSec * 0.18) * 0.025;
+      // --- Transition State Machine ---
+      if (state === 'ENTERING') {
+        transitionProgress += dt / 1.5; // 1.5s entrance
+        if (transitionProgress >= 1.0) {
+          transitionProgress = 1.0;
+          setInspectState('INSPECTING');
+        }
+      } else if (state === 'EXITING') {
+        transitionProgress -= dt / 1.35; // 1.35s exit
+        if (transitionProgress <= 0.0) {
+          transitionProgress = 0.0;
+          setInspectState('IDLE');
+          targetCamZ = 6.0;
+        }
+      } else if (state === 'INSPECTING') {
+        transitionProgress = 1.0;
+      } else {
+        transitionProgress = 0.0;
+      }
 
-      // 2. Slow 8.5s Natural Resting Breath Rhythm
-      const breathPhase = Math.sin(timeSec * 0.74);
-      const corePulse = 1.0 + breathPhase * 0.18;
-      coreOrb.scale.setScalar(corePulse);
-      coreMaterial.opacity = 0.35 + breathPhase * 0.15;
+      const p = easeInOutCubic(transitionProgress);
 
-      // 3. Theme Uniform Interpolation
-      const config = getThemeConfig(themeRef.current);
+      // --- 3D Position & Scale Interpolation ---
+      const trPos = getTopRightWorldPos();
+      const inspectPos = new THREE.Vector3(0, 0, 0);
+
+      // Lerp position between top-right and center
+      targetPos.copy(trPos).lerp(inspectPos, p);
+      curPos.lerp(targetPos, 0.12);
+      pyramidGroup.position.copy(curPos);
+
+      // Lerp scale (ambient 1.0 -> inspect 2.6)
+      targetScale = THREE.MathUtils.lerp(1.0, 2.6, p);
+      curScale += (targetScale - curScale) * 0.12;
+      pyramidGroup.scale.setScalar(curScale);
+
+      // Lerp Camera Z position
+      camera.position.z += (targetCamZ - camera.position.z) * 0.1;
+
+      // --- Rotation & Physics Momentum ---
+      if (state === 'INSPECTING' || state === 'ENTERING') {
+        // Drag inertia dampening
+        rotY += velY;
+        rotX += velX;
+        velY *= 0.92;
+        velX *= 0.92;
+
+        // Slow background ambient rotation when not dragging
+        if (!isDragging && Math.abs(velY) < 0.001) {
+          rotY += 0.003;
+        }
+      } else {
+        // Ambient Mode: Organic ~36s revolution + slight precession
+        const baseSpeed = (2 * Math.PI) / 36;
+        rotY += (baseSpeed + Math.sin(timeSec * 0.2) * 0.0015) * dt;
+        rotX = THREE.MathUtils.lerp(rotX, 0.22 + Math.sin(timeSec * 0.3) * 0.04, 0.05);
+        rotZ = Math.sin(timeSec * 0.18) * 0.025;
+        velX *= 0.85;
+        velY *= 0.85;
+      }
+
+      // Parallax shift for ambient mode
+      curParallaxX += (targetParallaxX - curParallaxX) * 0.05;
+      curParallaxY += (targetParallaxY - curParallaxY) * 0.05;
+      const floatY = Math.sin(timeSec * 1.1) * (1 - p) * 0.15;
+
+      pyramidGroup.position.x += curParallaxX;
+      pyramidGroup.position.y += floatY + curParallaxY;
+
+      pyramidGroup.rotation.x = rotX;
+      pyramidGroup.rotation.y = rotY;
+      pyramidGroup.rotation.z = rotZ;
+
+      // --- Core Orb & Shader Breathing ---
+      const breathPhase = Math.sin(timeSec * (0.74 + p * 0.5));
+      const coreScaleFactor = 1.0 + breathPhase * (0.18 + p * 0.12);
+      coreOrb.scale.setScalar(coreScaleFactor);
+      coreMaterial.opacity = (0.35 + breathPhase * 0.15) * (1 + p * 0.5);
+
+      // --- Uniform Interpolation ---
+      const config = getThemeConfig(themeRef.current, p > 0.3);
       targetColor.set(config.stroke);
       targetPulseColor.set(config.pulse);
 
       lineShaderMaterial.uniforms.uTime.value = timeSec;
-      lineShaderMaterial.uniforms.uColor.value.lerp(targetColor, 0.04);
-      lineShaderMaterial.uniforms.uPulseColor.value.lerp(targetPulseColor, 0.04);
-      lineShaderMaterial.uniforms.uEnergySpeed.value = config.speed;
-      lineShaderMaterial.uniforms.uJitter.value = config.jitter;
-      lineShaderMaterial.uniforms.uOpacity.value = config.opacity;
+      lineShaderMaterial.uniforms.uColor.value.lerp(targetColor, 0.06);
+      lineShaderMaterial.uniforms.uPulseColor.value.lerp(targetPulseColor, 0.06);
+      lineShaderMaterial.uniforms.uEnergySpeed.value = THREE.MathUtils.lerp(
+        lineShaderMaterial.uniforms.uEnergySpeed.value,
+        config.speed,
+        0.08
+      );
+      lineShaderMaterial.uniforms.uJitter.value = THREE.MathUtils.lerp(
+        lineShaderMaterial.uniforms.uJitter.value,
+        config.jitter,
+        0.08
+      );
+      lineShaderMaterial.uniforms.uOpacity.value = THREE.MathUtils.lerp(
+        lineShaderMaterial.uniforms.uOpacity.value,
+        config.opacity,
+        0.08
+      );
+      lineShaderMaterial.uniforms.uPulseIntensity.value = THREE.MathUtils.lerp(
+        lineShaderMaterial.uniforms.uPulseIntensity.value,
+        config.pulseIntensity,
+        0.08
+      );
 
       coreMaterial.color.copy(lineShaderMaterial.uniforms.uPulseColor.value);
 
-      // 4. Ultra-Faint Halo & Glow
+      // --- Halo & Glow DOM Sync ---
       if (haloRef.current) {
         haloRef.current.style.borderColor = config.haloBorder;
-        haloRef.current.style.transform = `rotate(${-yRot * 25}deg) scale(${1.0 + breathPhase * 0.02})`;
+        haloRef.current.style.opacity = `${(0.25 + p * 0.35).toFixed(2)}`;
+        haloRef.current.style.transform = `rotate(${-rotY * 25}deg) scale(${(1.0 + breathPhase * 0.04 + p * 0.5).toFixed(2)})`;
       }
       if (glowRef.current) {
-        glowRef.current.style.boxShadow = `0 0 28px 6px ${config.glow}`;
-      }
-
-      // 5. Soft Damped Parallax & 1.5px Floating Motion
-      curParallaxX += (targetParallaxX - curParallaxX) * 0.03;
-      curParallaxY += (targetParallaxY - curParallaxY) * 0.03;
-      const floatY = Math.sin(timeSec * 1.1) * 1.5;
-
-      if (containerRef.current) {
-        containerRef.current.style.transform = `translate3d(${curParallaxX.toFixed(2)}px, ${(floatY + curParallaxY).toFixed(2)}px, 0)`;
+        const glowBlur = 28 + p * 40;
+        const glowSpread = 6 + p * 16;
+        glowRef.current.style.boxShadow = `0 0 ${glowBlur}px ${glowSpread}px ${config.glow}`;
+        glowRef.current.style.opacity = `${(0.35 + p * 0.35).toFixed(2)}`;
       }
 
       renderer.render(scene, camera);
@@ -313,7 +528,12 @@ export default function WireframePyramid() {
 
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('mousemove', handleAmbientMouseMove);
       geometry.dispose();
       lineShaderMaterial.dispose();
       coreGeometry.dispose();
@@ -322,67 +542,122 @@ export default function WireframePyramid() {
     };
   }, []);
 
+  const isInspectActive = inspectState !== 'IDLE';
+
   return (
-    <div
-      ref={containerRef}
-      className="sacred-pyramid-wrapper"
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        top: '14px',
-        right: '20px',
-        width: '110px',
-        height: '110px',
-        zIndex: 5,
-        pointerEvents: 'none',
-        userSelect: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: mounted ? 1 : 0,
-        transition: 'opacity 2.5s ease-out, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-        willChange: 'transform, opacity',
-      }}
-    >
-      {/* Soft Ambient Background Glow */}
+    <>
+      {/* Backdrop overlay for Inspection Mode (blur, vignette, lower contrast) */}
       <div
-        ref={glowRef}
+        className={`artifact-inspect-backdrop${isInspectActive ? ' is-active' : ''}`}
+        onClick={closeInspect}
+        aria-hidden="true"
         style={{
-          position: 'absolute',
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          opacity: 0.35,
-          pointerEvents: 'none',
-          transition: 'box-shadow 1s ease',
-          filter: 'blur(12px)',
+          position: 'fixed',
+          inset: 0,
+          zIndex: 130,
+          pointerEvents: isInspectActive ? 'auto' : 'none',
+          opacity: isInspectActive ? 1 : 0,
+          backdropFilter: 'blur(12px) brightness(0.65) contrast(0.95)',
+          WebkitBackdropFilter: 'blur(12px) brightness(0.65) contrast(0.95)',
+          background:
+            'radial-gradient(circle at center, rgba(10, 14, 24, 0.45) 0%, rgba(5, 7, 14, 0.85) 100%)',
+          transition:
+            'opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          cursor: 'pointer',
         }}
       />
 
-      {/* Rotating Ambient Halo Ring */}
-      <div
-        ref={haloRef}
+      {/* Top-Right Mini Hit Target Button (Click to Inspect) */}
+      <button
+        type="button"
+        onClick={startInspect}
+        className="artifact-ambient-target"
+        aria-label="Inspect 3D Artifact — Ryōiki Tenkai Artifact"
+        title="Artifact Inspection Mode — Click to inspect"
         style={{
-          position: 'absolute',
-          width: '74px',
-          height: '74px',
-          borderRadius: '50%',
-          border: '1px dashed rgba(140, 190, 255, 0.15)',
-          opacity: 0.25,
-          pointerEvents: 'none',
-          transition: 'border-color 1s ease',
+          position: 'fixed',
+          top: '10px',
+          right: '15px',
+          width: '120px',
+          height: '120px',
+          zIndex: 145,
+          cursor: inspectState === 'IDLE' ? 'pointer' : 'default',
+          border: 'none',
+          background: 'transparent',
+          padding: 0,
+          outline: 'none',
+          pointerEvents: inspectState === 'IDLE' ? 'auto' : 'none',
+          userSelect: 'none',
         }}
       />
 
-      {/* 3D WebGL Canvas */}
-      <canvas
-        ref={canvasRef}
+      {/* Full-Screen WebGL Canvas Wrapper */}
+      <div
+        ref={containerRef}
+        className="sacred-pyramid-container"
+        aria-hidden="true"
         style={{
-          width: '110px',
-          height: '110px',
-          display: 'block',
+          position: 'fixed',
+          inset: 0,
+          zIndex: 140,
+          pointerEvents: inspectState === 'INSPECTING' ? 'auto' : 'none',
+          userSelect: 'none',
+          opacity: mounted ? 1 : 0,
+          transition: 'opacity 2.5s ease-out',
+          willChange: 'transform, opacity',
         }}
-      />
-    </div>
+      >
+        {/* Ambient Glow Backdrop */}
+        <div
+          ref={glowRef}
+          style={{
+            position: 'absolute',
+            top: inspectState === 'IDLE' ? '60px' : '50%',
+            right: inspectState === 'IDLE' ? '65px' : 'auto',
+            left: inspectState === 'IDLE' ? 'auto' : '50%',
+            transform: inspectState === 'IDLE' ? 'none' : 'translate(-50%, -50%)',
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            opacity: 0.35,
+            pointerEvents: 'none',
+            transition: 'top 1.4s ease, right 1.4s ease, left 1.4s ease, box-shadow 1s ease',
+            filter: 'blur(14px)',
+          }}
+        />
+
+        {/* Rotating Halo Ring */}
+        <div
+          ref={haloRef}
+          style={{
+            position: 'absolute',
+            top: inspectState === 'IDLE' ? '60px' : '50%',
+            right: inspectState === 'IDLE' ? '65px' : 'auto',
+            left: inspectState === 'IDLE' ? 'auto' : '50%',
+            marginTop: inspectState === 'IDLE' ? '-45px' : '-80px',
+            marginRight: inspectState === 'IDLE' ? '-45px' : 'auto',
+            marginLeft: inspectState === 'IDLE' ? 'auto' : '-80px',
+            width: inspectState === 'IDLE' ? '90px' : '160px',
+            height: inspectState === 'IDLE' ? '90px' : '160px',
+            borderRadius: '50%',
+            border: '1px dashed rgba(140, 190, 255, 0.15)',
+            opacity: 0.25,
+            pointerEvents: 'none',
+            transition: 'all 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        />
+
+        {/* Full-Screen WebGL Canvas */}
+        <canvas
+          ref={canvasRef}
+          style={{
+            width: '100vw',
+            height: '100vh',
+            display: 'block',
+            cursor: inspectState === 'INSPECTING' ? 'grab' : 'default',
+          }}
+        />
+      </div>
+    </>
   );
 }
