@@ -287,8 +287,8 @@ export default function WireframePyramid() {
     // --- Helper: World Coordinates for Top-Right Corner ---
     const getTopRightWorldPos = () => {
       const vec = new THREE.Vector3();
-      const screenX = window.innerWidth - 65;
-      const screenY = 65;
+      const screenX = window.innerWidth - 60;
+      const screenY = 55;
 
       vec.set(
         (screenX / window.innerWidth) * 2 - 1,
@@ -306,8 +306,8 @@ export default function WireframePyramid() {
     let animId = 0;
     let prevTime = performance.now();
 
-    const BASE_AMBIENT_SCALE = 0.65;
-    const TARGET_INSPECT_SCALE = 2.60; // 4x scale (0.65 * 4 = 2.60)
+    const BASE_AMBIENT_SCALE = 0.22;
+    const TARGET_INSPECT_SCALE = 0.88; // 4x scale (0.22 * 4 = 0.88)
 
     const curPos = getTopRightWorldPos();
     let targetPos = curPos.clone();
