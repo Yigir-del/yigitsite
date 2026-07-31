@@ -19,6 +19,13 @@ export default function WireframePyramid() {
 
   useEffect(() => {
     inspectRef.current = isInspecting;
+    if (isInspecting) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none'; // Lock Safari/Chrome pull-to-refresh
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
   }, [isInspecting]);
 
   useEffect(() => {
@@ -58,9 +65,10 @@ export default function WireframePyramid() {
       antialias: true,
       powerPreference: 'high-performance',
     });
-    // Render at 4x resolution so CSS scale(4) stays sharp
+    const isMobileDevice = window.innerWidth < 768;
+    // Render at 4x resolution so CSS scale(4) stays sharp, limit to 1.5x on mobile for 60fps
     renderer.setSize(440, 440, false);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
 
     // --- Sacred Geometry Construction ---
     const positions: number[] = [];
@@ -209,7 +217,7 @@ export default function WireframePyramid() {
     let prevTime = performance.now();
     let yRot = 0;
     
-    // Drag State
+    // Drag & Multi-Touch State
     let dragRotX = 0;
     let velX = 0;
     let velY = 0;
@@ -218,36 +226,99 @@ export default function WireframePyramid() {
     let lastPointerY = 0;
     let dragDistance = 0;
 
+    const activePointers = new Map<number, { x: number; y: number }>();
+    let initialPinchDistance = 0;
+    let currentPinchZoom = 1.0;
+    let targetPinchZoom = 1.0;
+
+    const getPinchDistance = () => {
+      if (activePointers.size < 2) return 0;
+      const pts = Array.from(activePointers.values());
+      const dx = pts[0].x - pts[1].x;
+      const dy = pts[0].y - pts[1].y;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
     const onPointerDown = (e: PointerEvent) => {
       if (!inspectRef.current) return;
-      isDragging = true;
-      dragDistance = 0;
-      lastPointerX = e.clientX;
-      lastPointerY = e.clientY;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (activePointers.size === 1) {
+        isDragging = true;
+        dragDistance = 0;
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+      } else if (activePointers.size === 2) {
+        isDragging = false; // Disable rotation while zooming
+        initialPinchDistance = getPinchDistance();
+      }
     };
     
     const onPointerMove = (e: PointerEvent) => {
-      if (!isDragging || !inspectRef.current) return;
+      if (!inspectRef.current) return;
+      // Prevent browser gestures colliding with 3D interactions
+      e.preventDefault();
+
+      if (activePointers.has(e.pointerId)) {
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      if (activePointers.size === 2) {
+        const currentDistance = getPinchDistance();
+        if (initialPinchDistance > 0) {
+          const zoomDelta = currentDistance / initialPinchDistance;
+          // Clamp target zoom between 0.6x and 2.5x to prevent extreme zooming
+          targetPinchZoom = Math.min(Math.max(targetPinchZoom * zoomDelta, 0.6), 2.5);
+          initialPinchDistance = currentDistance;
+        }
+        return;
+      }
+
+      if (!isDragging) return;
       const dx = e.clientX - lastPointerX;
       const dy = e.clientY - lastPointerY;
       dragDistance += Math.sqrt(dx * dx + dy * dy);
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
-      velY += dx * 0.004;
-      velX += dy * 0.004;
+      
+      // Directly apply rotation for instant 1:1 feel on mobile
+      yRot += dx * 0.006;
+      dragRotX += dy * 0.006;
+      
+      // Store velocity for momentum release
+      velY = dx * 0.006;
+      velX = dy * 0.006;
     };
     
-    const onPointerUp = () => {
-      if (isDragging && dragDistance < 5 && inspectRef.current) {
-        // It was a tap, not a drag. Close the inspection mode.
-        setIsInspecting(false);
+    const onPointerUp = (e: PointerEvent) => {
+      activePointers.delete(e.pointerId);
+      
+      if (activePointers.size < 2) {
+        initialPinchDistance = 0;
       }
-      isDragging = false;
+      if (activePointers.size === 1) {
+        // Resume drag tracking for remaining finger
+        const remainingPointer = Array.from(activePointers.values())[0];
+        isDragging = true;
+        lastPointerX = remainingPointer.x;
+        lastPointerY = remainingPointer.y;
+      }
+      
+      if (activePointers.size === 0) {
+        if (isDragging && dragDistance < 5 && inspectRef.current) {
+          // It was a tap, not a drag. Close the inspection mode.
+          setIsInspecting(false);
+          targetPinchZoom = 1.0;
+        }
+        isDragging = false;
+      }
     };
 
     window.addEventListener('pointerdown', onPointerDown);
+    // passive: false is critical here so e.preventDefault() works
     window.addEventListener('pointermove', onPointerMove, { passive: false });
     window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
 
     // Smooth Parallax State (Damped)
     let targetParallaxX = 0;
@@ -318,15 +389,21 @@ export default function WireframePyramid() {
 
       // 1. Organic Precession & Drag Rotation
       if (inspectRef.current) {
-        velY *= 0.92;
-        velX *= 0.92;
-        yRot += velY;
-        dragRotX += velX;
-        
-        if (!isDragging && Math.abs(velY) < 0.001) {
-           yRot += 0.003 * dt * 60; // slow auto-rotation
+        if (!isDragging) {
+          // Fluid momentum on touch release
+          velY *= 0.94;
+          velX *= 0.94;
+          yRot += velY;
+          dragRotX += velX;
+          
+          if (Math.abs(velY) < 0.001) {
+             yRot += 0.003 * dt * 60; // slow auto-rotation
+          }
         }
       } else {
+        // Reset zoom state smoothly when closing
+        targetPinchZoom = 1.0;
+        
         velY *= 0.85;
         velX *= 0.85;
         dragRotX += (0 - dragRotX) * 0.08;
@@ -369,12 +446,17 @@ export default function WireframePyramid() {
       curParallaxY += (targetParallaxY - curParallaxY) * 0.03;
       const floatY = Math.sin(timeSec * 1.1) * 1.5;
 
+      // Smooth Pinch Zoom Interpolation
+      currentPinchZoom += (targetPinchZoom - currentPinchZoom) * 0.2;
+
       if (containerRef.current) {
         const isMobile = window.innerWidth < 768;
         if (inspectRef.current) {
           const tx = (window.innerWidth / 2) - (window.innerWidth - 75);
           const ty = (window.innerHeight / 2) - 69;
-          const inspectScale = isMobile ? 2.6 : 4;
+          // Dynamically scale based on viewport to fit Safe Areas and different mobile screens beautifully
+          const baseInspectScale = isMobile ? Math.min(window.innerWidth / 160, 2.4) : 4;
+          const inspectScale = baseInspectScale * currentPinchZoom;
           containerRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${inspectScale})`;
         } else {
           const ambientScale = isMobile ? 0.75 : 1;
@@ -393,6 +475,7 @@ export default function WireframePyramid() {
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
       window.removeEventListener('mousemove', handleMouseMove);
       geometry.dispose();
       lineShaderMaterial.dispose();
