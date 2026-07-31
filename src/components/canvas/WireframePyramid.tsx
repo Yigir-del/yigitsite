@@ -523,6 +523,7 @@ export default function WireframePyramid() {
           justifyContent: 'center',
           opacity: mounted ? 1 : 0,
           touchAction: 'none',
+          WebkitTapHighlightColor: 'transparent',
           transition: 'opacity 2.5s ease-out, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'transform, opacity',
         }}
