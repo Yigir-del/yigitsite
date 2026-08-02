@@ -298,29 +298,24 @@ export default function NotFound() {
       return () => clearAllTimers();
     }
 
-    // Cinematic Timeline:
-    // T = 2.0s – Bilge speaks
+    // Snappy Cinematic Timeline:
+    // T = 1.2s – Bilge speaks
     addTimer(() => {
       setStage('CHARACTERS_TALK');
       setSageSpeech('Sanırım yine yolu kaybetmiş.');
-    }, 2000);
+    }, 1200);
 
-    // T = 3.0s – Bilge chatbox closes, Dilenci speaks immediately after
+    // T = 2.4s – Bilge chatbox closes, Dilenci speaks immediately after
     addTimer(() => {
       setSageSpeech(null);
       setBeggarSpeech('Abi... burası normal görünmüyor.');
-    }, 3000);
+    }, 2400);
 
-    // T = 5.0s – Dilenci chatbox closes
+    // T = 4.0s – Dilenci chatbox closes & WORLD COLLAPSE triggers
     addTimer(() => {
-      setBeggarSpeech(null);
-    }, 5000);
-
-    // T = 5.5s – WORLD COLLAPSE (2.5s faster)
-    addTimer(() => {
-      setStage('WORLD_COLLAPSE');
       setBeggarSpeech(null);
       setSageSpeech(null);
+      setStage('WORLD_COLLAPSE');
 
       // DOM objects collapse physically
       universeCollapseNav();
@@ -330,28 +325,25 @@ export default function NotFound() {
       // Signal existing floating components to destroy themselves
       fireEvent(UNIVERSE_EVENTS.COLLAPSE);
 
-      // 3s later: FINAL VOID
+      // 1.5s after collapse: FINAL VOID
       addTimer(() => {
         setStage('FINAL_VOID');
         window.scrollTo({ top: 0, behavior: 'instant' });
-        // 5s of total silence
-        addTimer(() => setShowCursor(true), 5000);
-        // 10s total: typewriter
-        addTimer(() => {
-          const full = 'Evren seni geri göndermeyi uygun gördü.';
-          let idx = 0;
-          const ti = window.setInterval(() => {
-            idx += 1;
-            setTypedText(full.slice(0, idx));
-            if (idx >= full.length) {
-              clearInterval(ti);
-              addTimer(() => setShowReturnBtn(true), 600);
-            }
-          }, 60);
-          timersRef.current.push(ti);
-        }, 10000);
-      }, 4000);
-    }, 9500);
+        setShowCursor(true);
+
+        const full = 'Evren seni geri göndermeyi uygun gördü.';
+        let idx = 0;
+        const ti = window.setInterval(() => {
+          idx += 1;
+          setTypedText(full.slice(0, idx));
+          if (idx >= full.length) {
+            clearInterval(ti);
+            addTimer(() => setShowReturnBtn(true), 300);
+          }
+        }, 40);
+        timersRef.current.push(ti);
+      }, 1500);
+    }, 4000);
 
     return () => {
       clearAllTimers();
