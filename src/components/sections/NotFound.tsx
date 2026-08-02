@@ -230,19 +230,6 @@ function SageAvatar({ eyesClosed = false, smile = false }: { eyesClosed?: boolea
   );
 }
 
-// ── TERMINAL LOGS ──
-const TERMINAL_MESSAGES = [
-  '> Koordinatlar doğrulanıyor...',
-  '> ...',
-  '> Hata.',
-  '> ...',
-  '> Bu adres mevcut değil.',
-  '> ...',
-  '> Gerçeklik bütünlüğü bozuldu.',
-  '> ...',
-  '> Kaçış öneriliyor.',
-];
-
 // ── DOM HELPER: apply/remove classes to universe elements ──
 const selectors = {
   nav:      '.site-nav',
@@ -250,7 +237,6 @@ const selectors = {
   pyramid:  '.sacred-pyramid-wrapper',
 };
 
-function universeDisableNav()  { document.querySelector(selectors.nav)?.classList.add('reality-disabled-nav'); }
 function universeCollapseNav() { document.querySelector(selectors.nav)?.classList.add('reality-collapsed-nav'); }
 function universeCollapseFooter() { document.querySelector(selectors.footer)?.classList.add('reality-collapsed-footer'); }
 function universeCollapsePyramid() { document.querySelector(selectors.pyramid)?.classList.add('reality-collapsed-pyramid'); }
@@ -278,10 +264,7 @@ export default function NotFound() {
   const [rareStep,     setRareStep]     = useState<RareStep>('DOTS');
   const [beggarSpeech, setBeggarSpeech] = useState<string | null>(null);
   const [sageSpeech,   setSageSpeech]   = useState<string | null>(null);
-  const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const [warningStep,  setWarningStep]  = useState(0);
-  const [countdown,    setCountdown]    = useState(5);
-  const [shakeKey,     setShakeKey]     = useState(0);
   const [sageEyesClosed, setSageEyesClosed] = useState(false);
   const [sageSmile,       setSageSmile]     = useState(false);
 
@@ -316,7 +299,7 @@ export default function NotFound() {
       return () => clearAllTimers();
     }
 
-    // Cinematic Timeline (original pacing + chatbox auto-close):
+    // Cinematic Timeline:
     // T = 2.0s – Bilge speaks
     addTimer(() => {
       setStage('CHARACTERS_TALK');
@@ -334,75 +317,49 @@ export default function NotFound() {
       setBeggarSpeech(null);
     }, 5000);
 
-    // T = 5.5s – SYSTEM INTERRUPTION
-    // 9 messages × 300ms = 2.7s → last message visible at ~8.2s
+    // T = 5.5s – MAIN WARNING
     addTimer(() => {
-      setStage('SYSTEM_INTERRUPTION');
-      universeDisableNav();
-      TERMINAL_MESSAGES.forEach((msg, i) => {
-        addTimer(() => setTerminalLogs((prev) => [...prev, msg]), i * 300);
-      });
+      setStage('MAIN_WARNING');
+      setWarningStep(1);
     }, 5500);
+    addTimer(() => setWarningStep(2), 7000);
 
-    // T = 9.5s – MAIN WARNING (after terminal messages finish)
-    addTimer(() => { setStage('MAIN_WARNING'); setWarningStep(1); }, 9500);
-    addTimer(() => setWarningStep(2), 11000);
-
-    // T = 13.0s – COUNTDOWN (starts cleanly after warning)
+    // T = 9.5s – WORLD COLLAPSE
     addTimer(() => {
-      setStage('COUNTDOWN');
-      setCountdown(5);
-      let current = 5;
-      const interval = window.setInterval(() => {
-        current -= 1;
-        if (current >= 0) {
-          setCountdown(current);
-          setShakeKey((k) => k + 1);
-          document.body.classList.add('cinema-shake');
-          setTimeout(() => document.body.classList.remove('cinema-shake'), 450);
-        }
-        if (current <= 0) {
-          clearInterval(interval);
+      setStage('WORLD_COLLAPSE');
+      setBeggarSpeech(null);
+      setSageSpeech(null);
 
-          // WORLD COLLAPSE
-          setStage('WORLD_COLLAPSE');
-          setBeggarSpeech(null);
-          setSageSpeech(null);
+      // DOM objects collapse physically
+      universeCollapseNav();
+      universeCollapseFooter();
+      universeCollapsePyramid();
 
-          // DOM objects collapse physically
-          universeCollapseNav();
-          universeCollapseFooter();
-          universeCollapsePyramid();
+      // Signal existing floating components to destroy themselves
+      fireEvent(UNIVERSE_EVENTS.COLLAPSE);
 
-          // Signal existing floating components to destroy themselves
-          fireEvent(UNIVERSE_EVENTS.COLLAPSE);
-
-          // 3s later: FINAL VOID
-          addTimer(() => {
-            setStage('FINAL_VOID');
-            // Scroll to very top so text section is centered on screen
-            window.scrollTo({ top: 0, behavior: 'instant' });
-            // 5s of total silence
-            addTimer(() => setShowCursor(true), 5000);
-            // 10s total: typewriter
-            addTimer(() => {
-              const full = 'Evren seni geri göndermeyi uygun gördü.';
-              let idx = 0;
-              const ti = window.setInterval(() => {
-                idx += 1;
-                setTypedText(full.slice(0, idx));
-                if (idx >= full.length) {
-                  clearInterval(ti);
-                  addTimer(() => setShowReturnBtn(true), 600);
-                }
-              }, 60);
-              timersRef.current.push(ti);
-            }, 10000);
-          }, 4000);
-        }
-      }, 1000);
-      timersRef.current.push(interval);
-    }, 13000);
+      // 3s later: FINAL VOID
+      addTimer(() => {
+        setStage('FINAL_VOID');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        // 5s of total silence
+        addTimer(() => setShowCursor(true), 5000);
+        // 10s total: typewriter
+        addTimer(() => {
+          const full = 'Evren seni geri göndermeyi uygun gördü.';
+          let idx = 0;
+          const ti = window.setInterval(() => {
+            idx += 1;
+            setTypedText(full.slice(0, idx));
+            if (idx >= full.length) {
+              clearInterval(ti);
+              addTimer(() => setShowReturnBtn(true), 600);
+            }
+          }, 60);
+          timersRef.current.push(ti);
+        }, 10000);
+      }, 4000);
+    }, 9500);
 
     return () => {
       clearAllTimers();
@@ -573,7 +530,6 @@ export default function NotFound() {
 
   // ── DESKTOP FULL SCRIPTED CINEMATIC EXPERIENCE ──
   const isCollapsing = stage === 'WORLD_COLLAPSE';
-  const isVibrating  = stage === 'COUNTDOWN' || stage === 'MAIN_WARNING';
 
   return (
     <>
@@ -594,8 +550,7 @@ export default function NotFound() {
 
       {/* ── MAIN 404 SECTION ── */}
       <section
-        key={shakeKey}
-        className={`not-found-section ${stage === 'COUNTDOWN' ? 'panel-vibrating' : ''}`}
+        className="not-found-section"
         aria-label="Sayfa Bulunamadı"
         style={{
           minHeight: '78vh',
@@ -615,14 +570,14 @@ export default function NotFound() {
           style={{ position: 'relative', marginBottom: '1rem' }}
         >
           <h1
-            className={`glitch-vibrate${isVibrating ? ' is-vibrating' : ''}`}
+            className="glitch-vibrate"
             data-text="404"
             style={{
               fontSize: 'clamp(5.5rem, 16vw, 10rem)',
               fontWeight: 800,
               lineHeight: 1,
               margin: 0,
-              color: stage === 'COUNTDOWN' ? '#f43f5e' : 'var(--text-primary)',
+              color: 'var(--text-primary)',
               letterSpacing: '4px',
               transition: 'color 0.5s ease',
             }}
@@ -656,17 +611,8 @@ export default function NotFound() {
           </div>
         </div>
 
-        {/* SYSTEM INTERRUPTION TERMINAL */}
-        {stage === 'SYSTEM_INTERRUPTION' && (
-          <div className="terminal-hud">
-            {terminalLogs.map((log, i) => (
-              <div key={i} className="terminal-hud__line">{log}</div>
-            ))}
-          </div>
-        )}
-
         {/* MAIN WARNING */}
-        {(stage === 'MAIN_WARNING' || stage === 'COUNTDOWN') && (
+        {stage === 'MAIN_WARNING' && (
           <div style={{ marginBlock: '1.5rem', animation: 'speechPop 0.4s ease forwards' }}>
             <h2
               style={{
@@ -682,21 +628,11 @@ export default function NotFound() {
             <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', marginBottom: '0.8rem' }}>
               Şimdi sessizce geri dön.
             </p>
-            {(warningStep >= 2 || stage === 'COUNTDOWN') && (
+            {warningStep >= 2 && (
               <p style={{ color: '#f8fafc', fontSize: '1.15rem', fontStyle: 'italic', animation: 'speechPop 0.4s ease forwards' }}>
                 Yoksa gerçeklik seni fark edecek.
               </p>
             )}
-          </div>
-        )}
-
-        {/* COUNTDOWN */}
-        {stage === 'COUNTDOWN' && (
-          <div style={{ marginBlock: '1rem' }}>
-            <div className="countdown-display">{countdown}</div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '1px' }}>
-              GERÇEKLİK ÇÖKÜYOR...
-            </p>
           </div>
         )}
 
