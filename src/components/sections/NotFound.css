@@ -1,51 +1,39 @@
-/* ── 404 Scripted Cinematic Event & World Manager Styles ── */
+/* ── 404 Scripted Cinematic Event Styles ──
+   RULE: No black overlays. The universe itself collapses.
+   The camera never moves. The scene never changes.
+*/
 
-/* Cinematic Camera Shake */
+/* ── Camera Shake ── */
 .cinema-shake {
   animation: cinemaShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
-
 @keyframes cinemaShake {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  15% { transform: translate3d(-8px, 6px, 0) rotate(-1.2deg); }
-  30% { transform: translate3d(8px, -6px, 0) rotate(1.2deg); }
-  45% { transform: translate3d(-5px, -4px, 0) rotate(-0.6deg); }
-  60% { transform: translate3d(5px, 4px, 0) rotate(0.6deg); }
-  75% { transform: translate3d(-3px, 2px, 0) rotate(-0.3deg); }
-  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  0%   { transform: translate3d(0,0,0) rotate(0deg); }
+  15%  { transform: translate3d(-8px,6px,0) rotate(-1.2deg); }
+  30%  { transform: translate3d(8px,-6px,0) rotate(1.2deg); }
+  45%  { transform: translate3d(-5px,-4px,0) rotate(-0.6deg); }
+  60%  { transform: translate3d(5px,4px,0) rotate(0.6deg); }
+  75%  { transform: translate3d(-3px,2px,0) rotate(-0.3deg); }
+  100% { transform: translate3d(0,0,0) rotate(0deg); }
 }
 
-/* Chromatic Aberration & Vibrating Glitch */
-.glitch-vibrate {
-  position: relative;
-  display: inline-block;
-}
-
+/* ── Chromatic Aberration Glitch ── */
+.glitch-vibrate { position: relative; display: inline-block; }
 .glitch-vibrate.is-vibrating {
   animation: chromaticPulse 0.35s infinite alternate;
 }
-
 @keyframes chromaticPulse {
-  0% {
-    text-shadow: -4px 0 #ff0055, 4px 0 #00ffff;
-    transform: translate(1.5px, -1.5px);
-  }
-  50% {
-    text-shadow: 4px 0 #ff0055, -4px 0 #00ffff;
-    transform: translate(-1.5px, 1.5px);
-  }
-  100% {
-    text-shadow: -3px 0 #ff0055, 3px 0 #00ffff;
-    transform: translate(0, 0);
-  }
+  0%   { text-shadow: -4px 0 #ff0055,  4px 0 #00ffff; transform: translate(1.5px,-1.5px); }
+  50%  { text-shadow:  4px 0 #ff0055, -4px 0 #00ffff; transform: translate(-1.5px,1.5px); }
+  100% { text-shadow: -3px 0 #ff0055,  3px 0 #00ffff; transform: translate(0,0); }
 }
 
-/* Terminal HUD Overlay */
+/* ── Terminal HUD Overlay (transparent glass) ── */
 .terminal-hud {
   font-family: monospace;
-  background: rgba(5, 10, 20, 0.88);
-  border: 1px solid rgba(0, 255, 170, 0.35);
-  box-shadow: 0 0 30px rgba(0, 255, 170, 0.15);
+  background: rgba(5, 10, 20, 0.82);
+  border: 1px solid rgba(0, 255, 170, 0.32);
+  box-shadow: 0 0 28px rgba(0, 255, 170, 0.12);
   border-radius: 8px;
   padding: 1.2rem 1.6rem;
   max-width: 480px;
@@ -55,7 +43,6 @@
   margin-block: 1.5rem;
   text-align: left;
 }
-
 .terminal-hud__line {
   margin-block: 0.4rem;
   font-size: 0.92rem;
@@ -63,13 +50,12 @@
   opacity: 0;
   animation: terminalLineIn 0.25s forwards ease-out;
 }
-
 @keyframes terminalLineIn {
-  from { opacity: 0; transform: translateX(-12px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
 }
 
-/* Character Duo & Speech Bubbles */
+/* ── Characters ── */
 .character-duo {
   display: flex;
   align-items: flex-end;
@@ -79,7 +65,6 @@
   position: relative;
   z-index: 15;
 }
-
 .character-card {
   display: flex;
   flex-direction: column;
@@ -88,22 +73,32 @@
   transition: transform 0.4s ease, opacity 0.5s ease;
 }
 
+/* ── Stardust Dissolution ── */
+.dissolve-to-stardust {
+  animation: stardustDissolve 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes stardustDissolve {
+  0%   { opacity:1; transform:scale(1) blur(0px); filter:blur(0px); }
+  40%  { opacity:0.7; transform:scale(1.08); filter:blur(2px); }
+  100% { opacity:0; transform:scale(0.3) translateY(-60px); filter:blur(20px); }
+}
+
+/* ── Speech Bubbles ── */
 .speech-bubble {
   position: absolute;
   bottom: 110%;
-  background: rgba(13, 19, 31, 0.95);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.2));
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  background: rgba(13,19,31,0.95);
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.2));
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   border-radius: 12px;
   padding: 0.6rem 1.1rem;
   font-size: 0.9rem;
   color: var(--text-primary, #f8fafc);
   white-space: nowrap;
   pointer-events: none;
-  animation: speechPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: speechPop 0.35s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
   z-index: 25;
 }
-
 .speech-bubble::after {
   content: '';
   position: absolute;
@@ -112,113 +107,110 @@
   transform: translateX(-50%);
   border-width: 6px;
   border-style: solid;
-  border-color: rgba(13, 19, 31, 0.95) transparent transparent transparent;
+  border-color: rgba(13,19,31,0.95) transparent transparent transparent;
 }
-
 @keyframes speechPop {
-  0% { opacity: 0; transform: scale(0.7) translateY(12px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+  0%   { opacity:0; transform:scale(0.7) translateY(12px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
 }
 
-/* Countdown Display */
+/* ── Countdown Display ── */
 .countdown-display {
   font-family: var(--font-title, serif);
   font-size: clamp(4.5rem, 12vw, 8rem);
   font-weight: 800;
   color: #f43f5e;
-  text-shadow: 0 0 35px rgba(244, 63, 94, 0.7);
+  text-shadow: 0 0 35px rgba(244,63,94,0.7);
   margin-block: 0.5rem;
   animation: countdownPulse 1s ease-in-out infinite;
 }
-
 @keyframes countdownPulse {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.08); opacity: 1; text-shadow: 0 0 55px rgba(244, 63, 94, 0.95); }
+  0%,100% { transform:scale(1); opacity:0.9; }
+  50%      { transform:scale(1.08); opacity:1; text-shadow:0 0 55px rgba(244,63,94,0.95); }
 }
 
-/* ── WORLD COLLAPSE DESTRUCTION TRANSFORMATIONS ── */
+/* ── Glass Panel Vibrate ── */
+.panel-vibrating {
+  animation: panelVibrate 0.35s infinite linear alternate;
+}
+@keyframes panelVibrate {
+  0%   { transform:translate(1px,1px) rotate(0.2deg); }
+  50%  { transform:translate(-1px,-1px) rotate(-0.2deg); }
+  100% { transform:translate(1px,-1px) rotate(0.1deg); }
+}
+
+/* ── Universe DOM Collapse Classes ──
+   Applied to existing elements; the Three.js canvas behind stays visible.
+*/
 .reality-disabled-nav {
   pointer-events: none !important;
-  opacity: 0.35 !important;
-  transition: opacity 1.5s ease, transform 1.5s ease !important;
+  opacity: 0.3 !important;
+  transition: opacity 1.5s ease !important;
 }
-
 .reality-collapsed-nav {
   transform: translateY(-160px) rotate(-15deg) scale(0.65) !important;
   opacity: 0 !important;
   filter: blur(16px) !important;
-  transition: all 2.2s cubic-bezier(0.55, 0.055, 0.675, 0.19) !important;
+  transition: all 2.2s cubic-bezier(0.55,0.055,0.675,0.19) !important;
 }
-
 .reality-collapsed-footer {
   transform: translateY(180px) rotate(12deg) scale(0.65) !important;
   opacity: 0 !important;
   filter: blur(16px) !important;
-  transition: all 2.2s cubic-bezier(0.55, 0.055, 0.675, 0.19) !important;
+  transition: all 2.2s cubic-bezier(0.55,0.055,0.675,0.19) !important;
 }
-
 .reality-collapsed-pyramid {
-  filter: brightness(0.05) contrast(3) hue-rotate(180deg) !important;
-  transform: scale(0.5) rotate(220deg) translateY(200px) !important;
+  transform: scale(0.4) rotate(220deg) translateY(200px) !important;
   opacity: 0 !important;
-  transition: all 2.5s cubic-bezier(0.55, 0.055, 0.675, 0.19) !important;
+  filter: brightness(0.05) contrast(3) !important;
+  transition: all 2.8s cubic-bezier(0.55,0.055,0.675,0.19) !important;
 }
 
-/* Shattered UI Fragment Animations */
+/* ── Physical Shatter (404 UI pieces) ── */
 .shatter-piece-1 {
-  animation: shatterLeft 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: shatterLeft  2.2s cubic-bezier(0.25,1,0.5,1) forwards;
 }
-
 .shatter-piece-2 {
-  animation: shatterRight 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: shatterRight 2.2s cubic-bezier(0.25,1,0.5,1) forwards;
 }
-
 .shatter-piece-3 {
-  animation: shatterDown 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: shatterDown  2.2s cubic-bezier(0.25,1,0.5,1) forwards;
 }
-
 @keyframes shatterLeft {
-  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: blur(0px); }
-  100% { transform: translate(-220px, -140px) rotate(-35deg) scale(0.4); opacity: 0; filter: blur(16px); }
+  0%   { transform:translate(0,0) rotate(0deg); opacity:1; filter:blur(0px); }
+  100% { transform:translate(-220px,-140px) rotate(-35deg) scale(0.4); opacity:0; filter:blur(16px); }
 }
-
 @keyframes shatterRight {
-  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: blur(0px); }
-  100% { transform: translate(240px, 160px) rotate(40deg) scale(0.4); opacity: 0; filter: blur(16px); }
+  0%   { transform:translate(0,0) rotate(0deg); opacity:1; filter:blur(0px); }
+  100% { transform:translate(240px,160px) rotate(40deg) scale(0.4); opacity:0; filter:blur(16px); }
 }
-
 @keyframes shatterDown {
-  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: blur(0px); }
-  100% { transform: translate(0, 300px) rotate(-20deg) scale(0.3); opacity: 0; filter: blur(16px); }
+  0%   { transform:translate(0,0) rotate(0deg); opacity:1; filter:blur(0px); }
+  100% { transform:translate(0,300px) rotate(-20deg) scale(0.3); opacity:0; filter:blur(16px); }
 }
 
-/* Reconstruction Spring Animations */
-.reconstruct-in {
-  animation: reconstructRebuild 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+/* ── Final Void: text floats inside the universe (no background) ── */
+@keyframes voidTextFadeIn {
+  0%   { opacity:0; letter-spacing:6px; }
+  100% { opacity:0.92; letter-spacing:normal; }
 }
 
-@keyframes reconstructRebuild {
-  0% { transform: scale(0.4) translateY(100px) rotate(15deg); opacity: 0; filter: blur(12px); }
-  100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; filter: blur(0px); }
-}
-
-/* Blinking Cursor for Final Void */
+/* ── Blinking Cursor ── */
 .blinking-cursor {
   display: inline-block;
   width: 10px;
-  height: 1.2em;
-  background-color: var(--accent-pale-gray, #cbd5e1);
-  margin-left: 6px;
+  height: 1.1em;
+  background-color: rgba(203,213,225,0.85);
+  margin-left: 5px;
   animation: blink 0.9s step-end infinite;
   vertical-align: middle;
 }
-
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,100% { opacity:1; }
+  50%      { opacity:0; }
 }
 
-/* 1% Rare Event Overlay */
+/* ── 1% Rare Event ── */
 .rare-overlay {
   position: fixed;
   inset: 0;
@@ -231,41 +223,21 @@
   color: #fff;
   overflow: hidden;
 }
-
 .rare-beggar-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
 }
-
-.rare-approaching {
-  animation: rareApproach 15s linear forwards;
-}
-
+.rare-approaching { animation: rareApproach 15s linear forwards; }
 @keyframes rareApproach {
-  0% { transform: scale(0.06) translateY(220px); opacity: 0; }
-  15% { opacity: 0.5; }
-  90% { opacity: 1; }
-  100% { transform: scale(1.6) translateY(0); opacity: 1; }
+  0%   { transform:scale(0.06) translateY(220px); opacity:0; }
+  15%  { opacity:0.5; }
+  90%  { opacity:1; }
+  100% { transform:scale(1.6) translateY(0); opacity:1; }
 }
-
-.rare-leaving {
-  animation: rareLeave 5.5s linear forwards;
-}
-
+.rare-leaving { animation: rareLeave 5.5s linear forwards; }
 @keyframes rareLeave {
-  0% { transform: scale(1.6) translateY(0); opacity: 1; }
-  100% { transform: scale(0.01) translateY(-300px); opacity: 0; }
-}
-
-/* Glass panel vibrating effect */
-.panel-vibrating {
-  animation: panelVibrate 0.35s infinite linear alternate;
-}
-
-@keyframes panelVibrate {
-  0% { transform: translate(1px, 1px) rotate(0.2deg); }
-  50% { transform: translate(-1px, -1px) rotate(-0.2deg); }
-  100% { transform: translate(1px, -1px) rotate(0.1deg); }
+  0%   { transform:scale(1.6) translateY(0); opacity:1; }
+  100% { transform:scale(0.01) translateY(-300px); opacity:0; }
 }
