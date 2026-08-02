@@ -4,16 +4,16 @@ import { randomOffscreenStart, planWanderHop } from '../../utils/flightPath';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
 const QUOTES = [
+  "Şu an canım müzik dinlemek istemiyor. 🎧",
   "Burada demokrasi yok. Ben ne istersem o çalar. 🛑",
   "DJ benim, istek parça almıyorum. 🎧✋",
   "Spotify Premium'umu sen mi ödüyorsun? Hayır. 💸😒",
   "Senin müzik zevkine güvenmiyorum. 🗑️😷",
-  "Mekan benim, kurallar benim. 👑😎",
 ];
 
 const MESSAGE_DURATION = 2500;
 const SPOTIFY_SRC =
-  'https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0';
+  'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0';
 
 export default function FlyingMusic() {
   const isMobilePerf = useIsMobilePerf();
@@ -27,9 +27,26 @@ export default function FlyingMusic() {
   const [searchMessage, setSearchMessage] = useState('');
   const [searchAttempts, setSearchAttempts] = useState(0);
   const [iframeKey, setIframeKey] = useState(0);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeTimedOut, setIframeTimedOut] = useState(false);
+
   const messageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageIdRef = useRef(0);
   const searchAttemptsRef = useRef(0);
+
+  useEffect(() => {
+    if (!shouldMountPlayer || !isPlaying) return;
+
+    setIframeLoaded(false);
+    setIframeTimedOut(false);
+
+    // Timeout detector for slow/failing iframe connections
+    const timer = setTimeout(() => {
+      setIframeTimedOut(true);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [shouldMountPlayer, isPlaying, iframeKey]);
 
   useEffect(() => {
     if (isMobilePerf) return;
@@ -307,16 +324,72 @@ export default function FlyingMusic() {
         </form>
 
         {showPlayer && (
-          <iframe
-            key={iframeKey}
-            style={{ borderRadius: '12px', background: 'transparent', border: 'none' }}
-            src={SPOTIFY_SRC}
-            width="100%"
-            height="152"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="eager"
-            title="Spotify çalma listesi"
-          />
+          <div style={{ position: 'relative', minHeight: '152px' }}>
+            {iframeTimedOut && !iframeLoaded && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(15, 23, 42, 0.95)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--glass-border, rgba(255,255,255,0.15))',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '1rem',
+                  textAlign: 'center',
+                  zIndex: 5,
+                }}
+              >
+                <p style={{ margin: '0 0 0.4rem 0', fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-main, #f8fafc)' }}>
+                  Şu an canım müzik dinlemek istemiyor 🎧
+                </p>
+                <p style={{ margin: '0 0 0.8rem 0', fontSize: '0.78rem', color: 'var(--text-muted, #94a3b8)' }}>
+                  Frekans şu an ulaşılamıyor.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIframeTimedOut(false);
+                    setIframeLoaded(false);
+                    setIframeKey((prev) => prev + 1);
+                  }}
+                  style={{
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    background: 'var(--accent-muted-blue, #4b6b8b)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Tekrar Dene 🔄
+                </button>
+              </div>
+            )}
+
+            <iframe
+              key={iframeKey}
+              onLoad={() => {
+                setIframeLoaded(true);
+                setIframeTimedOut(false);
+              }}
+              style={{
+                borderRadius: '12px',
+                background: 'transparent',
+                border: 'none',
+                opacity: iframeTimedOut && !iframeLoaded ? 0 : 1,
+              }}
+              src={SPOTIFY_SRC}
+              width="100%"
+              height="152"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="eager"
+              title="Spotify çalma listesi"
+            />
+          </div>
         )}
       </motion.div>
 
