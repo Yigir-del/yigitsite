@@ -290,10 +290,6 @@ export default function NotFound() {
   const [typedText,     setTypedText]     = useState('');
   const [showReturnBtn, setShowReturnBtn] = useState(false);
 
-  // Character dissolution (stardust exit)
-  const [charactersDissolving, setCharactersDissolving] = useState(false);
-  const [charactersGone,       setCharactersGone]       = useState(false);
-
   // Collapse canvas active flag
   const collapseCanvasRef = useCollapseCanvas(stage === 'WORLD_COLLAPSE');
 
@@ -369,9 +365,8 @@ export default function NotFound() {
 
           // WORLD COLLAPSE
           setStage('WORLD_COLLAPSE');
-          setBeggarSpeech('BEN DEMİŞTİM!');
+          setBeggarSpeech(null);
           setSageSpeech(null);
-          setSageEyesClosed(true);
 
           // DOM objects collapse physically
           universeCollapseNav();
@@ -381,11 +376,7 @@ export default function NotFound() {
           // Signal existing floating components to destroy themselves
           fireEvent(UNIVERSE_EVENTS.COLLAPSE);
 
-          // Characters dissolve into stardust after 1.8s
-          addTimer(() => setCharactersDissolving(true),  1800);
-          addTimer(() => setCharactersGone(true),        3200);
-
-          // 4s later: FINAL VOID
+          // 3s later: FINAL VOID
           addTimer(() => {
             setStage('FINAL_VOID');
             // Scroll to very top so text section is centered on screen
@@ -434,11 +425,14 @@ export default function NotFound() {
   // ── RETURN SEQUENCE (rebuild universe in-place) ──
   const handleReturnSequence = useCallback(() => {
     clearAllTimers();
+    setShowReturnBtn(false);
+    setTypedText('');
+    setShowCursor(false);
+    setStage('PAGE_LOAD');
+
     // Signal components to restore themselves
     universeRestoreAll();
     fireEvent(UNIVERSE_EVENTS.RESTORE);
-    setCharactersDissolving(false);
-    setCharactersGone(false);
     setSageEyesClosed(false);
     setSageSmile(true);
     setSageSpeech(null);
@@ -647,23 +641,19 @@ export default function NotFound() {
         )}
 
         {/* CHARACTERS DUO */}
-        {!charactersGone && (
-          <div
-            className={`character-duo${charactersDissolving ? ' dissolve-to-stardust' : ''}${isCollapsing && !charactersDissolving ? ' shatter-piece-3' : ''}`}
-          >
-            {/* Bilge */}
-            <div className="character-card">
-              {sageSpeech && <div className="speech-bubble">{sageSpeech}</div>}
-              <SageAvatar eyesClosed={sageEyesClosed} smile={sageSmile} />
-            </div>
-
-            {/* Dilenci */}
-            <div className="character-card">
-              {beggarSpeech && <div className="speech-bubble">{beggarSpeech}</div>}
-              <BeggarAvatar panic={isCollapsing && !charactersDissolving} />
-            </div>
+        <div className={`character-duo${isCollapsing ? ' shatter-piece-3' : ''}`}>
+          {/* Bilge */}
+          <div className="character-card">
+            {sageSpeech && <div className="speech-bubble">{sageSpeech}</div>}
+            <SageAvatar eyesClosed={sageEyesClosed} smile={sageSmile} />
           </div>
-        )}
+
+          {/* Dilenci */}
+          <div className="character-card">
+            {beggarSpeech && <div className="speech-bubble">{beggarSpeech}</div>}
+            <BeggarAvatar panic={isCollapsing} />
+          </div>
+        </div>
 
         {/* SYSTEM INTERRUPTION TERMINAL */}
         {stage === 'SYSTEM_INTERRUPTION' && (

@@ -73,15 +73,7 @@
   transition: transform 0.4s ease, opacity 0.5s ease;
 }
 
-/* ── Stardust Dissolution ── */
-.dissolve-to-stardust {
-  animation: stardustDissolve 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-@keyframes stardustDissolve {
-  0%   { opacity:1; transform:scale(1) blur(0px); filter:blur(0px); }
-  40%  { opacity:0.7; transform:scale(1.08); filter:blur(2px); }
-  100% { opacity:0; transform:scale(0.3) translateY(-60px); filter:blur(20px); }
-}
+
 
 /* ── Speech Bubbles ── */
 .speech-bubble {
