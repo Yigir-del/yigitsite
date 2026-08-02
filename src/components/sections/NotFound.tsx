@@ -316,38 +316,39 @@ export default function NotFound() {
       return () => clearAllTimers();
     }
 
-    // Relaxed Cinematic Timeline Sequence:
+    // Cinematic Timeline (original pacing + chatbox auto-close):
     // T = 2.0s – Bilge speaks
     addTimer(() => {
       setStage('CHARACTERS_TALK');
       setSageSpeech('Sanırım yine yolu kaybetmiş.');
     }, 2000);
 
-    // T = 4.2s – Bilge chatbox closes, Dilenci speaks
+    // T = 3.0s – Bilge chatbox closes, Dilenci speaks immediately after
     addTimer(() => {
       setSageSpeech(null);
       setBeggarSpeech('Abi... burası normal görünmüyor.');
-    }, 4200);
+    }, 3000);
 
-    // T = 6.8s – Dilenci chatbox closes
+    // T = 5.0s – Dilenci chatbox closes
     addTimer(() => {
       setBeggarSpeech(null);
-    }, 6800);
+    }, 5000);
 
-    // T = 7.5s – SYSTEM INTERRUPTION
+    // T = 5.5s – SYSTEM INTERRUPTION
+    // 9 messages × 300ms = 2.7s → last message visible at ~8.2s
     addTimer(() => {
       setStage('SYSTEM_INTERRUPTION');
       universeDisableNav();
       TERMINAL_MESSAGES.forEach((msg, i) => {
-        addTimer(() => setTerminalLogs((prev) => [...prev, msg]), i * 350);
+        addTimer(() => setTerminalLogs((prev) => [...prev, msg]), i * 300);
       });
-    }, 7500);
+    }, 5500);
 
-    // T = 11.0s – MAIN WARNING
-    addTimer(() => { setStage('MAIN_WARNING'); setWarningStep(1); }, 11000);
-    addTimer(() => setWarningStep(2), 12500);
+    // T = 10.0s – MAIN WARNING (1.8s after last terminal message → all visible)
+    addTimer(() => { setStage('MAIN_WARNING'); setWarningStep(1); }, 10000);
+    addTimer(() => setWarningStep(2), 11000);
 
-    // T = 14.0s – COUNTDOWN
+    // T = 12.0s – COUNTDOWN
     addTimer(() => {
       setStage('COUNTDOWN');
       setCountdown(5);
