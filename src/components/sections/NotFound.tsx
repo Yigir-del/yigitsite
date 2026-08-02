@@ -344,11 +344,11 @@ export default function NotFound() {
       });
     }, 5500);
 
-    // T = 10.0s – MAIN WARNING (1.8s after last terminal message → all visible)
-    addTimer(() => { setStage('MAIN_WARNING'); setWarningStep(1); }, 10000);
+    // T = 9.5s – MAIN WARNING (after terminal messages finish)
+    addTimer(() => { setStage('MAIN_WARNING'); setWarningStep(1); }, 9500);
     addTimer(() => setWarningStep(2), 11000);
 
-    // T = 12.0s – COUNTDOWN
+    // T = 13.0s – COUNTDOWN (starts cleanly after warning)
     addTimer(() => {
       setStage('COUNTDOWN');
       setCountdown(5);
@@ -402,7 +402,7 @@ export default function NotFound() {
         }
       }, 1000);
       timersRef.current.push(interval);
-    }, 9000);
+    }, 13000);
 
     return () => {
       clearAllTimers();
@@ -666,7 +666,7 @@ export default function NotFound() {
         )}
 
         {/* MAIN WARNING */}
-        {stage === 'MAIN_WARNING' && (
+        {(stage === 'MAIN_WARNING' || stage === 'COUNTDOWN') && (
           <div style={{ marginBlock: '1.5rem', animation: 'speechPop 0.4s ease forwards' }}>
             <h2
               style={{
@@ -682,7 +682,7 @@ export default function NotFound() {
             <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', marginBottom: '0.8rem' }}>
               Şimdi sessizce geri dön.
             </p>
-            {warningStep >= 2 && (
+            {(warningStep >= 2 || stage === 'COUNTDOWN') && (
               <p style={{ color: '#f8fafc', fontSize: '1.15rem', fontStyle: 'italic', animation: 'speechPop 0.4s ease forwards' }}>
                 Yoksa gerçeklik seni fark edecek.
               </p>
