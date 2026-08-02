@@ -316,12 +316,7 @@ export default function NotFound() {
       setBeggarSpeech(null);
     }, 5000);
 
-    // T = 5.5s – Pause duration before collapse (preserves original timeskip timing)
-    addTimer(() => {
-      setStage('MAIN_WARNING');
-    }, 5500);
-
-    // T = 9.5s – WORLD COLLAPSE
+    // T = 8.0s – WORLD COLLAPSE (1.5s faster)
     addTimer(() => {
       setStage('WORLD_COLLAPSE');
       setBeggarSpeech(null);
