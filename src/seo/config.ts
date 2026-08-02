@@ -44,7 +44,8 @@ export type PageKey =
   | 'thoughts'
   | 'studio'
   | 'contact'
-  | 'memorial';
+  | 'memorial'
+  | 'notFound';
 
 export interface PageSEO {
   title: string;
@@ -140,5 +141,10 @@ export const PAGE_SEO: Record<PageKey, PageSEO> = {
       'anıt',
     ].join(', '),
     canonical: `${SITE.url}/miras`,
+  },
+  notFound: {
+    title: 'Sayfa Bulunamadı (404)',
+    description: 'Aradığınız sayfa bulunamadı veya taşınmış olabilir.',
+    canonical: `${SITE.url}/404`,
   },
 };

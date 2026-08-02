@@ -104,7 +104,7 @@ export default function Contact() {
         </a>
 
         <h3 style={{ fontSize: '1.5rem' }}>
-          <a href="#" style={{ color: 'var(--text-primary)', textDecoration: 'underline', textDecorationColor: 'var(--accent-muted-blue)' }}>Bana bir kahve ısmarla.</a>
+          <a href="mailto:81altuntas38@gmail.com?subject=Kahve%20Ismarla" style={{ color: 'var(--text-primary)', textDecoration: 'underline', textDecorationColor: 'var(--accent-muted-blue)' }}>Bana bir kahve ısmarla.</a>
         </h3>
         <h3 style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>Ya da ısmarlama.</h3>
         <h3 style={{ color: 'var(--text-muted)', opacity: 0.5 }}>Su da işimi görür.</h3>

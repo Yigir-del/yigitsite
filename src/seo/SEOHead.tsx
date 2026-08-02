@@ -107,6 +107,7 @@ export default function SEOHead({ page }: SEOHeadProps) {
   const fullTitle = SITE.titleTemplate.replace('%s', seo.title);
   const ogImage = seo.ogImage ?? SITE.ogImage;
   const keywords = seo.keywords ?? SITE.keywords;
+  const isNotFound = page === 'notFound';
 
   return (
     <>
@@ -118,8 +119,15 @@ export default function SEOHead({ page }: SEOHeadProps) {
         <meta name="author" content={SITE.author} />
         <meta name="creator" content={SITE.author} />
         <meta name="publisher" content={SITE.author} />
-        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-        <meta name="googlebot" content="index, follow" />
+        <meta
+          name="robots"
+          content={
+            isNotFound
+              ? 'noindex, nofollow'
+              : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+          }
+        />
+        <meta name="googlebot" content={isNotFound ? 'noindex, nofollow' : 'index, follow'} />
 
         {/* ── Canonical ── */}
         <link rel="canonical" href={seo.canonical} />

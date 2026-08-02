@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, useCallback, type ReactNode } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ReactLenis, useLenis } from '@studio-freight/react-lenis';
 import gsap from 'gsap';
@@ -31,6 +31,7 @@ const Thoughts = lazy(() => import('./components/sections/Thoughts'));
 const Studio = lazy(() => import('./components/sections/Studio'));
 const Contact = lazy(() => import('./components/sections/Contact'));
 const Memorial = lazy(() => import('./components/sections/Memorial'));
+const NotFound = lazy(() => import('./components/sections/NotFound'));
 
 const ChaosManager = lazy(() => import('./components/events/ChaosManager'));
 const EasterEggs = lazy(() => import('./components/events/EasterEggs'));
@@ -140,6 +141,16 @@ function AnimatedRoutes() {
             <Route path="/iletisim" element={<Contact />} />
             <Route path="/miras" element={<Memorial />} />
             <Route path="/atam" element={<Memorial />} />
+
+            {/* Yönlendirmeler (Redirects) */}
+            <Route path="/portfolio" element={<Navigate to="/projeler" replace />} />
+            <Route path="/portfolyo" element={<Navigate to="/projeler" replace />} />
+            <Route path="/about" element={<Navigate to="/hakkimda" replace />} />
+            <Route path="/projects" element={<Navigate to="/projeler" replace />} />
+            <Route path="/contact" element={<Navigate to="/iletisim" replace />} />
+
+            {/* 404 Bulunamayan Sayfa */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </PageTransition>
       </AnimatePresence>
