@@ -264,7 +264,6 @@ export default function NotFound() {
   const [rareStep,     setRareStep]     = useState<RareStep>('DOTS');
   const [beggarSpeech, setBeggarSpeech] = useState<string | null>(null);
   const [sageSpeech,   setSageSpeech]   = useState<string | null>(null);
-  const [warningStep,  setWarningStep]  = useState(0);
   const [sageEyesClosed, setSageEyesClosed] = useState(false);
   const [sageSmile,       setSageSmile]     = useState(false);
 
@@ -317,12 +316,10 @@ export default function NotFound() {
       setBeggarSpeech(null);
     }, 5000);
 
-    // T = 5.5s – MAIN WARNING
+    // T = 5.5s – Pause duration before collapse (preserves original timeskip timing)
     addTimer(() => {
       setStage('MAIN_WARNING');
-      setWarningStep(1);
     }, 5500);
-    addTimer(() => setWarningStep(2), 7000);
 
     // T = 9.5s – WORLD COLLAPSE
     addTimer(() => {
@@ -587,14 +584,12 @@ export default function NotFound() {
         </div>
 
         {/* SUBTITLE */}
-        {stage !== 'MAIN_WARNING' && stage !== 'COUNTDOWN' && (
-          <h2
-            className={isCollapsing ? 'shatter-piece-2' : ''}
-            style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', marginBottom: '1.5rem' }}
-          >
-            Sayfa Bulunamadı
-          </h2>
-        )}
+        <h2
+          className={isCollapsing ? 'shatter-piece-2' : ''}
+          style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', marginBottom: '1.5rem' }}
+        >
+          Sayfa Bulunamadı
+        </h2>
 
         {/* CHARACTERS DUO */}
         <div className={`character-duo${isCollapsing ? ' shatter-piece-3' : ''}`}>
@@ -610,31 +605,6 @@ export default function NotFound() {
             <BeggarAvatar panic={isCollapsing} />
           </div>
         </div>
-
-        {/* MAIN WARNING */}
-        {stage === 'MAIN_WARNING' && (
-          <div style={{ marginBlock: '1.5rem', animation: 'speechPop 0.4s ease forwards' }}>
-            <h2
-              style={{
-                fontFamily: 'var(--font-title, serif)',
-                fontSize: 'clamp(2.2rem, 5.5vw, 3.5rem)',
-                color: '#f43f5e',
-                marginBottom: '0.8rem',
-                textShadow: '0 0 25px rgba(244, 63, 94, 0.45)',
-              }}
-            >
-              Yanlış yere geldin.
-            </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', marginBottom: '0.8rem' }}>
-              Şimdi sessizce geri dön.
-            </p>
-            {warningStep >= 2 && (
-              <p style={{ color: '#f8fafc', fontSize: '1.15rem', fontStyle: 'italic', animation: 'speechPop 0.4s ease forwards' }}>
-                Yoksa gerçeklik seni fark edecek.
-              </p>
-            )}
-          </div>
-        )}
 
         {/* ACTION BUTTONS */}
         {!isCollapsing && (
