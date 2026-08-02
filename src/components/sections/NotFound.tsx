@@ -316,7 +316,7 @@ export default function NotFound() {
       setBeggarSpeech(null);
     }, 5000);
 
-    // T = 8.0s – WORLD COLLAPSE (1.5s faster)
+    // T = 5.5s – WORLD COLLAPSE (2.5s faster)
     addTimer(() => {
       setStage('WORLD_COLLAPSE');
       setBeggarSpeech(null);
