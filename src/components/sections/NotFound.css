@@ -1,4 +1,4 @@
-/* ── 404 Interactive Experience Styles ── */
+/* ── 404 Scripted Cinematic Event & World Manager Styles ── */
 
 /* Cinematic Camera Shake */
 .cinema-shake {
@@ -7,11 +7,11 @@
 
 @keyframes cinemaShake {
   0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  15% { transform: translate3d(-7px, 5px, 0) rotate(-1deg); }
-  30% { transform: translate3d(7px, -5px, 0) rotate(1deg); }
-  45% { transform: translate3d(-5px, -3px, 0) rotate(-0.5deg); }
-  60% { transform: translate3d(5px, 3px, 0) rotate(0.5deg); }
-  75% { transform: translate3d(-2px, 1px, 0) rotate(-0.2deg); }
+  15% { transform: translate3d(-8px, 6px, 0) rotate(-1.2deg); }
+  30% { transform: translate3d(8px, -6px, 0) rotate(1.2deg); }
+  45% { transform: translate3d(-5px, -4px, 0) rotate(-0.6deg); }
+  60% { transform: translate3d(5px, 4px, 0) rotate(0.6deg); }
+  75% { transform: translate3d(-3px, 2px, 0) rotate(-0.3deg); }
   100% { transform: translate3d(0, 0, 0) rotate(0deg); }
 }
 
@@ -22,20 +22,20 @@
 }
 
 .glitch-vibrate.is-vibrating {
-  animation: chromaticPulse 0.4s infinite alternate;
+  animation: chromaticPulse 0.35s infinite alternate;
 }
 
 @keyframes chromaticPulse {
   0% {
-    text-shadow: -3px 0 #ff0055, 3px 0 #00ffff;
-    transform: translate(1px, -1px);
+    text-shadow: -4px 0 #ff0055, 4px 0 #00ffff;
+    transform: translate(1.5px, -1.5px);
   }
   50% {
-    text-shadow: 3px 0 #ff0055, -3px 0 #00ffff;
-    transform: translate(-1px, 1px);
+    text-shadow: 4px 0 #ff0055, -4px 0 #00ffff;
+    transform: translate(-1.5px, 1.5px);
   }
   100% {
-    text-shadow: -2px 0 #ff0055, 2px 0 #00ffff;
+    text-shadow: -3px 0 #ff0055, 3px 0 #00ffff;
     transform: translate(0, 0);
   }
 }
@@ -43,15 +43,15 @@
 /* Terminal HUD Overlay */
 .terminal-hud {
   font-family: monospace;
-  background: rgba(5, 10, 20, 0.85);
-  border: 1px solid rgba(0, 255, 170, 0.3);
-  box-shadow: 0 0 25px rgba(0, 255, 170, 0.12);
+  background: rgba(5, 10, 20, 0.88);
+  border: 1px solid rgba(0, 255, 170, 0.35);
+  box-shadow: 0 0 30px rgba(0, 255, 170, 0.15);
   border-radius: 8px;
   padding: 1.2rem 1.6rem;
   max-width: 480px;
   width: 90%;
   color: #00ffaa;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
   margin-block: 1.5rem;
   text-align: left;
 }
@@ -61,11 +61,11 @@
   font-size: 0.92rem;
   letter-spacing: 0.5px;
   opacity: 0;
-  animation: terminalLineIn 0.3s forwards ease-out;
+  animation: terminalLineIn 0.25s forwards ease-out;
 }
 
 @keyframes terminalLineIn {
-  from { opacity: 0; transform: translateX(-10px); }
+  from { opacity: 0; transform: translateX(-12px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
@@ -85,7 +85,7 @@
   flex-direction: column;
   align-items: center;
   position: relative;
-  transition: transform 0.4s ease;
+  transition: transform 0.4s ease, opacity 0.5s ease;
 }
 
 .speech-bubble {
@@ -136,7 +136,7 @@
   50% { transform: scale(1.08); opacity: 1; text-shadow: 0 0 55px rgba(244, 63, 94, 0.95); }
 }
 
-/* Global Reality Collapse Transformations applied to Site Header, Nav, Footer */
+/* ── WORLD COLLAPSE DESTRUCTION TRANSFORMATIONS ── */
 .reality-disabled-nav {
   pointer-events: none !important;
   opacity: 0.35 !important;
@@ -144,24 +144,62 @@
 }
 
 .reality-collapsed-nav {
-  transform: translateY(-120px) rotate(-12deg) scale(0.75) !important;
+  transform: translateY(-160px) rotate(-15deg) scale(0.65) !important;
   opacity: 0 !important;
-  filter: blur(14px) !important;
-  transition: all 2s ease-in-out !important;
+  filter: blur(16px) !important;
+  transition: all 2.2s cubic-bezier(0.55, 0.055, 0.675, 0.19) !important;
 }
 
 .reality-collapsed-footer {
-  transform: translateY(140px) rotate(8deg) scale(0.75) !important;
+  transform: translateY(180px) rotate(12deg) scale(0.65) !important;
   opacity: 0 !important;
-  filter: blur(14px) !important;
-  transition: all 2s ease-in-out !important;
+  filter: blur(16px) !important;
+  transition: all 2.2s cubic-bezier(0.55, 0.055, 0.675, 0.19) !important;
 }
 
 .reality-collapsed-pyramid {
-  filter: brightness(0.15) contrast(2) hue-rotate(180deg) !important;
-  transform: scale(0.65) rotate(180deg) !important;
-  opacity: 0.2 !important;
-  transition: all 2.5s ease-in-out !important;
+  filter: brightness(0.05) contrast(3) hue-rotate(180deg) !important;
+  transform: scale(0.5) rotate(220deg) translateY(200px) !important;
+  opacity: 0 !important;
+  transition: all 2.5s cubic-bezier(0.55, 0.055, 0.675, 0.19) !important;
+}
+
+/* Shattered UI Fragment Animations */
+.shatter-piece-1 {
+  animation: shatterLeft 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.shatter-piece-2 {
+  animation: shatterRight 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.shatter-piece-3 {
+  animation: shatterDown 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes shatterLeft {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: blur(0px); }
+  100% { transform: translate(-220px, -140px) rotate(-35deg) scale(0.4); opacity: 0; filter: blur(16px); }
+}
+
+@keyframes shatterRight {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: blur(0px); }
+  100% { transform: translate(240px, 160px) rotate(40deg) scale(0.4); opacity: 0; filter: blur(16px); }
+}
+
+@keyframes shatterDown {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: blur(0px); }
+  100% { transform: translate(0, 300px) rotate(-20deg) scale(0.3); opacity: 0; filter: blur(16px); }
+}
+
+/* Reconstruction Spring Animations */
+.reconstruct-in {
+  animation: reconstructRebuild 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes reconstructRebuild {
+  0% { transform: scale(0.4) translateY(100px) rotate(15deg); opacity: 0; filter: blur(12px); }
+  100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; filter: blur(0px); }
 }
 
 /* Blinking Cursor for Final Void */

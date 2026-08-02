@@ -207,8 +207,12 @@ function AppShell() {
     };
   }, [upsideDown]);
 
-  const showCharacters = !isQuiet && ready('characters');
-  const showChaos = !isQuiet && ready('chaos');
+  const location = useLocation();
+  const KNOWN_ROUTES = ['/', '/hakkimda', '/projeler', '/dusunceler', '/studyom', '/iletisim', '/miras', '/atam', '/portfolio', '/portfolyo', '/about', '/projects', '/contact'];
+  const is404Page = !KNOWN_ROUTES.includes(location.pathname);
+
+  const showCharacters = !isQuiet && !is404Page && ready('characters');
+  const showChaos = !isQuiet && !is404Page && ready('chaos');
 
   return (
     <>
