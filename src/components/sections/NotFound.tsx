@@ -375,6 +375,8 @@ export default function NotFound() {
           // 4s later: FINAL VOID
           addTimer(() => {
             setStage('FINAL_VOID');
+            // Scroll to very top so text section is centered on screen
+            window.scrollTo({ top: 0, behavior: 'instant' });
             // 5s of total silence
             addTimer(() => setShowCursor(true), 5000);
             // 10s total: typewriter
@@ -484,78 +486,80 @@ export default function NotFound() {
   }
 
   // ── FINAL VOID: text floats IN the existing space scene ──
+  // Using 100dvh transparent section (document flow) instead of position:fixed
+  // because Lenis smooth scroll uses CSS transforms which break fixed positioning.
   if (stage === 'FINAL_VOID') {
     return (
-      <>
+      <section
+        style={{
+          minHeight: '100dvh',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          padding: '2rem',
+          background: 'transparent', // ← universe stays visible behind
+          position: 'relative',
+          zIndex: 10,
+        }}
+      >
         <SEOHead page="notFound" />
-        {/* The background WebGL scene remains fully visible beneath this transparent overlay */}
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 50,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-            background: 'transparent', // ← NEVER covers the universe
-          }}
-        >
-          {showCursor && typedText === '' && (
-            <span className="blinking-cursor" style={{ pointerEvents: 'none' }} />
-          )}
 
-          {typedText !== '' && (
-            <p
-              style={{
-                fontFamily: 'var(--font-title, serif)',
-                fontSize: 'clamp(1.4rem, 3.8vw, 2.6rem)',
-                lineHeight: 1.5,
-                color: 'rgba(248, 250, 252, 0.92)',
-                textShadow: '0 0 40px rgba(148, 163, 184, 0.5)',
-                maxWidth: '700px',
-                textAlign: 'center',
-                padding: '0 2rem',
-                animation: 'voidTextFadeIn 2s ease forwards',
-              }}
-            >
-              {typedText}
-              {!showReturnBtn && <span className="blinking-cursor" />}
-            </p>
-          )}
+        {showCursor && typedText === '' && (
+          <span className="blinking-cursor" />
+        )}
 
-          {showReturnBtn && (
-            <button
-              onClick={handleReturnSequence}
-              style={{
-                pointerEvents: 'auto',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                padding: '0.95rem 2.4rem',
-                borderRadius: '8px',
-                background: 'rgba(75, 107, 139, 0.85)',
-                backdropFilter: 'blur(8px)',
-                color: '#fff',
-                border: '1px solid rgba(148, 163, 184, 0.3)',
-                fontSize: '1.05rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-                boxShadow: '0 0 30px rgba(75, 107, 139, 0.45)',
-                marginTop: '2.5rem',
-                transition: 'transform 0.2s, background 0.2s',
-                animation: 'speechPop 0.6s ease forwards',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0) scale(1)')}
-            >
-              <RotateCcw size={19} aria-hidden />
-              Gerçekliğe Dön
-            </button>
-          )}
-        </div>
-      </>
+        {typedText !== '' && (
+          <p
+            style={{
+              fontFamily: 'var(--font-title, serif)',
+              fontSize: 'clamp(1.4rem, 3.8vw, 2.6rem)',
+              lineHeight: 1.5,
+              color: 'rgba(248, 250, 252, 0.92)',
+              textShadow: '0 0 40px rgba(148, 163, 184, 0.5)',
+              maxWidth: '700px',
+              textAlign: 'center',
+              padding: '0 2rem',
+              margin: 0,
+              animation: 'voidTextFadeIn 2s ease forwards',
+            }}
+          >
+            {typedText}
+            {!showReturnBtn && <span className="blinking-cursor" />}
+          </p>
+        )}
+
+        {showReturnBtn && (
+          <button
+            onClick={handleReturnSequence}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              padding: '0.95rem 2.4rem',
+              borderRadius: '8px',
+              background: 'rgba(75, 107, 139, 0.85)',
+              backdropFilter: 'blur(8px)',
+              color: '#fff',
+              border: '1px solid rgba(148, 163, 184, 0.3)',
+              fontSize: '1.05rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              boxShadow: '0 0 30px rgba(75, 107, 139, 0.45)',
+              marginTop: '2.5rem',
+              transition: 'transform 0.2s, background 0.2s',
+              animation: 'speechPop 0.6s ease forwards',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0) scale(1)')}
+          >
+            <RotateCcw size={19} aria-hidden />
+            Gerçekliğe Dön
+          </button>
+        )}
+      </section>
     );
   }
 
