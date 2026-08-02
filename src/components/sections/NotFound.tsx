@@ -320,42 +320,38 @@ export default function NotFound() {
       return () => clearAllTimers();
     }
 
-    // Timeline Sequence:
-    // T = 1.0s – Bilge speaks
+    // Relaxed Cinematic Timeline Sequence:
+    // T = 2.0s – Bilge speaks
     addTimer(() => {
       setStage('CHARACTERS_TALK');
       setSageSpeech('Sanırım yine yolu kaybetmiş.');
-    }, 1000);
+    }, 2000);
 
-    // T = 2.5s – Bilge textbox closes
+    // T = 4.2s – Bilge chatbox closes, Dilenci speaks
     addTimer(() => {
       setSageSpeech(null);
-    }, 2500);
-
-    // T = 3.0s – Dilenci speaks
-    addTimer(() => {
       setBeggarSpeech('Abi... burası normal görünmüyor.');
-    }, 3000);
+    }, 4200);
 
-    // T = 4.5s – Dilenci textbox closes
+    // T = 6.8s – Dilenci chatbox closes
     addTimer(() => {
       setBeggarSpeech(null);
-    }, 4500);
+    }, 6800);
 
-    // T = 5.5s – SYSTEM INTERRUPTION
+    // T = 7.5s – SYSTEM INTERRUPTION
     addTimer(() => {
       setStage('SYSTEM_INTERRUPTION');
       universeDisableNav();
       TERMINAL_MESSAGES.forEach((msg, i) => {
-        addTimer(() => setTerminalLogs((prev) => [...prev, msg]), i * 300);
+        addTimer(() => setTerminalLogs((prev) => [...prev, msg]), i * 350);
       });
-    }, 5500);
+    }, 7500);
 
-    // T = 8.5s – MAIN WARNING
-    addTimer(() => { setStage('MAIN_WARNING'); setWarningStep(1); }, 8500);
-    addTimer(() => setWarningStep(2), 9800);
+    // T = 11.0s – MAIN WARNING
+    addTimer(() => { setStage('MAIN_WARNING'); setWarningStep(1); }, 11000);
+    addTimer(() => setWarningStep(2), 12500);
 
-    // T = 11.0s – COUNTDOWN
+    // T = 14.0s – COUNTDOWN
     addTimer(() => {
       setStage('COUNTDOWN');
       setCountdown(5);
