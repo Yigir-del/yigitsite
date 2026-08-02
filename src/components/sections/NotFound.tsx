@@ -330,25 +330,29 @@ export default function NotFound() {
       // Signal existing floating components to destroy themselves
       fireEvent(UNIVERSE_EVENTS.COLLAPSE);
 
-      // 1.5s after collapse: FINAL VOID
+      // 4s after collapse: FINAL VOID
       addTimer(() => {
         setStage('FINAL_VOID');
+        // Scroll to very top so text section is centered on screen
         window.scrollTo({ top: 0, behavior: 'instant' });
-        setShowCursor(true);
-
-        const full = 'Evren seni geri göndermeyi uygun gördü.';
-        let idx = 0;
-        const ti = window.setInterval(() => {
-          idx += 1;
-          setTypedText(full.slice(0, idx));
-          if (idx >= full.length) {
-            clearInterval(ti);
-            addTimer(() => setShowReturnBtn(true), 300);
-          }
-        }, 40);
-        timersRef.current.push(ti);
-      }, 1500);
-    }, 4000);
+        // 5s of total silence
+        addTimer(() => setShowCursor(true), 5000);
+        // 10s total: typewriter
+        addTimer(() => {
+          const full = 'Evren seni geri göndermeyi uygun gördü.';
+          let idx = 0;
+          const ti = window.setInterval(() => {
+            idx += 1;
+            setTypedText(full.slice(0, idx));
+            if (idx >= full.length) {
+              clearInterval(ti);
+              addTimer(() => setShowReturnBtn(true), 600);
+            }
+          }, 60);
+          timersRef.current.push(ti);
+        }, 10000);
+      }, 4000);
+    }, 5200);
 
     return () => {
       clearAllTimers();
