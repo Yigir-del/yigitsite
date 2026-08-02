@@ -298,20 +298,25 @@ export default function NotFound() {
       return () => clearAllTimers();
     }
 
-    // Snappy Cinematic Timeline:
-    // T = 1.2s – Bilge speaks
+    // Cinematic Timeline:
+    // T = 2.0s – Bilge speaks
     addTimer(() => {
       setStage('CHARACTERS_TALK');
       setSageSpeech('Sanırım yine yolu kaybetmiş.');
-    }, 1200);
+    }, 2000);
 
-    // T = 2.4s – Bilge chatbox closes, Dilenci speaks immediately after
+    // T = 3.0s – Bilge chatbox closes, Dilenci speaks immediately after
     addTimer(() => {
       setSageSpeech(null);
       setBeggarSpeech('Abi... burası normal görünmüyor.');
-    }, 2400);
+    }, 3000);
 
-    // T = 4.0s – Dilenci chatbox closes & WORLD COLLAPSE triggers
+    // T = 5.0s – Dilenci chatbox closes
+    addTimer(() => {
+      setBeggarSpeech(null);
+    }, 5000);
+
+    // T = 5.2s – WORLD COLLAPSE triggers immediately after Dilenci speaks!
     addTimer(() => {
       setBeggarSpeech(null);
       setSageSpeech(null);
