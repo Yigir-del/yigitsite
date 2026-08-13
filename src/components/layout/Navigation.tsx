@@ -5,12 +5,12 @@ import { MEMORIAL_PATH, useMemorial } from '../../context/MemorialContext';
 const leftItems = [
   { path: '/', label: 'Ana Sayfa' },
   { path: '/hakkimda', label: 'Hakkımda' },
-  { path: '/projeler', label: 'Projeler' },
 ];
 
 const rightItems = [
-  { path: '/dusunceler', label: 'Düşünceler' },
-  { path: '/studyom', label: 'Stüdyom' },
+  { path: '/projeler', label: 'Projeler' },
+  // { path: '/dusunceler', label: 'Düşünceler' },
+  // { path: '/studyom', label: 'Stüdyom' },
   { path: '/iletisim', label: 'İletişim' },
 ];
 
