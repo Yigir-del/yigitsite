@@ -1,11 +1,10 @@
-import { rankEmblem, type RankEmblemVariant } from '../../utils/leagueAssets';
+import { rankEmblem } from '../../utils/leagueAssets';
 
 type RankEmblemSize = 'hero' | 'ladder' | 'ladder-current';
 
 interface RankEmblemProps {
   tier: string;
   size?: RankEmblemSize;
-  variant?: RankEmblemVariant;
   className?: string;
 }
 
@@ -15,16 +14,13 @@ const INTRINSIC: Record<RankEmblemSize, number> = {
   'ladder-current': 90,
 };
 
-/** Fixed-size rank emblem — prevents layout shift and CDN padding shrink */
+/** Fixed-size classic LoL rank emblem */
 export default function RankEmblem({
   tier,
   size = 'ladder',
-  variant,
   className = '',
 }: RankEmblemProps) {
   const px = INTRINSIC[size];
-  const assetVariant =
-    variant ?? (size === 'hero' ? 'wings' : size === 'ladder-current' ? 'plate' : 'emblem');
 
   return (
     <div
@@ -32,7 +28,7 @@ export default function RankEmblem({
       aria-hidden
     >
       <img
-        src={rankEmblem(tier, assetVariant)}
+        src={rankEmblem(tier)}
         alt=""
         width={px}
         height={px}

@@ -1,21 +1,10 @@
-/** Rank emblem asset variants from CommunityDragon */
-export type RankEmblemVariant = 'emblem' | 'wings' | 'plate';
+const CDRAGON_EMBLEM =
+  'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem';
 
-const CDRAGON_RANK_BASE =
-  'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default';
-
-export function rankEmblem(tier: string, variant: RankEmblemVariant = 'emblem'): string {
+/** Classic LoL rank helmet/crest emblem (not wings or frame) */
+export function rankEmblem(tier: string): string {
   const slug = tier.toLowerCase();
-
-  if (variant === 'wings') {
-    return `${CDRAGON_RANK_BASE}/ranked-emblem/wings/wings_${slug}.png`;
-  }
-
-  if (variant === 'plate') {
-    return `${CDRAGON_RANK_BASE}/ranked-emblem/wings/wings_${slug}_plate.png`;
-  }
-
-  return `${CDRAGON_RANK_BASE}/images/ranked-emblem/emblem-${slug}.png`;
+  return `${CDRAGON_EMBLEM}/emblem-${slug}.png`;
 }
 
 export function champIcon(version: string, name: string): string {
