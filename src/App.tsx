@@ -31,6 +31,7 @@ const Thoughts = lazy(() => import('./components/sections/Thoughts'));
 const Studio = lazy(() => import('./components/sections/Studio'));
 const Contact = lazy(() => import('./components/sections/Contact'));
 const Memorial = lazy(() => import('./components/sections/Memorial'));
+const League = lazy(() => import('./components/sections/League'));
 const NotFound = lazy(() => import('./components/sections/NotFound'));
 
 const ChaosManager = lazy(() => import('./components/events/ChaosManager'));
@@ -139,6 +140,7 @@ function AnimatedRoutes() {
             <Route path="/dusunceler" element={<Thoughts />} />
             <Route path="/studyom" element={<Studio />} />
             <Route path="/iletisim" element={<Contact />} />
+            <Route path="/league" element={<League />} />
             <Route path="/miras" element={<Memorial />} />
             <Route path="/atam" element={<Memorial />} />
 
@@ -208,7 +210,7 @@ function AppShell() {
   }, [upsideDown]);
 
   const location = useLocation();
-  const KNOWN_ROUTES = ['/', '/hakkimda', '/projeler', '/dusunceler', '/studyom', '/iletisim', '/miras', '/atam', '/portfolio', '/portfolyo', '/about', '/projects', '/contact'];
+  const KNOWN_ROUTES = ['/', '/hakkimda', '/projeler', '/dusunceler', '/studyom', '/iletisim', '/league', '/miras', '/atam', '/portfolio', '/portfolyo', '/about', '/projects', '/contact'];
   const is404Page = !KNOWN_ROUTES.includes(location.pathname);
 
   const showCharacters = !isQuiet && !is404Page && ready('characters');

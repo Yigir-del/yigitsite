@@ -9,6 +9,7 @@ const leftItems = [
 
 const rightItems = [
   { path: '/projeler', label: 'Projeler' },
+  { path: '/league', label: 'League' },
   // { path: '/dusunceler', label: 'Düşünceler' },
   // { path: '/studyom', label: 'Stüdyom' },
   { path: '/iletisim', label: 'İletişim' },
