@@ -82,14 +82,33 @@ export interface ChampionCompare {
   avgDeaths: number;
 }
 
-export type {
-  PlayerStateAnalysis,
-  PlayerStateKind,
-  AggressionBand,
-  PlaystyleTrend,
-} from '../utils/playerStateDisplay';
+export type PlayerStateKind =
+  | 'ON_FIRE'
+  | 'AGGRESSIVE'
+  | 'CALM'
+  | 'LOCKED_IN'
+  | 'TILTED'
+  | 'STRUGGLING';
 
-import type { PlayerStateAnalysis } from '../utils/playerStateDisplay';
+export interface PlayerStateAnalysis {
+  state: PlayerStateKind;
+  secondaryTendency: string | null;
+  confidence: number;
+  aggressionScore: number;
+  aggressionBand: string;
+  momentumScore: number;
+  consistencyScore: number;
+  playstyleTrend: string;
+  trendLabel: string;
+  trendDetail: string;
+  observation: string;
+  reasons: string[];
+  analyzedGames: number;
+  windows: {
+    short: Record<string, unknown>;
+    mid: Record<string, unknown>;
+  };
+}
 
 export interface PlayerSummary {
   riotId: string;

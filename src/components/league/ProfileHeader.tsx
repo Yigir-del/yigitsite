@@ -6,7 +6,7 @@ import {
   profileIcon,
   tierDisplay,
 } from '../../utils/leagueAssets';
-import BilgeAnalyst from './BilgeAnalyst';
+import BilgeVisitorHint from './BilgeVisitorHint';
 import RankEmblem from './RankEmblem';
 
 interface ProfileHeaderProps {
@@ -19,7 +19,7 @@ export default function ProfileHeader({ data, fetchedAt }: ProfileHeaderProps) {
   const form = data.recentForm;
 
   return (
-    <div className="league-hero-shell">
+    <div className="league-hero-wrap">
       <header className="league-hero card-surface glass" aria-label="Oyuncu profili">
         <div className="league-hero__col league-hero__col--identity">
           <img
@@ -112,7 +112,7 @@ export default function ProfileHeader({ data, fetchedAt }: ProfileHeaderProps) {
       </header>
 
       {data.playerState && (
-        <BilgeAnalyst analysis={data.playerState} />
+        <BilgeVisitorHint analysis={data.playerState} />
       )}
     </div>
   );
