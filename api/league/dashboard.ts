@@ -4,9 +4,9 @@ import {
   buildRecentSummary,
   compareChampions,
   enrichMatchesWithInsights,
-} from '../../server/league/analysis';
-import { cacheDelete, cacheGet, cacheGetStale, cacheSet } from '../../server/league/cache';
-import { CACHE_TTL, MATCH_COUNT, PLAYER } from '../../server/league/constants';
+} from '../../server/league/analysis.js';
+import { cacheDelete, cacheGet, cacheGetStale, cacheSet } from '../../server/league/cache.js';
+import { CACHE_TTL, MATCH_COUNT, PLAYER } from '../../server/league/constants.js';
 import {
   fetchAccount,
   fetchChampionMasteries,
@@ -16,9 +16,9 @@ import {
   fetchMatchIds,
   fetchSummoner,
   RiotApiError,
-} from '../../server/league/riot';
-import { buildPlayerSummary, transformMatch } from '../../server/league/transform';
-import type { PlayerSummary } from '../../server/league/types';
+} from '../../server/league/riot.js';
+import { buildPlayerSummary, transformMatch } from '../../server/league/transform.js';
+import type { PlayerSummary } from '../../server/league/types.js';
 
 const CACHE_KEY = `league-dashboard-${PLAYER.gameName}-${PLAYER.tagLine}`;
 

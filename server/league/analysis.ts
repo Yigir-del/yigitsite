@@ -1,5 +1,5 @@
-import type { LeagueMatch, MatchInsight, PlayerSummary } from './types';
-import { MIN_COMPARE_GAMES } from './constants';
+import type { LeagueMatch, MatchInsight, PlayerSummary } from './types.js';
+import { MIN_COMPARE_GAMES } from './constants.js';
 
 function kdaRatio(k: number, d: number, a: number): number {
   if (d === 0) return k + a;

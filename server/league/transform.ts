@@ -3,13 +3,13 @@ import type {
   LeagueParticipant,
   LeagueRank,
   PlayerSummary,
-} from './types';
+} from './types.js';
 import type {
   RiotLeagueEntry,
   RiotMatch,
   RiotParticipant,
-} from './riot';
-import { PLAYER, OPGG_URL, TIER_ORDER } from './constants';
+} from './riot.js';
+import { PLAYER, OPGG_URL, TIER_ORDER } from './constants.js';
 
 const POSITION_MAP: Record<string, string> = {
   TOP: 'TOP',

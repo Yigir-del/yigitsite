@@ -2,6 +2,11 @@
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
+  "functions": {
+    "api/league/dashboard.ts": {
+      "includeFiles": "server/league/**"
+    }
+  },
   "headers": [
     {
       "source": "/index.html",

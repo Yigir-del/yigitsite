@@ -1,4 +1,4 @@
-import { PLAYER } from './constants';
+import { PLAYER } from './constants.js';
 
 const RIOT_KEY = process.env.RIOT_API_KEY ?? '';
 
