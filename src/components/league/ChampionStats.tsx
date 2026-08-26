@@ -1,14 +1,12 @@
-import type { ChampionStat, PlayerSummary } from '../../types/league';
+import type { ChampionStat } from '../../types/league';
 import { champIcon, formatWinRate } from '../../utils/leagueAssets';
-import VexVsQiyana from './VexVsQiyana';
 
 interface ChampionStatsProps {
   stats: ChampionStat[];
   version: string;
-  compare: PlayerSummary['vexVsQiyana'];
 }
 
-export default function ChampionStats({ stats, version, compare }: ChampionStatsProps) {
+export default function ChampionStats({ stats, version }: ChampionStatsProps) {
   if (stats.length === 0) return null;
 
   const featured = stats.slice(0, 6);
@@ -42,7 +40,6 @@ export default function ChampionStats({ stats, version, compare }: ChampionStats
           </article>
         ))}
       </div>
-      <VexVsQiyana compare={compare} embedded />
     </section>
   );
 }
