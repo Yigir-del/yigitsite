@@ -24,9 +24,8 @@ interface SvgLineChartProps {
   variant?: 'line' | 'step' | 'bar-labeled';
 }
 
-const CHART_W = 320;
-const CHART_H = 140;
-const PAD = { top: 16, right: 12, bottom: 28, left: 36 };
+const LINE_CHART = { w: 320, h: 150, pad: { top: 18, right: 12, bottom: 28, left: 36 } };
+const BAR_CHART = { w: 320, h: 210, pad: { top: 36, right: 12, bottom: 34, left: 42 } };
 
 function SvgLineChart({
   title,
@@ -40,13 +39,28 @@ function SvgLineChart({
 }: SvgLineChartProps) {
   if (points.length === 0) return null;
 
-  const innerW = CHART_W - PAD.left - PAD.right;
-  const innerH = CHART_H - PAD.top - PAD.bottom;
+  const cfg = variant === 'bar-labeled' ? BAR_CHART : LINE_CHART;
+  const innerW = cfg.w - cfg.pad.left - cfg.pad.right;
+  const innerH = cfg.h - cfg.pad.top - cfg.pad.bottom;
   const range = yMax - yMin || 1;
 
   const coords = points.map((p, i) => {
-    const x = PAD.left + (points.length === 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
-    const y = PAD.top + innerH - ((p.value - yMin) / range) * innerH;
+    let x: number;
+    if (variant === 'bar-labeled') {
+      const barW = Math.min(40, innerW / points.length - 8);
+      const slot = innerW / points.length;
+      x = cfg.pad.left + slot * i + slot / 2;
+      const barHalf = barW / 2;
+      return {
+        ...p,
+        x,
+        y: cfg.pad.top + innerH - ((p.value - yMin) / range) * innerH,
+        barW,
+        barHalf,
+      };
+    }
+    x = cfg.pad.left + (points.length === 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
+    const y = cfg.pad.top + innerH - ((p.value - yMin) / range) * innerH;
     return { ...p, x, y };
   });
 
@@ -67,22 +81,27 @@ function SvgLineChart({
       <p className="league-stat-sublabel">{subtitle}</p>
       <svg
         className="league-line-chart"
-        viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+        viewBox={`0 0 ${cfg.w} ${cfg.h}`}
         role="img"
         aria-label={`${title}: ${points.map((p) => `${p.label} ${p.display ?? p.value}`).join(', ')}`}
       >
         {[0, 0.5, 1].map((t) => {
-          const y = PAD.top + innerH * (1 - t);
+          const y = cfg.pad.top + innerH * (1 - t);
           return (
             <g key={t}>
               <line
-                x1={PAD.left}
+                x1={cfg.pad.left}
                 y1={y}
-                x2={CHART_W - PAD.right}
+                x2={cfg.w - cfg.pad.right}
                 y2={y}
                 className="league-line-chart__grid"
               />
-              <text x={PAD.left - 6} y={y + 3} className="league-line-chart__axis-y" textAnchor="end">
+              <text
+                x={cfg.pad.left - 8}
+                y={y + 4}
+                className="league-line-chart__axis-y"
+                textAnchor="end"
+              >
                 {yTicks[Math.round(t * 2)] ?? ''}
               </text>
             </g>
@@ -93,25 +112,43 @@ function SvgLineChart({
           <path d={linePath} className="league-line-chart__line" fill="none" />
         )}
 
-        {coords.map((c) =>
-          variant === 'bar-labeled' ? (
-            <g key={c.label}>
-              <rect
-                x={c.x - 14}
-                y={c.y}
-                width={28}
-                height={PAD.top + innerH - c.y}
-                className="league-line-chart__bar"
-                rx={3}
-              />
-              <text x={c.x} y={c.y - 6} className="league-line-chart__value" textAnchor="middle">
-                {c.display ?? `${c.value}${unit}`}
-              </text>
-              <text x={c.x} y={CHART_H - 6} className="league-line-chart__axis-x" textAnchor="middle">
-                {c.label}
-              </text>
-            </g>
-          ) : (
+        {coords.map((c) => {
+          if (variant === 'bar-labeled') {
+            const barW = 'barW' in c ? (c.barW as number) : 28;
+            const barHalf = barW / 2;
+            const barBottom = cfg.pad.top + innerH;
+            const labelInside = c.y < cfg.pad.top + 22;
+            return (
+              <g key={`${c.label}-${c.value}`}>
+                <rect
+                  x={c.x - barHalf}
+                  y={c.y}
+                  width={barW}
+                  height={barBottom - c.y}
+                  className="league-line-chart__bar"
+                  rx={4}
+                />
+                <text
+                  x={c.x}
+                  y={labelInside ? c.y + 14 : c.y - 10}
+                  className={`league-line-chart__value${labelInside ? ' league-line-chart__value--on-bar' : ''}`}
+                  textAnchor="middle"
+                >
+                  {c.display ?? `${c.value}${unit}`}
+                </text>
+                <text
+                  x={c.x}
+                  y={cfg.h - 8}
+                  className="league-line-chart__axis-x"
+                  textAnchor="middle"
+                >
+                  {c.label}
+                </text>
+              </g>
+            );
+          }
+
+          return (
             <g key={c.label}>
               <circle
                 cx={c.x}
@@ -123,12 +160,12 @@ function SvgLineChart({
               <text x={c.x} y={c.y - 10} className="league-line-chart__value" textAnchor="middle">
                 {c.display ?? `${c.value}${unit}`}
               </text>
-              <text x={c.x} y={CHART_H - 6} className="league-line-chart__axis-x" textAnchor="middle">
+              <text x={c.x} y={cfg.h - 6} className="league-line-chart__axis-x" textAnchor="middle">
                 {c.label}
               </text>
             </g>
-          ),
-        )}
+          );
+        })}
       </svg>
     </div>
   );
@@ -138,7 +175,9 @@ export default function LeagueCharts({ matches, championStats, embedded }: Leagu
   const chronological = [...matches].reverse();
   const recentResults = chronological.slice(-10);
   const kdaTrend = chronological.slice(-10);
-  const topChamps = championStats.slice(0, 5);
+  const topChamps = [...championStats]
+    .sort((a, b) => b.winRate - a.winRate)
+    .slice(0, 5);
 
   if (recentResults.length === 0) return null;
 
@@ -193,7 +232,7 @@ export default function LeagueCharts({ matches, championStats, embedded }: Leagu
         {champPoints.length > 0 && (
           <SvgLineChart
             title="Champion Win Rate"
-            subtitle="En çok oynanan — % win rate"
+            subtitle="Win rate — büyükten küçüğe"
             points={champPoints}
             yMin={0}
             yMax={100}
