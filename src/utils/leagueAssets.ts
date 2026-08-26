@@ -1,3 +1,23 @@
+/** Rank emblem asset variants from CommunityDragon */
+export type RankEmblemVariant = 'emblem' | 'wings' | 'plate';
+
+const CDRAGON_RANK_BASE =
+  'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default';
+
+export function rankEmblem(tier: string, variant: RankEmblemVariant = 'emblem'): string {
+  const slug = tier.toLowerCase();
+
+  if (variant === 'wings') {
+    return `${CDRAGON_RANK_BASE}/ranked-emblem/wings/wings_${slug}.png`;
+  }
+
+  if (variant === 'plate') {
+    return `${CDRAGON_RANK_BASE}/ranked-emblem/wings/wings_${slug}_plate.png`;
+  }
+
+  return `${CDRAGON_RANK_BASE}/images/ranked-emblem/emblem-${slug}.png`;
+}
+
 export function champIcon(version: string, name: string): string {
   return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${name}.png`;
 }
@@ -26,11 +46,6 @@ export function spellIcon(version: string, spellId: number): string {
 
 export function profileIcon(version: string, id: number): string {
   return `https://ddragon.leagueoflegends.com/cdn/${version}/img/profileicon/${id}.png`;
-}
-
-export function rankEmblem(tier: string): string {
-  const slug = tier.toLowerCase();
-  return `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-${slug}.png`;
 }
 
 export function formatDuration(seconds: number): string {

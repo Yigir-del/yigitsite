@@ -4,9 +4,9 @@ import {
   formatRelativeUpdate,
   formatWinRate,
   profileIcon,
-  rankEmblem,
   tierDisplay,
 } from '../../utils/leagueAssets';
+import RankEmblem from './RankEmblem';
 
 interface ProfileHeaderProps {
   data: PlayerSummary;
@@ -48,12 +48,7 @@ export default function ProfileHeader({ data, fetchedAt }: ProfileHeaderProps) {
       <div className="league-hero__col league-hero__col--rank">
         {solo ? (
           <>
-            <img
-              className="league-hero__emblem"
-              src={rankEmblem(solo.tier)}
-              alt=""
-              loading="lazy"
-            />
+            <RankEmblem tier={solo.tier} size="hero" />
             <p className="league-stat-label">Current Rank</p>
             <p className="league-hero__tier">{tierDisplay(solo.tier, solo.rank)}</p>
             <p className="league-hero__lp">
