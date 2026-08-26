@@ -16,26 +16,12 @@ export default function League() {
     <section className="league-page" aria-label="League of Legends profil">
       <SEOHead page="league" />
 
-      <header className="league-page__header">
-        <h1 className="league-page__title glitch" data-text="Summoner's Rift">
-          Summoner&apos;s Rift
-        </h1>
-        <p className="league-page__subtitle">
-          Kişisel LoL dashboard — Bilge analiz eder, Dilenci yorumlar.
-        </p>
-      </header>
-
       {loading && !data && <LeagueSkeleton />}
 
       {error && !data && (
-        <div className="league-error card-surface">
-          <p>{error}</p>
-          <button
-            type="button"
-            className="league-toolbar__refresh"
-            style={{ marginTop: '1rem' }}
-            onClick={refresh}
-          >
+        <div className="league-error">
+          <p className="league-error__text">{error}</p>
+          <button type="button" className="league-toolbar__refresh" onClick={refresh}>
             Tekrar dene
           </button>
         </div>

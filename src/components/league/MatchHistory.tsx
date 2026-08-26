@@ -62,7 +62,7 @@ export default function MatchHistory({ matches, version, puuid }: MatchHistoryPr
             </div>
             <div className="league-match-card__meta">
               <div>CS {m.cs}</div>
-              <div>{formatDuration(m.durationSeconds)}</div>
+              {m.durationSeconds > 0 && <div>{formatDuration(m.durationSeconds)}</div>}
               <div>{formatDate(m.gameCreation)}</div>
             </div>
           </button>

@@ -29,8 +29,10 @@ export default function ProfileHeader({ data }: ProfileHeaderProps) {
       <div>
         <h2 className="league-profile__riot-id">{data.riotId}</h2>
         <p className="league-profile__meta">
-          {data.region} · Seviye {data.summonerLevel} · Toplam ustalık{' '}
-          {formatMastery(data.totalChampionMastery)}
+          {data.region} · Seviye {data.summonerLevel}
+          {data.totalChampionMastery > 0 && (
+            <> · Toplam ustalık {formatMastery(data.totalChampionMastery)}</>
+          )}
         </p>
 
         {solo ? (
@@ -93,7 +95,7 @@ export function LeagueToolbar({
   return (
     <div className="league-toolbar">
       <span>
-        Last updated: {formatRelativeUpdate(fetchedAt)}
+        OP.GG · {formatRelativeUpdate(fetchedAt)}
         {stale && <span className="league-stale-badge">Önbellek</span>}
       </span>
       <button

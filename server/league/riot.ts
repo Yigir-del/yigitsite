@@ -28,6 +28,13 @@ async function riotFetch<T>(url: string): Promise<T> {
     throw new RiotApiError('Resource not found', 404);
   }
 
+  if (res.status === 401 || res.status === 403) {
+    throw new RiotApiError(
+      'Riot API anahtarı geçersiz veya production ortamında kullanılamıyor. Development key sadece localhost\'ta çalışır — developer.riotgames.com üzerinden Production API key başvurusu yap.',
+      res.status,
+    );
+  }
+
   if (!res.ok) {
     throw new RiotApiError(`Riot API error: ${res.status}`, res.status);
   }

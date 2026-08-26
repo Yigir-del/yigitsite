@@ -15,6 +15,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { MemorialProvider, useMemorial } from './context/MemorialContext';
 import ThemeSelector from './components/ui/ThemeSelector';
 import { useIsMobilePerf } from './hooks/useIsMobilePerf';
+import LeagueMobileGuard from './components/league/LeagueMobileGuard';
 import { useAtmosphereStage } from './hooks/useAtmosphereStage';
 import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
 import { trackPageView } from './utils/analytics';
@@ -40,6 +41,7 @@ const FlyingPen = lazy(() => import('./components/events/FlyingPen'));
 const FlyingMusic = lazy(() => import('./components/events/FlyingMusic'));
 const FlyingBeggar = lazy(() => import('./components/events/FlyingBeggar'));
 const FlyingSage = lazy(() => import('./components/events/FlyingSage'));
+const FlyingLoL = lazy(() => import('./components/events/FlyingLoL'));
 const SocialDrifters = lazy(() => import('./components/events/SocialDrifters'));
 const CustomCursor = lazy(() => import('./components/ui/CustomCursor'));
 
@@ -140,7 +142,14 @@ function AnimatedRoutes() {
             <Route path="/dusunceler" element={<Thoughts />} />
             <Route path="/studyom" element={<Studio />} />
             <Route path="/iletisim" element={<Contact />} />
-            <Route path="/league" element={<League />} />
+            <Route
+              path="/league"
+              element={
+                <LeagueMobileGuard>
+                  <League />
+                </LeagueMobileGuard>
+              }
+            />
             <Route path="/miras" element={<Memorial />} />
             <Route path="/atam" element={<Memorial />} />
 
@@ -245,6 +254,7 @@ function AppShell() {
                 <>
                   <FlyingBeggar />
                   <FlyingSage />
+                  <FlyingLoL />
                   <SocialDrifters />
                 </>
               )}
