@@ -82,6 +82,15 @@ export interface ChampionCompare {
   avgDeaths: number;
 }
 
+export type {
+  PlayerStateAnalysis,
+  PlayerStateKind,
+  AggressionBand,
+  PlaystyleTrend,
+} from '../utils/playerStateDisplay';
+
+import type { PlayerStateAnalysis } from '../utils/playerStateDisplay';
+
 export interface PlayerSummary {
   riotId: string;
   gameName: string;
@@ -120,6 +129,7 @@ export interface PlayerSummary {
     verdict: string | null;
     minGames: number;
   };
+  playerState: PlayerStateAnalysis;
   ddragonVersion: string;
   opggUrl: string;
   fetchedAt: number;

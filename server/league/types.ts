@@ -82,6 +82,61 @@ export interface ChampionCompare {
   avgDeaths: number;
 }
 
+export type PlayerStateKind =
+  | 'ON_FIRE'
+  | 'AGGRESSIVE'
+  | 'CALM'
+  | 'LOCKED_IN'
+  | 'TILTED'
+  | 'STRUGGLING';
+
+export type AggressionBand =
+  | 'VERY_CALM'
+  | 'CALM'
+  | 'BALANCED'
+  | 'AGGRESSIVE'
+  | 'VERY_AGGRESSIVE';
+
+export type PlaystyleTrend =
+  | 'MORE_AGGRESSIVE'
+  | 'MORE_CONTROLLED'
+  | 'STABLE';
+
+export interface MatchWindowMetrics {
+  sampleSize: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  avgKills: number;
+  avgDeaths: number;
+  avgAssists: number;
+  avgKda: number;
+  avgKillParticipation: number | null;
+  avgTakedownsPerMin: number;
+  winStreak: number;
+  lossStreak: number;
+}
+
+export interface PlayerStateAnalysis {
+  state: PlayerStateKind;
+  secondaryTendency: string | null;
+  confidence: number;
+  aggressionScore: number;
+  aggressionBand: AggressionBand;
+  momentumScore: number;
+  consistencyScore: number;
+  playstyleTrend: PlaystyleTrend;
+  trendLabel: string;
+  trendDetail: string;
+  observation: string;
+  reasons: string[];
+  analyzedGames: number;
+  windows: {
+    short: MatchWindowMetrics;
+    mid: MatchWindowMetrics;
+  };
+}
+
 export interface PlayerSummary {
   riotId: string;
   gameName: string;
@@ -120,6 +175,7 @@ export interface PlayerSummary {
     verdict: string | null;
     minGames: number;
   };
+  playerState: PlayerStateAnalysis;
   ddragonVersion: string;
   opggUrl: string;
   fetchedAt: number;

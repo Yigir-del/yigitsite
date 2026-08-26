@@ -12,10 +12,19 @@ import {
   fetchOpggMatchDurations,
   OpggApiError,
 } from '../../server/league/opgg.js';
+import { analyzePlayerState } from '../../server/league/playerState.js';
 import { transformOpggToSummary } from '../../server/league/opggTransform.js';
 import type { PlayerSummary } from '../../server/league/types.js';
 
 const CACHE_KEY = `league-dashboard-${PLAYER.gameName}-${PLAYER.tagLine}`;
+
+function ensurePlayerState(summary: PlayerSummary): PlayerSummary {
+  if (summary.playerState) return summary;
+  return {
+    ...summary,
+    playerState: analyzePlayerState(summary.matches),
+  };
+}
 
 async function loadDashboard(): Promise<PlayerSummary> {
   const cachedVersion = cacheGet<string>('ddragon-version');
@@ -48,6 +57,7 @@ async function loadDashboard(): Promise<PlayerSummary> {
     matches: withInsights,
     recentForm: buildRecentSummary(withInsights),
     vexVsQiyana: compareChampions(withInsights, 'Vex', 'Qiyana'),
+    playerState: analyzePlayerState(withInsights),
   };
 
   return summary;
@@ -69,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (cached) {
       return res.status(200).json({
         ok: true,
-        data: cached,
+        data: ensurePlayerState(cached),
         stale: false,
       });
     }
@@ -86,7 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (stale) {
       return res.status(200).json({
         ok: true,
-        data: { ...stale, stale: true },
+        data: ensurePlayerState({ ...stale, stale: true }),
         stale: true,
         error: err instanceof Error ? err.message : 'Unknown error',
       });

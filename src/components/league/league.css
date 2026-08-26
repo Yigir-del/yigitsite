@@ -1998,7 +1998,465 @@
 
 
 
+/* ── Hero shell + Bilge analyst ── */
+
+.league-hero-shell {
+
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+
+  gap: 1.25rem;
+
+  align-items: start;
+
+  margin-bottom: 0.25rem;
+
+}
+
+
+
+.league-hero-shell .league-hero {
+
+  margin-bottom: 0;
+
+}
+
+
+
+.league-bilge-analyst {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.5rem;
+
+  position: sticky;
+
+  top: 1rem;
+
+  transition: transform 0.25s ease;
+
+}
+
+
+
+.league-bilge-analyst:hover .league-bilge-analyst__panel {
+
+  border-color: rgba(148, 163, 184, 0.35);
+
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+
+}
+
+
+
+.league-bilge-analyst__scene {
+
+  display: flex;
+
+  justify-content: center;
+
+  padding: 0.25rem 0.5rem 0;
+
+  animation: league-bilge-breathe 5s ease-in-out infinite;
+
+}
+
+
+
+.league-bilge__illustration {
+
+  width: 100%;
+
+  max-width: 200px;
+
+  height: auto;
+
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
+
+}
+
+
+
+.league-bilge__eye {
+
+  animation: league-bilge-blink 6s ease-in-out infinite;
+
+}
+
+
+
+.league-bilge__orb {
+
+  animation: league-bilge-pulse 3s ease-in-out infinite;
+
+}
+
+
+
+.league-bilge__orb-core {
+
+  animation: league-bilge-pulse 3s ease-in-out infinite 0.4s;
+
+}
+
+
+
+@keyframes league-bilge-breathe {
+
+  0%, 100% { transform: translateY(0); }
+
+  50% { transform: translateY(-3px); }
+
+}
+
+
+
+@keyframes league-bilge-blink {
+
+  0%, 92%, 100% { opacity: 1; }
+
+  95% { opacity: 0.35; }
+
+}
+
+
+
+@keyframes league-bilge-pulse {
+
+  0%, 100% { opacity: 0.55; }
+
+  50% { opacity: 1; }
+
+}
+
+
+
+.league-bilge-analyst__panel {
+
+  padding: 1rem 1.1rem;
+
+  border-radius: 12px;
+
+  background: rgba(12, 16, 22, 0.72);
+
+  border: 1px solid var(--glass-border);
+
+  backdrop-filter: blur(10px);
+
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+}
+
+
+
+.league-bilge-analyst__eyebrow {
+
+  font-size: 0.68rem;
+
+  letter-spacing: 0.12em;
+
+  text-transform: uppercase;
+
+  color: var(--text-muted, #94a3b8);
+
+  margin: 0 0 0.5rem;
+
+}
+
+
+
+.league-bilge-analyst__state-row {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.45rem;
+
+  margin-bottom: 0.2rem;
+
+}
+
+
+
+.league-bilge-analyst__state-emoji {
+
+  font-size: 1.15rem;
+
+  line-height: 1;
+
+}
+
+
+
+.league-bilge-analyst__state {
+
+  font-family: var(--font-title);
+
+  font-size: 1.05rem;
+
+  margin: 0;
+
+  letter-spacing: 0.04em;
+
+}
+
+
+
+.league-bilge-analyst__sub {
+
+  font-size: 0.78rem;
+
+  color: var(--text-muted, #94a3b8);
+
+  margin: 0 0 0.65rem;
+
+}
+
+
+
+.league-bilge-analyst__quote {
+
+  margin: 0 0 0.85rem;
+
+  padding-left: 0.65rem;
+
+  border-left: 2px solid rgba(148, 163, 184, 0.35);
+
+  font-size: 0.82rem;
+
+  line-height: 1.55;
+
+  color: var(--text-secondary, #cbd5e1);
+
+  font-style: normal;
+
+}
+
+
+
+.league-bilge-analyst__scores {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.55rem;
+
+  margin-bottom: 0.85rem;
+
+}
+
+
+
+.league-bilge__score-head {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: baseline;
+
+  margin-bottom: 0.2rem;
+
+}
+
+
+
+.league-bilge__score-label {
+
+  font-size: 0.72rem;
+
+  color: var(--text-muted, #94a3b8);
+
+}
+
+
+
+.league-bilge__score-value {
+
+  font-size: 0.72rem;
+
+  font-variant-numeric: tabular-nums;
+
+  color: var(--text-secondary, #cbd5e1);
+
+}
+
+
+
+.league-bilge__score-track {
+
+  height: 4px;
+
+  border-radius: 2px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  overflow: hidden;
+
+}
+
+
+
+.league-bilge__score-fill {
+
+  height: 100%;
+
+  border-radius: 2px;
+
+  transition: width 0.4s ease;
+
+}
+
+
+
+.league-bilge-analyst__trend {
+
+  margin-bottom: 0.65rem;
+
+}
+
+
+
+.league-bilge-analyst__trend-label {
+
+  font-size: 0.82rem;
+
+  font-weight: 600;
+
+  margin: 0.15rem 0 0.25rem;
+
+}
+
+
+
+.league-bilge-analyst__trend-label.league-bilge__trend--up {
+
+  color: #f87171;
+
+}
+
+
+
+.league-bilge-analyst__trend-label.league-bilge__trend--down {
+
+  color: #7dd3fc;
+
+}
+
+
+
+.league-bilge-analyst__trend-label.league-bilge__trend--flat {
+
+  color: var(--text-secondary, #cbd5e1);
+
+}
+
+
+
+.league-bilge-analyst__trend-detail {
+
+  font-size: 0.75rem;
+
+  line-height: 1.45;
+
+  color: var(--text-muted, #94a3b8);
+
+  margin: 0;
+
+}
+
+
+
+.league-bilge-analyst__meta {
+
+  font-size: 0.68rem;
+
+  color: var(--text-muted, #64748b);
+
+  margin: 0;
+
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  .league-bilge-analyst__scene,
+
+  .league-bilge__eye,
+
+  .league-bilge__orb,
+
+  .league-bilge__orb-core {
+
+    animation: none;
+
+  }
+
+}
+
+
+
 /* ── Responsive ── */
+
+@media (max-width: 1100px) {
+
+  .league-hero-shell {
+
+    grid-template-columns: 1fr;
+
+  }
+
+
+
+  .league-bilge-analyst {
+
+    position: static;
+
+    flex-direction: row;
+
+    align-items: flex-start;
+
+    gap: 1rem;
+
+  }
+
+
+
+  .league-bilge-analyst__scene {
+
+    flex-shrink: 0;
+
+    width: 120px;
+
+  }
+
+
+
+  .league-bilge__illustration {
+
+    max-width: 120px;
+
+  }
+
+
+
+  .league-bilge-analyst__panel {
+
+    flex: 1;
+
+    min-width: 0;
+
+  }
+
+}
+
+
 
 @media (max-width: 860px) {
 
@@ -2047,6 +2505,34 @@
     grid-template-columns: 1fr 1fr;
 
     text-align: center;
+
+  }
+
+
+
+  .league-bilge-analyst {
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+  }
+
+
+
+  .league-bilge-analyst__scene {
+
+    width: auto;
+
+  }
+
+
+
+  .league-bilge__illustration {
+
+    max-width: 160px;
+
+    margin: 0 auto;
 
   }
 
