@@ -1,103 +1,134 @@
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import type { PlayerSummary } from '../../types/league';
 import {
-  formatMastery,
+  formatRelativeUpdate,
   formatWinRate,
   profileIcon,
   rankEmblem,
-  tierLabel,
-  formatRelativeUpdate,
+  tierDisplay,
 } from '../../utils/leagueAssets';
 
 interface ProfileHeaderProps {
   data: PlayerSummary;
+  fetchedAt: number;
 }
 
-export default function ProfileHeader({ data }: ProfileHeaderProps) {
+export default function ProfileHeader({ data, fetchedAt }: ProfileHeaderProps) {
   const solo = data.soloRank;
-  const flex = data.flexRank;
+  const form = data.recentForm;
 
   return (
-    <div className="league-profile card-surface glass">
-      <img
-        className="league-profile__icon"
-        src={profileIcon(data.ddragonVersion, data.profileIconId)}
-        alt=""
-        loading="lazy"
-      />
+    <header className="league-hero card-surface glass" aria-label="Oyuncu profili">
+      <div className="league-hero__col league-hero__col--identity">
+        <img
+          className="league-hero__icon"
+          src={profileIcon(data.ddragonVersion, data.profileIconId)}
+          alt=""
+          loading="lazy"
+        />
+        <div className="league-hero__identity-text">
+          <h1 className="league-hero__name">{data.gameName}</h1>
+          <p className="league-hero__meta">
+            {data.region} · Seviye {data.summonerLevel}
+          </p>
+          <p className="league-hero__updated">
+            OP.GG · {formatRelativeUpdate(fetchedAt)}
+          </p>
+          <a
+            className="league-hero__opgg"
+            href={data.opggUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View on OP.GG <ExternalLink size={13} aria-hidden />
+          </a>
+        </div>
+      </div>
 
-      <div>
-        <h2 className="league-profile__riot-id">{data.riotId}</h2>
-        <p className="league-profile__meta">
-          {data.region} · Seviye {data.summonerLevel}
-          {data.totalChampionMastery > 0 && (
-            <> · Toplam ustalık {formatMastery(data.totalChampionMastery)}</>
-          )}
-        </p>
-
+      <div className="league-hero__col league-hero__col--rank">
         {solo ? (
           <>
-            <p className="league-profile__rank">
-              {solo.tier} {solo.rank}
-            </p>
-            <p className="league-profile__stats">
-              <span>{solo.lp} LP</span>
-              <span>
-                {solo.wins}W — {solo.losses}L
-              </span>
-              <span>{formatWinRate(solo.winRate)} Win Rate</span>
+            <img
+              className="league-hero__emblem"
+              src={rankEmblem(solo.tier)}
+              alt=""
+              loading="lazy"
+            />
+            <p className="league-stat-label">Current Rank</p>
+            <p className="league-hero__tier">{tierDisplay(solo.tier, solo.rank)}</p>
+            <p className="league-hero__lp">
+              <span className="league-hero__lp-value">{solo.lp}</span>
+              <span className="league-hero__lp-unit"> LP</span>
             </p>
           </>
         ) : (
-          <p className="league-profile__rank">Unranked</p>
+          <>
+            <p className="league-stat-label">Current Rank</p>
+            <p className="league-hero__tier">Unranked</p>
+          </>
         )}
-
-        {flex && (
-          <p className="league-profile__meta" style={{ marginTop: '0.5rem' }}>
-            Flex: {tierLabel(flex.tier, flex.rank, flex.lp)} ·{' '}
-            {flex.wins}W / {flex.losses}L
-          </p>
-        )}
-
-        <a
-          className="league-profile__opgg"
-          href={data.opggUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          View on OP.GG <ExternalLink size={14} aria-hidden />
-        </a>
       </div>
 
       {solo && (
-        <img
-          className="league-profile__emblem"
-          src={rankEmblem(solo.tier)}
-          alt={`${solo.tier} emblem`}
-          loading="lazy"
-        />
+        <div className="league-hero__col league-hero__col--stats">
+          <div className="league-hero__stat-block">
+            <p className="league-stat-label">Win Rate</p>
+            <p className="league-hero__stat-value">{formatWinRate(solo.winRate)}</p>
+          </div>
+          <div className="league-hero__stat-block">
+            <p className="league-stat-label">Ranked Record</p>
+            <p className="league-hero__stat-value league-hero__stat-value--sm">
+              {solo.wins}W — {solo.losses}L
+            </p>
+          </div>
+          {form.streak >= 2 && form.streakType !== 'none' && (
+            <div className="league-hero__stat-block">
+              <p className="league-stat-label">Current Streak</p>
+              <p className="league-hero__stat-value league-hero__stat-value--sm">
+                {form.streak}
+                {form.streakType === 'win' ? 'W' : 'L'}
+              </p>
+              {form.last5Form.length > 0 && (
+                <div className="league-form-dots league-form-dots--compact" aria-hidden>
+                  {form.last5Form.map((r, i) => (
+                    <span
+                      key={i}
+                      className={`league-form-dot league-form-dot--${r.toLowerCase()}`}
+                    >
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {form.mostPlayedChampion && (
+            <div className="league-hero__stat-block">
+              <p className="league-stat-label">Most Played</p>
+              <p className="league-hero__stat-value league-hero__stat-value--sm">
+                {form.mostPlayedChampion}
+              </p>
+            </div>
+          )}
+        </div>
       )}
-    </div>
+    </header>
   );
 }
 
 export function LeagueToolbar({
-  fetchedAt,
   stale,
   loading,
   onRefresh,
 }: {
-  fetchedAt: number;
   stale: boolean;
   loading: boolean;
   onRefresh: () => void;
 }) {
   return (
     <div className="league-toolbar">
-      <span>
-        OP.GG · {formatRelativeUpdate(fetchedAt)}
-        {stale && <span className="league-stale-badge">Önbellek</span>}
-      </span>
+      <span className="league-toolbar__hint">League of Legends profili</span>
+      {stale && <span className="league-stale-badge">Önbellek</span>}
       <button
         type="button"
         className="league-toolbar__refresh"

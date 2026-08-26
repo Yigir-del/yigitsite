@@ -1,19 +1,21 @@
-import type { ChampionStat } from '../../types/league';
-import { champIcon, formatDate, formatWinRate } from '../../utils/leagueAssets';
+import type { ChampionStat, PlayerSummary } from '../../types/league';
+import { champIcon, formatWinRate } from '../../utils/leagueAssets';
+import VexVsQiyana from './VexVsQiyana';
 
 interface ChampionStatsProps {
   stats: ChampionStat[];
   version: string;
+  compare: PlayerSummary['vexVsQiyana'];
 }
 
-export default function ChampionStats({ stats, version }: ChampionStatsProps) {
+export default function ChampionStats({ stats, version, compare }: ChampionStatsProps) {
   if (stats.length === 0) return null;
 
   const featured = stats.slice(0, 6);
 
   return (
-    <section aria-label="Champion statistics">
-      <h3 className="league-section-title">Current Champions</h3>
+    <section className="league-section" aria-label="Champion performance">
+      <h2 className="league-section-title">Champion Performance</h2>
       <div className="league-champ-grid">
         {featured.map((c) => (
           <article key={c.championName} className="league-champ-card card-surface">
@@ -24,33 +26,23 @@ export default function ChampionStats({ stats, version }: ChampionStatsProps) {
                 alt=""
                 loading="lazy"
               />
-              <span className="league-champ-card__name">{c.championName}</span>
+              <h3 className="league-champ-card__name">{c.championName.toUpperCase()}</h3>
             </div>
-            <div className="league-champ-card__stat">
-              <span>Games</span>
-              <span>{c.games}</span>
-            </div>
-            <div className="league-champ-card__stat">
-              <span>Win Rate</span>
-              <span>{formatWinRate(c.winRate)}</span>
-            </div>
-            <div className="league-champ-card__stat">
-              <span>KDA</span>
-              <span>{c.avgKda.toFixed(2)}</span>
-            </div>
-            {c.csPerMin > 0 && (
-              <div className="league-champ-card__stat">
-                <span>CS/min</span>
-                <span>{c.csPerMin.toFixed(1)}</span>
+            <p className="league-champ-card__wr">{formatWinRate(c.winRate)} Win Rate</p>
+            <div className="league-champ-card__metrics">
+              <div className="league-champ-card__metric">
+                <span className="league-stat-label">Games</span>
+                <span className="league-champ-card__metric-value">{c.games}</span>
               </div>
-            )}
-            <div className="league-champ-card__stat">
-              <span>Son oyun</span>
-              <span>{formatDate(c.lastPlayed)}</span>
+              <div className="league-champ-card__metric">
+                <span className="league-stat-label">KDA</span>
+                <span className="league-champ-card__metric-value">{c.avgKda.toFixed(1)}</span>
+              </div>
             </div>
           </article>
         ))}
       </div>
+      <VexVsQiyana compare={compare} embedded />
     </section>
   );
 }

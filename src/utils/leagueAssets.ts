@@ -74,5 +74,13 @@ export function formatRelativeUpdate(ts: number): string {
 
 export function tierLabel(tier: string, rank: string, lp: number): string {
   if (tier === 'UNRANKED') return 'Unranked';
-  return `${tier} ${rank} · ${lp} LP`;
+  return `${tierDisplay(tier, rank)} · ${lp} LP`;
+}
+
+/** e.g. PLATINUM + II → "PLATINUM II" */
+export function tierDisplay(tier: string, rank: string): string {
+  if (tier === 'UNRANKED') return 'Unranked';
+  const base = tier.toUpperCase();
+  if (!rank) return base;
+  return `${base} ${rank.toUpperCase()}`;
 }
