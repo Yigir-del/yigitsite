@@ -348,6 +348,7 @@ interface StateCandidate {
 }
 
 function pickState(
+  current: MatchWindowMetrics,
   recent: MatchWindowMetrics,
   baseline: MatchWindowMetrics,
   aggressionScore: number,
@@ -357,16 +358,17 @@ function pickState(
   const candidates: StateCandidate[] = [];
 
   if (
-    recent.winRate >= WIN_RATE_ON_FIRE &&
-    (recent.winStreak >= WIN_STREAK_ON_FIRE || momentumScore >= MOMENTUM_ON_FIRE_MIN)
+    current.winRate >= WIN_RATE_ON_FIRE &&
+    (current.winStreak >= WIN_STREAK_ON_FIRE ||
+      momentumScore >= MOMENTUM_ON_FIRE_MIN)
   ) {
     candidates.push({
       state: 'ON_FIRE',
-      score: 0.85 + recent.winStreak * 0.03,
+      score: 0.85 + current.winStreak * 0.03,
       reasons: [
-        `Son ${recent.sampleSize} maçta %${Math.round(recent.winRate * 100)} kazanma oranı`,
-        recent.winStreak >= 2
-          ? `${recent.winStreak} galibiyetlik aktif seri`
+        `Son ${current.sampleSize} maçta %${Math.round(current.winRate * 100)} kazanma oranı`,
+        current.winStreak >= 2
+          ? `${current.winStreak} galibiyetlik aktif seri`
           : `Momentum skoru ${momentumScore}/100`,
       ],
     });
@@ -375,45 +377,45 @@ function pickState(
   if (
     consistencyScore >= CONSISTENCY_LOCKED_IN_MIN &&
     recent.winRate >= WIN_RATE_STRONG &&
-    recent.avgDeaths <= baseline.avgDeaths + 1
+    current.avgDeaths <= baseline.avgDeaths + 1
   ) {
     candidates.push({
       state: 'LOCKED_IN',
       score: 0.78 + consistencyScore / 500,
       reasons: [
         `Tutarlılık skoru ${consistencyScore}/100`,
-        `KDA ortalaması ${recent.avgKda} ile stabil`,
+        `KDA ortalaması ${current.avgKda} ile stabil`,
         `Son ${recent.sampleSize} maçta %${Math.round(recent.winRate * 100)} WR`,
       ],
     });
   }
 
   if (
-    recent.lossStreak >= LOSS_STREAK_STRUGGLING ||
+    current.lossStreak >= LOSS_STREAK_STRUGGLING ||
     (recent.winRate <= WIN_RATE_STRUGGLING && recent.sampleSize >= 5)
   ) {
     candidates.push({
       state: 'STRUGGLING',
-      score: 0.8 + recent.lossStreak * 0.04,
+      score: 0.8 + current.lossStreak * 0.04,
       reasons: [
-        recent.lossStreak >= 2
-          ? `${recent.lossStreak} mağlubiyetlik seri`
+        current.lossStreak >= 2
+          ? `${current.lossStreak} mağlubiyetlik seri`
           : `Son ${recent.sampleSize} maçta düşük WR (%${Math.round(recent.winRate * 100)})`,
-        `Ortalama KDA ${recent.avgKda}`,
+        `Ortalama KDA ${current.avgKda}`,
       ],
     });
   }
 
   if (
-    recent.lossStreak >= LOSS_STREAK_CONCERN &&
-    recent.avgDeaths > baseline.avgDeaths * 1.1
+    current.lossStreak >= LOSS_STREAK_CONCERN &&
+    current.avgDeaths > baseline.avgDeaths * 1.1
   ) {
     candidates.push({
       state: 'TILTED',
-      score: 0.72 + recent.lossStreak * 0.05,
+      score: 0.72 + current.lossStreak * 0.05,
       reasons: [
-        `${recent.lossStreak} arka arkaya mağlubiyet`,
-        `Ölüm ortalaması ${recent.avgDeaths} (baseline ${baseline.avgDeaths})`,
+        `${current.lossStreak} arka arkaya mağlubiyet`,
+        `Ölüm ortalaması ${current.avgDeaths} (baseline ${baseline.avgDeaths})`,
         `Performans dalgalanması artmış görünüyor`,
       ],
     });
@@ -425,9 +427,9 @@ function pickState(
       score: 0.65 + (aggressionScore - 60) / 100,
       reasons: [
         `Agresiflik skoru ${aggressionScore}/100`,
-        `Kill/death ortalaması: ${recent.avgKills}/${recent.avgDeaths}`,
-        recent.avgKillParticipation != null
-          ? `KP ortalaması %${Math.round(recent.avgKillParticipation * 100)}`
+        `Kill/death ortalaması: ${current.avgKills}/${current.avgDeaths}`,
+        current.avgKillParticipation != null
+          ? `KP ortalaması %${Math.round(current.avgKillParticipation * 100)}`
           : 'Yüksek takedown temposu',
       ],
     });
@@ -435,7 +437,7 @@ function pickState(
 
   if (
     aggressionScore <= AGGRESSION_CALM_MAX &&
-    recent.avgDeaths <= baseline.avgDeaths &&
+    current.avgDeaths <= baseline.avgDeaths &&
     momentumScore >= MOMENTUM_WEAK_MAX
   ) {
     candidates.push({
@@ -443,8 +445,8 @@ function pickState(
       score: 0.68 + (AGGRESSION_CALM_MAX - aggressionScore) / 80,
       reasons: [
         `Agresiflik skoru ${aggressionScore}/100 — kontrollü profil`,
-        `Ölüm ortalaması ${recent.avgDeaths}`,
-        `KDA ${recent.avgKda}`,
+        `Ölüm ortalaması ${current.avgDeaths}`,
+        `KDA ${current.avgKda}`,
       ],
     });
   }
@@ -551,15 +553,20 @@ export function analyzePlayerState(matches: LeagueMatch[]): PlayerStateAnalysis 
     baselineSlice.length > 0 ? baselineSlice : sorted,
   );
 
+  /** Short window = "right now"; mid window = broader form. */
+  const current = short.sampleSize >= MIN_MATCHES_FOR_ANALYSIS ? short : mid;
   const recent = mid.sampleSize >= MIN_MATCHES_FOR_ANALYSIS ? mid : short;
-  const analyzedGames = recent.sampleSize;
+  const analyzedGames = current.sampleSize;
 
-  const aggressionScore = computeAggressionScore(recent, baseline);
-  const momentumScore = computeMomentumScore(recent, baseline);
-  const consistencyScore = computeConsistencyScore(midSlice.length > 0 ? midSlice : shortSlice);
+  const aggressionScore = computeAggressionScore(current, baseline);
+  const momentumScore = computeMomentumScore(current, baseline);
+  const consistencyScore = computeConsistencyScore(
+    midSlice.length >= MIN_MATCHES_FOR_ANALYSIS ? midSlice : shortSlice,
+  );
   const band = aggressionBand(aggressionScore);
 
   const { state, confidence, reasons } = pickState(
+    current,
     recent,
     baseline,
     aggressionScore,
@@ -569,7 +576,7 @@ export function analyzePlayerState(matches: LeagueMatch[]): PlayerStateAnalysis 
 
   const { trend, label: trendLabel, detail: trendDetail } =
     sorted.length >= MIN_MATCHES_FOR_TREND
-      ? computePlaystyleTrend(recent, baseline)
+      ? computePlaystyleTrend(current, baseline)
       : {
           trend: 'STABLE' as PlaystyleTrend,
           label: 'Limited Sample',
@@ -587,7 +594,7 @@ export function analyzePlayerState(matches: LeagueMatch[]): PlayerStateAnalysis 
     playstyleTrend: trend,
     trendLabel,
     trendDetail,
-    observation: buildObservation(state, recent, baseline, aggressionScore, trend),
+    observation: buildObservation(state, current, baseline, aggressionScore, trend),
     reasons,
     analyzedGames,
     windows: { short, mid },
