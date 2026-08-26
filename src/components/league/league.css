@@ -2056,6 +2056,28 @@
 
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
 
+  opacity: 0;
+
+  transform: translateY(4px) scale(0.96);
+
+  transform-origin: bottom right;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+
+}
+
+
+
+.league-bilge-hint--open .league-bilge-hint__bubble {
+
+  opacity: 1;
+
+  transform: translateY(0) scale(1);
+
 }
 
 
@@ -2068,7 +2090,47 @@
 
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
 
-  animation: league-bilge-hint-float 4.5s ease-in-out infinite;
+  pointer-events: auto;
+
+  cursor: pointer;
+
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  border-radius: 50%;
+
+  line-height: 0;
+
+  transition: opacity 0.15s ease;
+
+}
+
+
+
+.league-bilge-hint__avatar:hover {
+
+  opacity: 1;
+
+}
+
+
+
+.league-bilge-hint__avatar:hover svg {
+
+  transform: scale(1.06);
+
+}
+
+
+
+.league-bilge-hint__avatar:focus-visible {
+
+  outline: 2px solid var(--accent-pale-gray);
+
+  outline-offset: 3px;
 
 }
 
@@ -2079,6 +2141,10 @@
   width: 36px;
 
   height: 36px;
+
+  animation: league-bilge-hint-float 4.5s ease-in-out infinite;
+
+  transition: transform 0.15s ease;
 
 }
 
@@ -2096,9 +2162,17 @@
 
 @media (prefers-reduced-motion: reduce) {
 
-  .league-bilge-hint__avatar {
+  .league-bilge-hint__avatar svg {
 
     animation: none;
+
+  }
+
+
+
+  .league-bilge-hint__bubble {
+
+    transition: none;
 
   }
 

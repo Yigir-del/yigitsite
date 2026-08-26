@@ -45,6 +45,11 @@ export function pickBilgeVisitorLine(state: PlayerStateKind): string {
   return pool[idx] ?? pool[0];
 }
 
+export function pickRandomBilgeVisitorLine(state: PlayerStateKind): string {
+  const pool = LINES[state];
+  return pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
+}
+
 export function pickBilgeFallbackLine(): string {
   const idx = Math.floor(Date.now() / 86_400_000) % FALLBACK.length;
   return FALLBACK[idx];
