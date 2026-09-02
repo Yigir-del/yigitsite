@@ -1235,6 +1235,33 @@ html.scene-quiet {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  .app-container {
+    scroll-behavior: auto;
+    transition: none !important;
+  }
+
+  .app-container.world-flipped {
+    transform: none;
+  }
+
+  .glitch::before,
+  .glitch::after,
+  .page-transition,
+  .fade-in {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .site-nav__link--anitkabir {
+    transition: none;
+  }
+
+  .memorial-portrait-card__shimmer {
+    animation: none;
+  }
+
   .wreath-offering.is-placed .wreath-offering__icon {
     animation: none;
   }
@@ -1284,13 +1311,11 @@ html.scene-quiet {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .site-nav__link--anitkabir {
-    transition: none;
-  }
-
-  .memorial-portrait-card__shimmer {
-    animation: none;
+@media (max-width: 860px) {
+  .social-respect__icon {
+    width: 38px;
+    height: 38px;
+    opacity: 0.22;
   }
 }
 

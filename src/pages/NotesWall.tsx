@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { motion, useMotionValue, animate } from 'framer-motion';
 import { type Note } from '../data/notes';
+import { useAdminSession } from '../hooks/useAdminSession';
 import { useIsMobilePerf } from '../hooks/useIsMobilePerf';
 
 function noteTimestamp(note: Note) {
@@ -78,6 +79,7 @@ function NoteBody({
             zIndex: 2,
           }}
           title="Sil"
+          aria-label="Notu sil"
         >
           ✕
         </button>
@@ -182,22 +184,37 @@ function DraggableNoteCard({
 
 export default function NotesWall() {
   const isMobilePerf = useIsMobilePerf();
+  const isAdmin = useAdminSession();
   const [notes, setNotes] = useState<Note[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [dragFrontId, setDragFrontId] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const notesRef = useRef(notes);
+  notesRef.current = notes;
+  const postingRef = useRef(false);
 
   useEffect(() => {
-    fetch('/api/notes')
-      .then((res) => res.json())
+    const ctrl = new AbortController();
+    fetch('/api/notes', { signal: ctrl.signal })
+      .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setNotes(sortNewestFirst(data));
         else setNotes([]);
       })
-      .catch(() => setNotes([]));
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setNotes([]);
+      })
+      .finally(() => {
+        if (!ctrl.signal.aborted) setLoaded(true);
+      });
+    return () => ctrl.abort();
   }, []);
 
   useEffect(() => {
     const handleAddNote = async (e: Event) => {
+      if (postingRef.current) return;
+      postingRef.current = true;
+
       const customEvent = e as CustomEvent<Note>;
       const newNote: Note = {
         ...customEvent.detail,
@@ -209,35 +226,36 @@ export default function NotesWall() {
       try {
         const res = await fetch('/api/notes', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: newNote.text,
             author: newNote.author,
             date: newNote.date,
-            isAdmin: newNote.isAdmin,
           }),
         });
 
-        if (res.ok) {
-          const saved = (await res.json()) as Note;
-          setNotes((prev) =>
-            sortNewestFirst([
-              saved,
-              ...prev.filter((n) => n.id !== newNote.id && n.id !== saved.id),
-            ])
-          );
+        if (!res.ok) {
+          setNotes((prev) => prev.filter((n) => n.id !== newNote.id));
+          return;
         }
-      } catch (err) {
-        console.error('Failed to save note to DB', err);
+
+        const saved = (await res.json()) as Note;
+        setNotes((prev) =>
+          sortNewestFirst([
+            saved,
+            ...prev.filter((n) => n.id !== newNote.id && n.id !== saved.id),
+          ]),
+        );
+      } catch {
+        setNotes((prev) => prev.filter((n) => n.id !== newNote.id));
+      } finally {
+        postingRef.current = false;
       }
     };
 
     window.addEventListener('add-note', handleAddNote);
     return () => window.removeEventListener('add-note', handleAddNote);
-  }, []);
-
-  useEffect(() => {
-    setIsAdmin(localStorage.getItem('yigit_admin') === 'true');
   }, []);
 
   const positionedNotes = useMemo(() => {
@@ -285,11 +303,16 @@ export default function NotesWall() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    const previous = notesRef.current;
     setNotes((prev) => sortNewestFirst(prev.filter((n) => n.id !== id)));
     try {
-      await fetch(`/api/notes?id=${id}`, { method: 'DELETE' });
-    } catch (err) {
-      console.error('Failed to delete note', err);
+      const res = await fetch(`/api/notes?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('delete failed');
+    } catch {
+      setNotes(previous);
     }
   };
 
@@ -326,7 +349,7 @@ export default function NotesWall() {
         Not Defterim
       </h1>
 
-      {positionedNotes.length === 0 && (
+      {loaded && positionedNotes.length === 0 && (
         <p
           style={{
             position: 'absolute',

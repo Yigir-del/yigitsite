@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import SEOHead from '../../seo/SEOHead';
+import { useAdminSession } from '../../hooks/useAdminSession';
 
 interface StudioItem {
   id: string;
@@ -15,7 +16,7 @@ interface StudioItem {
 const MAX_UPLOAD_BYTES = 4.5 * 1024 * 1024;
 
 export default function Studio() {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = useAdminSession();
   const [items, setItems] = useState<StudioItem[]>([]);
 
   const [newAlt, setNewAlt] = useState('');
@@ -27,15 +28,18 @@ export default function Studio() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setIsAdmin(localStorage.getItem('yigit_admin') === 'true');
-
-    fetch('/api/photos')
-      .then((res) => res.json())
+    const ctrl = new AbortController();
+    fetch('/api/photos', { signal: ctrl.signal })
+      .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setItems(data);
         else setItems([]);
       })
-      .catch(() => setItems([]));
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setItems([]);
+      });
+    return () => ctrl.abort();
   }, []);
 
   useEffect(() => {
@@ -96,6 +100,7 @@ export default function Studio() {
           'x-alt': encodeURIComponent(newAlt.trim() || 'İsimsiz Eser'),
         },
         body: pendingFile,
+        credentials: 'include',
         signal: controller.signal,
       });
 
@@ -131,12 +136,15 @@ export default function Studio() {
     }
   };
 
-  const deleteItem = async (id: string, blobUrl: string, e: React.MouseEvent) => {
+  const deleteItem = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setItems((prev) => prev.filter((p) => p.id !== id));
 
     try {
-      await fetch(`/api/photos?id=${id}&url=${encodeURIComponent(blobUrl)}`, { method: 'DELETE' });
+      await fetch(`/api/photos?id=${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
     } catch (err) {
       console.error('Failed to delete photo', err);
     }
@@ -383,7 +391,7 @@ export default function Studio() {
           >
             {isAdmin && (
               <button
-                onClick={(e) => deleteItem(item.id, item.url || item.src || '', e)}
+                onClick={(e) => deleteItem(item.id, e)}
                 style={{
                   position: 'absolute',
                   top: '10px',

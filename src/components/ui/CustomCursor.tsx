@@ -11,7 +11,6 @@ export default function CustomCursor() {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.add('has-custom-cursor');
 
     const stop = () => {
       running.current = false;
@@ -43,6 +42,7 @@ export default function CustomCursor() {
     const onMove = (e: MouseEvent) => {
       pos.current.x = e.clientX;
       pos.current.y = e.clientY;
+      root.classList.add('has-custom-cursor');
       start();
       window.clearTimeout(idleTimer.current);
       idleTimer.current = window.setTimeout(stop, 120);

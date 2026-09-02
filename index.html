@@ -78,13 +78,21 @@
         ]
       }
     </script>
-    <!-- Google Analytics GA4 — async, ana thread'i bloklamaz -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7J6EVCM1BV"></script>
+    <!-- Google Analytics GA4 — production host only; SPA pageviews via analytics.ts -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-7J6EVCM1BV', { send_page_view: false });
+      (function () {
+        var host = location.hostname;
+        if (host !== 'yigitaltuntas.me' && host !== 'www.yigitaltuntas.me') return;
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', 'G-7J6EVCM1BV', { send_page_view: false });
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-7J6EVCM1BV';
+        document.head.appendChild(s);
+      })();
     </script>
   </head>
   <body>

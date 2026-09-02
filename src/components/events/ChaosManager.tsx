@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Ghost } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import { getPrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 
 type EventType = 'ufo' | 'popup' | 'achievement' | 'gravity' | 'none';
 
@@ -63,7 +64,9 @@ export default function ChaosManager() {
       track(triggerChaos, nextTime);
     };
 
-    track(triggerChaos, 20000);
+    if (!getPrefersReducedMotion()) {
+      track(triggerChaos, 20000);
+    }
 
     let idleTimer: ReturnType<typeof setTimeout>;
     let idleRaf = 0;

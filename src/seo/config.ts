@@ -44,7 +44,6 @@ export type PageKey =
   | 'thoughts'
   | 'studio'
   | 'contact'
-  | 'league'
   | 'memorial'
   | 'notFound';
 
@@ -131,18 +130,6 @@ export const PAGE_SEO: Record<PageKey, PageSEO> = {
       'contact',
     ].join(', '),
     canonical: `${SITE.url}/iletisim`,
-  },
-  league: {
-    title: 'League of Legends',
-    description:
-      'Qiyana My Queen — kişisel League of Legends profil dashboard. Rank, maç geçmişi ve Bilge/Dilenci analizleri.',
-    keywords: [
-      'League of Legends',
-      'LoL profil',
-      'Qiyana My Queen',
-      'Yiğit Altuntaş LoL',
-    ].join(', '),
-    canonical: `${SITE.url}/league`,
   },
   memorial: {
     title: 'Mustafa Kemal Atatürk',

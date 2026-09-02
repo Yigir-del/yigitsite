@@ -1,36 +1,29 @@
 import { useRef, useEffect, useState } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { gsap } from '../../lib/gsapSetup';
+import { useAdminSession } from '../../hooks/useAdminSession';
 import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import { getPrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import SEOHead from '../../seo/SEOHead';
-
-gsap.registerPlugin(ScrollTrigger);
-
-interface Thought {
-  id: string;
-  text: string;
-  type: string;
-  date: string;
-  rotation: number;
-}
+import { parseStoredThoughts, type Thought } from '../../data/thoughts';
 
 export default function Thoughts() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = useAdminSession();
   const [myThoughts, setMyThoughts] = useState<Thought[]>([]);
   const [newText, setNewText] = useState('');
   const [newType, setNewType] = useState('GÜNLÜK');
 
   useEffect(() => {
-    setIsAdmin(localStorage.getItem('yigit_admin') === 'true');
-    const saved = localStorage.getItem('yigit_thoughts');
-    if (saved) {
-      setMyThoughts(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('yigit_thoughts');
+      if (saved) setMyThoughts(parseStoredThoughts(saved));
+    } catch {
+      setMyThoughts([]);
     }
   }, []);
 
   useEffect(() => {
-    if (getIsMobilePerf()) return;
+    if (getIsMobilePerf() || getPrefersReducedMotion()) return;
     const root = containerRef.current;
     if (!root || myThoughts.length === 0) return;
 
@@ -71,7 +64,11 @@ export default function Thoughts() {
     
     const updated = [thought, ...myThoughts];
     setMyThoughts(updated);
-    localStorage.setItem('yigit_thoughts', JSON.stringify(updated));
+    try {
+      localStorage.setItem('yigit_thoughts', JSON.stringify(updated));
+    } catch {
+      /* quota / private mode */
+    }
     setNewText('');
   };
 
@@ -108,7 +105,7 @@ export default function Thoughts() {
           />
           <textarea 
             value={newText}
-            onChange={e => setNewText(e.target.value)}
+            onChange={e => setNewText(e.target.value.slice(0, 800))}
             placeholder="Ne düşünüyorsun?"
             className="input-domain"
             style={{ width: '100%', padding: '0.6rem', minHeight: '80px', marginBottom: '1rem', fontSize: '0.85rem', resize: 'vertical' }}

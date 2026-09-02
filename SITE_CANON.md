@@ -3,6 +3,8 @@
 Bu dosya, **yigitaltuntas.me** sitesinin dilini, mottosunu, karakterlerini ve yapım ruhunu anlatır.  
 Başka bir yapay zekâya “bu siteyi konuşalım / buna uygun bir şey ekle” dediğinde bu dökümanı ver.
 
+Teknik harita, rota, API, borç ve refactor kuralları: **`SITE_BRIEF.md`** (refactor konuşması için asıl dosya).
+
 ---
 
 ## 1. Kimlik
@@ -171,7 +173,7 @@ Projeler de “hikâye + ders” dilinde yazılır; kurumsal bullet list değil.
 
 - Stack: React 19 + Vite + React Router, Framer Motion, GSAP (desktop), Three.js yıldız alanı (desktop only)
 - Backend: Vercel API + Postgres + Blob (notlar, stüdyo foto)
-- Admin: `localStorage yigit_admin === 'true'`
+- Admin: httpOnly `yigit_session` cookie (server secret). `localStorage yigit_admin` is UI cache only.
 - Performans kapısı: `useIsMobilePerf` (~860px veya coarse pointer)
 - Canonical / marka URL: yalnızca `https://yigitaltuntas.me`
 - Push alışkanlığı: iş bitince `main`’e commit + push
@@ -186,7 +188,7 @@ Projeler de “hikâye + ders” dilinde yazılır; kurumsal bullet list değil.
 Bu site yigitaltuntas.me — Yiğit Altuntaş portfolyosu.
 Atmosfer: MURYOKUSHO (karanlık yıldız, glitch, absürt-samimi Türkçe).
 Motto: İzler bırakılır; ziyaretçi kraldır; hiçlikle şaka yapılır; mobilde hafif, masaüstünde zengin.
-SITE_CANON.md kurallarına uy. UI dilini bozma. [İSTEĞİN BURAYA]
+SITE_BRIEF.md + SITE_CANON.md kurallarına uy. UI dilini bozma. [İSTEĞİN BURAYA]
 ```
 
 ---

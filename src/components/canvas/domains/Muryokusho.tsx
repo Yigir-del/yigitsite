@@ -82,6 +82,12 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
   const crackRef  = useRef<THREE.Mesh>(null);
 
   useEffect(() => {
+    return () => {
+      document.body.style.cursor = 'auto';
+    };
+  }, []);
+
+  useEffect(() => {
     if (collapsed) {
       cs.current = { phase: 'shaking', elapsed: 0, upperVY: 0, lowerVY: 0, opacity: 1 };
     } else {

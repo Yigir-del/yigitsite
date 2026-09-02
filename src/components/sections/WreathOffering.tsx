@@ -167,6 +167,10 @@ export default function WreathOffering() {
         error?: string;
       };
 
+      if (res.status === 429) {
+        throw new Error('rate limited');
+      }
+
       if (res.status === 409 || data.alreadyLeft) {
         markLocalLeftToday();
         setState((s) => ({

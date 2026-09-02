@@ -2,8 +2,7 @@ import { lazy, Suspense, useEffect, useState, useCallback, type ReactNode } from
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ReactLenis, useLenis } from '@studio-freight/react-lenis';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollTrigger } from './lib/gsapSetup';
 import Background from './components/canvas/Background';
 import WireframePyramid from './components/canvas/WireframePyramid';
 import FakeMenu from './components/ui/FakeMenu';
@@ -15,12 +14,11 @@ import { ThemeProvider } from './context/ThemeContext';
 import { MemorialProvider, useMemorial } from './context/MemorialContext';
 import ThemeSelector from './components/ui/ThemeSelector';
 import { useIsMobilePerf } from './hooks/useIsMobilePerf';
-import LeagueMobileGuard from './components/league/LeagueMobileGuard';
+import { getPrefersReducedMotion, usePrefersReducedMotion } from './hooks/usePrefersReducedMotion';
 import { useAtmosphereStage } from './hooks/useAtmosphereStage';
 import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
 import { trackPageView } from './utils/analytics';
-
-gsap.registerPlugin(ScrollTrigger);
+import { isKnownRoute } from './utils/routes';
 
 if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
   window.history.scrollRestoration = 'manual';
@@ -32,7 +30,6 @@ const Thoughts = lazy(() => import('./components/sections/Thoughts'));
 const Studio = lazy(() => import('./components/sections/Studio'));
 const Contact = lazy(() => import('./components/sections/Contact'));
 const Memorial = lazy(() => import('./components/sections/Memorial'));
-const League = lazy(() => import('./components/sections/League'));
 const NotFound = lazy(() => import('./components/sections/NotFound'));
 
 const ChaosManager = lazy(() => import('./components/events/ChaosManager'));
@@ -41,7 +38,6 @@ const FlyingPen = lazy(() => import('./components/events/FlyingPen'));
 const FlyingMusic = lazy(() => import('./components/events/FlyingMusic'));
 const FlyingBeggar = lazy(() => import('./components/events/FlyingBeggar'));
 const FlyingSage = lazy(() => import('./components/events/FlyingSage'));
-const FlyingLoL = lazy(() => import('./components/events/FlyingLoL'));
 const SocialDrifters = lazy(() => import('./components/events/SocialDrifters'));
 const CustomCursor = lazy(() => import('./components/ui/CustomCursor'));
 
@@ -116,7 +112,8 @@ function ScrollTriggerSync() {
 
 function Shell({ children }: { children: ReactNode }) {
   const isMobilePerf = useIsMobilePerf();
-  if (isMobilePerf) return <>{children}</>;
+  const reducedMotion = usePrefersReducedMotion();
+  if (isMobilePerf || reducedMotion) return <>{children}</>;
   return <ReactLenis root>{children as never}</ReactLenis>;
 }
 
@@ -142,14 +139,6 @@ function AnimatedRoutes() {
             <Route path="/dusunceler" element={<Thoughts />} />
             <Route path="/studyom" element={<Studio />} />
             <Route path="/iletisim" element={<Contact />} />
-            <Route
-              path="/league"
-              element={
-                <LeagueMobileGuard>
-                  <League />
-                </LeagueMobileGuard>
-              }
-            />
             <Route path="/miras" element={<Memorial />} />
             <Route path="/atam" element={<Memorial />} />
 
@@ -176,7 +165,7 @@ function AppShell() {
   const { ready } = useAtmosphereStage();
 
   const toggleWorld = useCallback(() => {
-    if (isQuiet) return;
+    if (isQuiet || getPrefersReducedMotion()) return;
     setUpsideDown((v) => !v);
   }, [isQuiet]);
 
@@ -219,8 +208,8 @@ function AppShell() {
   }, [upsideDown]);
 
   const location = useLocation();
-  const KNOWN_ROUTES = ['/', '/hakkimda', '/projeler', '/dusunceler', '/studyom', '/iletisim', '/league', '/miras', '/atam', '/portfolio', '/portfolyo', '/about', '/projects', '/contact'];
-  const is404Page = !KNOWN_ROUTES.includes(location.pathname);
+  const reducedMotion = usePrefersReducedMotion();
+  const is404Page = !isKnownRoute(location.pathname);
 
   const showCharacters = !isQuiet && !is404Page && ready('characters');
   const showChaos = !isQuiet && !is404Page && ready('chaos');
@@ -229,7 +218,7 @@ function AppShell() {
     <>
       <div className="atmosphere-fill" aria-hidden />
       <Background hushed={isQuiet} />
-      <WireframePyramid />
+      {!isMobilePerf && <WireframePyramid />}
       <ThemeSelector />
 
 
@@ -254,7 +243,6 @@ function AppShell() {
                 <>
                   <FlyingBeggar />
                   <FlyingSage />
-                  <FlyingLoL />
                   <SocialDrifters />
                 </>
               )}
@@ -283,7 +271,7 @@ function AppShell() {
         </div>
       </Shell>
 
-      {!isMobilePerf && !isQuiet && ready('characters') && (
+      {!isMobilePerf && !isQuiet && !reducedMotion && ready('characters') && (
         <Suspense fallback={null}>
           <CustomCursor />
         </Suspense>

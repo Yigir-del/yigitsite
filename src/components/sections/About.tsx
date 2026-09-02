@@ -1,16 +1,14 @@
 import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { gsap } from '../../lib/gsapSetup';
 import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import { getPrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import SEOHead from '../../seo/SEOHead';
-
-gsap.registerPlugin(ScrollTrigger);
 
 export default function About() {
   const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (getIsMobilePerf()) return;
+    if (getIsMobilePerf() || getPrefersReducedMotion()) return;
     const el = textRef.current;
     if (!el) return;
 

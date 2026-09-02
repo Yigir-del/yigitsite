@@ -4,14 +4,30 @@ import type { Note } from '../../data/notes';
 import { planWanderHop, randomOffscreenStart } from '../../utils/flightPath';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 
+const NOTE_TEXT_MAX = 500;
+const NOTE_AUTHOR_MAX = 40;
+
 export default function FlyingPen() {
   const isMobilePerf = useIsMobilePerf();
-  // Pen prefers left/top entry — different from music
   const [position, setPosition] = useState(() => randomOffscreenStart(['right', 'bottom']));
   const [flightDuration, setFlightDuration] = useState(11);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [authorName, setAuthorName] = useState('');
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isModalOpen]);
 
   useEffect(() => {
     if (isMobilePerf) return;
@@ -35,7 +51,7 @@ export default function FlyingPen() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!noteText.trim()) return;
+    if (!noteText.trim() || noteText.trim().length > NOTE_TEXT_MAX) return;
 
     const now = new Date();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getFullYear()}`;
@@ -101,6 +117,7 @@ export default function FlyingPen() {
           type="button"
           onClick={() => setIsModalOpen(true)}
           title="Bırakmak istediğin bir iz var mı?"
+          aria-label="Bırakmak istediğin bir iz var mı?"
           style={penButtonStyle}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -114,6 +131,7 @@ export default function FlyingPen() {
       <motion.button
         onClick={() => setIsModalOpen(true)}
         title="Bırakmak istediğin bir iz var mı?"
+        aria-label="Bırakmak istediğin bir iz var mı?"
         drag
         dragMomentum={true}
         whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
@@ -134,7 +152,11 @@ export default function FlyingPen() {
 
       {/* Note Input Modal */}
       {isModalOpen && (
-        <div style={{
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="note-modal-title"
+          style={{
           position: 'fixed', inset: 0,
           background: 'rgba(0, 0, 0, 0.8)',
           backdropFilter: 'blur(8px)',
@@ -151,14 +173,18 @@ export default function FlyingPen() {
             boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
             boxSizing: 'border-box',
           }}>
-            <h2 style={{ marginBottom: '2rem', textAlign: 'center' }}>Bir Not Bırak</h2>
+            <h2 id="note-modal-title" style={{ marginBottom: '2rem', textAlign: 'center' }}>Bir Not Bırak</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
+                <label htmlFor="note-text" className="visually-hidden">Not</label>
                 <textarea
+                  id="note-text"
                   value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
+                  onChange={(e) => setNoteText(e.target.value.slice(0, NOTE_TEXT_MAX))}
                   placeholder="Aklından geçenleri dök..."
                   required
+                  maxLength={NOTE_TEXT_MAX}
+                  autoFocus
                   style={{
                     width: '100%',
                     height: '150px',
@@ -175,11 +201,14 @@ export default function FlyingPen() {
                 />
               </div>
               <div>
+                <label htmlFor="note-author" className="visually-hidden">İsim (isteğe bağlı)</label>
                 <input
+                  id="note-author"
                   type="text"
                   value={authorName}
-                  onChange={(e) => setAuthorName(e.target.value)}
+                  onChange={(e) => setAuthorName(e.target.value.slice(0, NOTE_AUTHOR_MAX))}
                   placeholder="İsmin (İsteğe bağlı)"
+                  maxLength={NOTE_AUTHOR_MAX}
                   style={{
                     width: '100%',
                     background: 'rgba(255,255,255,0.05)',
