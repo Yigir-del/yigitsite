@@ -12,6 +12,25 @@ import {
 } from '../../utils/flyerDialogue';
 
 /** Angry beggar — mostly heckles the king; rarely jabs the sage with a mapped reply */
+const ALMS_KEY = 'yigit_beggar_alms';
+
+function readAlms() {
+  try {
+    const n = Number(localStorage.getItem(ALMS_KEY));
+    return Number.isFinite(n) && n >= 0 ? Math.min(Math.floor(n), 99999) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeAlms(n: number) {
+  try {
+    localStorage.setItem(ALMS_KEY, String(n));
+  } catch {
+    /* private mode */
+  }
+}
+
 export default function FlyingBeggar() {
   const { x, y, visible, dragging, onDragStart, onDragEnd } = useThrowableEdgeFlight({
     durationMin: 16,
@@ -22,6 +41,12 @@ export default function FlyingBeggar() {
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busyRef = useRef(false);
+  const draggedRef = useRef(false);
+  const [alms, setAlms] = useState(0);
+
+  useEffect(() => {
+    setAlms(readAlms());
+  }, []);
 
   const say = (text: string, holdMs = 5000) => {
     busyRef.current = true;
@@ -82,9 +107,24 @@ export default function FlyingBeggar() {
     };
   }, []);
 
-  if (!visible) return null;
+  if (!visible) {
+    return (
+      <p className="beggar-alms" aria-live="polite">
+        Toplam bağış · oyun: {alms.toLocaleString('tr-TR')}
+      </p>
+    );
+  }
+
+  const giveAlms = () => {
+    if (draggedRef.current) return;
+    const next = alms + 1;
+    setAlms(next);
+    writeAlms(next);
+    say('Kral lütfetti. Hâlâ açım.', 2800);
+  };
 
   return (
+    <>
     <motion.div
       style={{
         x,
@@ -104,9 +144,18 @@ export default function FlyingBeggar() {
       dragMomentum
       dragElastic={0.2}
       whileDrag={{ scale: 1.15, cursor: 'grabbing', zIndex: 200 }}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      title="Sinirli dilenci"
+      onDragStart={() => {
+        draggedRef.current = true;
+        onDragStart();
+      }}
+      onDragEnd={() => {
+        onDragEnd();
+        window.setTimeout(() => {
+          draggedRef.current = false;
+        }, 40);
+      }}
+      onClick={giveAlms}
+      title="Sinirli dilenci — kral bağışlasın"
     >
       <div
         style={{
@@ -194,5 +243,9 @@ export default function FlyingBeggar() {
         dilenci
       </span>
     </motion.div>
+    <p className="beggar-alms" aria-live="polite">
+      Toplam bağış · oyun: {alms.toLocaleString('tr-TR')}
+    </p>
+    </>
   );
 }

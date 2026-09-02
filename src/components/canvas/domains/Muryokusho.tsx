@@ -1,7 +1,10 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Stars } from '@react-three/drei';
+import { Line, Stars } from '@react-three/drei';
 import * as THREE from 'three';
+import { useTheme } from '../../../context/ThemeContext';
+import { getNoteTraces, hashStarPos, NOTE_TRACES_EVENT, type NoteTrace } from '../../../utils/noteTraces';
+import { istanbulDayKey, samsunSkyBand } from '../../../utils/samsunTime';
 
 const COLLAPSE_EVENT = 'universe-404-collapse';
 const RESTORE_EVENT  = 'universe-404-restore';
@@ -245,9 +248,81 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
   );
 }
 
+function TraceConstellation({ hushed }: { hushed: boolean }) {
+  const [traces, setTraces] = useState<NoteTrace[]>(() => getNoteTraces());
+
+  useEffect(() => {
+    const onTraces = (e: Event) => {
+      const detail = (e as CustomEvent<NoteTrace[]>).detail;
+      if (!Array.isArray(detail)) return;
+      setTraces(detail.filter((row) => row.id && row.t > 0).slice(0, 48));
+    };
+    window.addEventListener(NOTE_TRACES_EVENT, onTraces);
+    return () => window.removeEventListener(NOTE_TRACES_EVENT, onTraces);
+  }, []);
+
+  const stars = useMemo(
+    () => traces.map((row) => ({ id: row.id, pos: hashStarPos(row.id) })),
+    [traces],
+  );
+
+  const polylines = useMemo(() => {
+    const byDay = new Map<string, NoteTrace[]>();
+    for (const row of traces) {
+      const key = istanbulDayKey(row.t);
+      const list = byDay.get(key) ?? [];
+      list.push(row);
+      byDay.set(key, list);
+    }
+    const lines: [number, number, number][][] = [];
+    for (const list of byDay.values()) {
+      if (list.length < 2) continue;
+      list.sort((a, b) => a.t - b.t);
+      lines.push(list.map((row) => hashStarPos(row.id)));
+    }
+    return lines;
+  }, [traces]);
+
+  if (stars.length === 0) return null;
+
+  return (
+    <group>
+      {stars.map((star) => (
+        <mesh key={star.id} position={star.pos}>
+          <sphereGeometry args={[0.09, 6, 6]} />
+          <meshBasicMaterial
+            color="#e8eef8"
+            transparent
+            opacity={hushed ? 0.35 : 0.85}
+            depthWrite={false}
+          />
+        </mesh>
+      ))}
+      {polylines.map((pts, i) => (
+        <Line
+          key={i}
+          points={pts}
+          color="#c8d8f0"
+          lineWidth={1}
+          transparent
+          opacity={hushed ? 0.12 : 0.32}
+          depthWrite={false}
+        />
+      ))}
+    </group>
+  );
+}
+
 // ── Root Scene ──
 export default function Muryokusho({ hushed = false }: { hushed?: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
+  const { theme } = useTheme();
+  const sky = !hushed && theme === 'Muryokusho' ? samsunSkyBand() : 'night';
+  const ambient = hushed ? 0.42 : sky === 'day' ? 0.58 : sky === 'dusk' ? 0.53 : 0.5;
+  const dir = hushed ? 0.85 : sky === 'day' ? 1.08 : 1;
+  const fogFar = sky === 'day' ? 18 : sky === 'dusk' ? 16 : 15;
+  const fogColor = sky === 'day' ? '#141c2a' : '#0d131f';
+  const bgColor = sky === 'day' ? '#101820' : '#0d131f';
 
   useEffect(() => {
     const onCollapse = () => setCollapsed(true);
@@ -262,12 +337,13 @@ export default function Muryokusho({ hushed = false }: { hushed?: boolean }) {
 
   return (
     <>
-      <color attach="background" args={['#0d131f']} />
-      <ambientLight intensity={hushed ? 0.42 : 0.5} />
-      <directionalLight position={[-10, 10, 5]} intensity={hushed ? 0.85 : 1} />
+      <color attach="background" args={[bgColor]} />
+      <ambientLight intensity={ambient} />
+      <directionalLight position={[-10, 10, 5]} intensity={dir} />
       <MovingStars hushed={hushed} collapsed={collapsed} />
       <Moon hushed={hushed} collapsed={collapsed} />
-      <fog attach="fog" args={['#0d131f', 5, 15]} />
+      {!collapsed && <TraceConstellation hushed={hushed} />}
+      <fog attach="fog" args={[fogColor, 5, fogFar]} />
     </>
   );
 }

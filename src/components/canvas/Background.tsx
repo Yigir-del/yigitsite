@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import { samsunSkyBand } from '../../utils/samsunTime';
 
 const DesktopBackground = lazy(() => import('./DesktopBackground'));
 
@@ -14,7 +15,7 @@ export default function Background({ hushed = false }: { hushed?: boolean }) {
     return (
       <div
         id="canvas-container"
-        className={`mobile-starfield${hushed ? ' is-hushed' : ''}`}
+        className={`mobile-starfield${hushed ? ' is-hushed' : ''}${samsunSkyBand() === 'day' ? ' mobile-starfield--day' : ''}`}
         aria-hidden
       />
     );

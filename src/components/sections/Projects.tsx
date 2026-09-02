@@ -68,9 +68,14 @@ export default function Projects() {
                     <ExternalLink size={24} aria-hidden="true" />
                   </a>
                 </h2>
-                <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem', flexWrap: 'wrap', alignItems: 'center' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><User size={16} aria-hidden="true"/> {p.role}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={16} aria-hidden="true"/> {p.timeline}</span>
+                  <span className={`project-pulse project-pulse--${p.status}`}>
+                    <span className="project-pulse__dot" aria-hidden />
+                    {p.status === 'aktif' ? 'aktif' : 'dinlenmede'}
+                    <span className="project-pulse__when"> · {p.lastTouched}</span>
+                  </span>
                 </div>
 
                 <p style={{ fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '2rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>

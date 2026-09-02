@@ -8,6 +8,8 @@ export interface Project {
   lessonsLearned: string;
   link: string;
   images: string[];
+  status: 'aktif' | 'dinlenmede';
+  lastTouched: string;
 }
 
 export const projects: Project[] = [
@@ -20,7 +22,9 @@ export const projects: Project[] = [
     timeline: "Mayıs 2025",
     lessonsLearned: "Bazen en zor şey kod yazmak değil, neyi yazmaman gerektiğine karar vermektir. Bir vizyonu başkalarıyla paylaşmak ve onu hayatta tutmak, en az mimari kurmak kadar karmaşıktır.",
     link: "https://sinavizcisi.com",
-    images: ["https://sinavizcisi.com/static/images/icon_son.png"]
+    images: ["https://sinavizcisi.com/static/images/icon_son.png"],
+    status: "aktif",
+    lastTouched: "Ağu 2026"
   },
   {
     id: "chatstats",
@@ -31,7 +35,9 @@ export const projects: Project[] = [
     timeline: "Kasım 2025",
     lessonsLearned: "Veriler sadece sayılardan ibaret değildir. Eğer doğru soruyu sorarsan, her satır log dosyası sana insanların karakterleri hakkında bir hikaye anlatabilir.",
     link: "https://play.google.com/store/apps/details?id=com.whatsapp.chatanalyzer",
-    images: ["https://play-lh.googleusercontent.com/1uUuIsQ3Dc92ScuLu_mx5JgyYHATcYcG6Bwdq4D4NGmkGZG924vAazfjJ9EReyrxEsacdxwwq3s8LbVrvBD9UA"]
+    images: ["https://play-lh.googleusercontent.com/1uUuIsQ3Dc92ScuLu_mx5JgyYHATcYcG6Bwdq4D4NGmkGZG924vAazfjJ9EReyrxEsacdxwwq3s8LbVrvBD9UA"],
+    status: "aktif",
+    lastTouched: "Eyl 2026"
   },
   {
     id: "tubitak2209",
@@ -42,6 +48,8 @@ export const projects: Project[] = [
     timeline: "Yakında Başlıyor",
     lessonsLearned: "Geleceği tahmin etmek imkansızdır, ancak belirsizliği modellemek insana umut verir. İnsanların psikolojisini anlayan algoritmalar tasarlamak her zaman en zoru.",
     link: "#",
-    images: ["https://avatars.githubusercontent.com/u/15082103?v=4"]
+    images: ["https://avatars.githubusercontent.com/u/15082103?v=4"],
+    status: "dinlenmede",
+    lastTouched: "May 2026"
   }
 ];

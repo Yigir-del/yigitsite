@@ -3,6 +3,8 @@ import { motion, useMotionValue, animate } from 'framer-motion';
 import { type Note } from '../data/notes';
 import { useAdminSession } from '../hooks/useAdminSession';
 import { useIsMobilePerf } from '../hooks/useIsMobilePerf';
+import { istanbulMonthKey } from '../utils/samsunTime';
+import { publishNoteTraces } from '../utils/noteTraces';
 
 function noteTimestamp(note: Note) {
   if (note.created_at) {
@@ -28,6 +30,19 @@ function sortNewestFirst(list: Note[]) {
   return [...list].sort((a, b) => noteTimestamp(b) - noteTimestamp(a));
 }
 
+function relativeIz(ts: number, now = Date.now()) {
+  if (!ts) return '';
+  const diff = Math.max(0, now - ts);
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return 'az önce';
+  if (minutes < 60) return `${minutes} dakika önce`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} saat önce`;
+  if (hours < 48) return 'dün';
+  const days = Math.floor(hours / 24);
+  return `${days} gün önce`;
+}
+
 function frac(seed: number) {
   const n = Math.sin(seed) * 10000;
   return n - Math.floor(n);
@@ -46,10 +61,12 @@ const HOME_EASE = [0.22, 1, 0.36, 1] as const;
 function NoteBody({
   note,
   isAdmin,
+  isFresh,
   onDelete,
 }: {
   note: PositionedNote;
   isAdmin: boolean;
+  isFresh: boolean;
   onDelete: (e: React.MouseEvent, id: string) => void;
 }) {
   return (
@@ -107,10 +124,16 @@ function NoteBody({
         }}
       >
         — {note.author}
-        {note.date && (
-          <div style={{ fontSize: '0.75rem', marginTop: '0.3rem', opacity: 0.6, fontStyle: 'italic' }}>
-            {note.date}
+        {isFresh ? (
+          <div className="note-card__when" style={{ fontSize: '0.75rem', marginTop: '0.3rem', opacity: 0.75, fontStyle: 'italic' }}>
+            {relativeIz(noteTimestamp(note))}
           </div>
+        ) : (
+          note.date && (
+            <div style={{ fontSize: '0.75rem', marginTop: '0.3rem', opacity: 0.6, fontStyle: 'italic' }}>
+              {note.date}
+            </div>
+          )
         )}
       </div>
     </>
@@ -122,12 +145,14 @@ function DraggableNoteCard({
   note,
   style,
   isAdmin,
+  isFresh,
   onDelete,
   onDragFront,
 }: {
   note: PositionedNote;
   style: CSSProperties;
   isAdmin: boolean;
+  isFresh: boolean;
   onDelete: (e: React.MouseEvent, id: string) => void;
   onDragFront: (id: string | null) => void;
 }) {
@@ -153,7 +178,7 @@ function DraggableNoteCard({
 
   return (
     <motion.div
-      className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
+      className={`note-card${note.isAdmin ? ' admin-note' : ''}${isFresh ? ' note-card--fresh' : ''}`}
       drag
       dragMomentum
       dragElastic={0.35}
@@ -177,7 +202,7 @@ function DraggableNoteCard({
         cursor: 'grab',
       }}
     >
-      <NoteBody note={note} isAdmin={isAdmin} onDelete={onDelete} />
+      <NoteBody note={note} isAdmin={isAdmin} isFresh={isFresh} onDelete={onDelete} />
     </motion.div>
   );
 }
@@ -301,6 +326,19 @@ export default function NotesWall() {
     });
   }, [notes, isMobilePerf]);
 
+  const freshId = positionedNotes[0]?.id ?? null;
+  const monthCount = useMemo(() => {
+    const month = istanbulMonthKey();
+    return notes.filter((n) => {
+      const t = noteTimestamp(n);
+      return t > 0 && istanbulMonthKey(t) === month;
+    }).length;
+  }, [notes]);
+
+  useEffect(() => {
+    publishNoteTraces(notes.slice(0, 48).map((n) => ({ id: n.id, t: noteTimestamp(n) })));
+  }, [notes]);
+
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const previous = notesRef.current;
@@ -349,6 +387,12 @@ export default function NotesWall() {
         Not Defterim
       </h1>
 
+      {isMobilePerf && loaded && (
+        <p className="notes-month-badge" aria-live="polite">
+          Bu ay bırakılan iz: {monthCount}
+        </p>
+      )}
+
       {loaded && positionedNotes.length === 0 && (
         <p
           style={{
@@ -368,6 +412,7 @@ export default function NotesWall() {
 
       <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
         {positionedNotes.map((note, index) => {
+          const isFresh = note.id === freshId;
           const baseZ = positionedNotes.length - index;
           const zIndex = dragFrontId === note.id ? 80 : baseZ;
 
@@ -400,14 +445,14 @@ export default function NotesWall() {
             return (
               <div
                 key={note.id}
-                className={`note-card ${note.isAdmin ? 'admin-note' : ''}`}
+                className={`note-card${note.isAdmin ? ' admin-note' : ''}${isFresh ? ' note-card--fresh' : ''}`}
                 style={{
                   ...commonStyle,
                   transform: `rotate(${note.computedRotation}deg)`,
                   cursor: 'default',
                 }}
               >
-                <NoteBody note={note} isAdmin={isAdmin} onDelete={handleDelete} />
+                <NoteBody note={note} isAdmin={isAdmin} isFresh={isFresh} onDelete={handleDelete} />
               </div>
             );
           }
@@ -418,6 +463,7 @@ export default function NotesWall() {
               note={note}
               style={commonStyle}
               isAdmin={isAdmin}
+              isFresh={isFresh}
               onDelete={handleDelete}
               onDragFront={setDragFrontId}
             />

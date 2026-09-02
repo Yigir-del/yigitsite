@@ -1320,7 +1320,159 @@ html.scene-quiet {
 }
 
 
-/* GPU page transitions — compositor-friendly, no paint seams */
+.notes-month-badge {
+  position: absolute;
+  top: calc(5% + 3.2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  margin: 0;
+  font-family: var(--font-handwriting);
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.note-card--fresh {
+  box-shadow: 0 0 22px var(--glow), 0 0 1px var(--glow-strong);
+  border-color: color-mix(in srgb, var(--accent-pale-gray) 45%, var(--card-border)) !important;
+}
+
+.freq-log {
+  margin: 0 0 0.85rem;
+  padding: 0.45rem 0.55rem;
+  border-top: 1px solid var(--glass-border);
+  max-height: 4.8rem;
+  overflow: hidden;
+}
+
+.freq-log__label {
+  margin: 0 0 0.25rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.freq-log__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.freq-log__list li {
+  font-family: var(--font-handwriting);
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  opacity: 0.85;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.freq-log--static .freq-log__list li {
+  font-size: 0.85rem;
+}
+
+.project-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.project-pulse__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.55;
+}
+
+.project-pulse--aktif .project-pulse__dot {
+  background: var(--accent-pale-gray);
+  box-shadow: 0 0 8px var(--glow);
+  opacity: 1;
+}
+
+.project-pulse__when {
+  opacity: 0.7;
+}
+
+.beggar-alms {
+  position: fixed;
+  left: 0.9rem;
+  bottom: 0.7rem;
+  z-index: 35;
+  margin: 0;
+  font-family: var(--font-handwriting);
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  opacity: 0.55;
+  pointer-events: none;
+  letter-spacing: 0.03em;
+}
+
+.idle-whisper {
+  position: fixed;
+  z-index: 45;
+  margin: 0;
+  font-family: var(--font-handwriting);
+  font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+  color: var(--text-muted);
+  opacity: 0;
+  pointer-events: none;
+  animation: idleWhisperFade 7s ease-in-out forwards;
+}
+
+.idle-whisper--left {
+  left: 1.25rem;
+  top: 38%;
+}
+
+.idle-whisper--right {
+  right: 1.25rem;
+  top: 52%;
+  text-align: right;
+}
+
+.idle-whisper--bottom {
+  left: 50%;
+  bottom: 12%;
+  transform: translateX(-50%);
+}
+
+.idle-whisper--still {
+  animation: none;
+  opacity: 0.45;
+}
+
+@keyframes idleWhisperFade {
+  0% { opacity: 0; }
+  18% { opacity: 0.55; }
+  75% { opacity: 0.45; }
+  100% { opacity: 0; }
+}
+
+.mobile-starfield--day {
+  background-color: #101820;
+  opacity: 0.95;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idle-whisper {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
 .page-transition {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;

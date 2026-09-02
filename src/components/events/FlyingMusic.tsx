@@ -26,6 +26,7 @@ export default function FlyingMusic() {
   const [searchValue, setSearchValue] = useState('');
   const [searchMessage, setSearchMessage] = useState('');
   const [searchAttempts, setSearchAttempts] = useState(0);
+  const [rejectedLog, setRejectedLog] = useState<string[]>([]);
   const [iframeKey, setIframeKey] = useState(0);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
@@ -129,6 +130,7 @@ export default function FlyingMusic() {
       searchAttemptsRef.current = attempts + 1;
       setSearchAttempts(attempts + 1);
       setSearchMessage(quote);
+      setRejectedLog((prev) => [quote, ...prev.filter((q) => q !== quote)].slice(0, 4));
 
       const messageId = ++messageIdRef.current;
       scheduleMessageHide(messageId, () => setSearchMessage(''));
@@ -322,6 +324,17 @@ export default function FlyingMusic() {
             </button>
           </div>
         </form>
+
+        {rejectedLog.length > 0 && (
+          <div className={`freq-log${isMobilePerf ? ' freq-log--static' : ''}`} aria-live="polite">
+            <p className="freq-log__label">Son reddedilenler</p>
+            <ul className="freq-log__list">
+              {rejectedLog.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {showPlayer && (
           <div style={{ position: 'relative', minHeight: '152px' }}>

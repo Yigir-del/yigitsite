@@ -3,6 +3,7 @@ import { Ghost } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getIsMobilePerf } from '../../hooks/useIsMobilePerf';
 import { getPrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
+import { takeAmbient, releaseAmbient } from '../../utils/ambientSlot';
 
 type EventType = 'ufo' | 'popup' | 'achievement' | 'gravity' | 'none';
 
@@ -30,13 +31,20 @@ export default function ChaosManager() {
         clearTimeout(idleTimer);
         setIdleQuote(null);
         idleTimer = setTimeout(() => {
+          if (!takeAmbient('chaos')) return;
           setIdleQuote('Burada çok sessizleştin... İyi misin?');
+          track(() => {
+            setIdleQuote(null);
+            releaseAmbient('chaos');
+          }, 8000);
         }, 180000);
       };
       window.addEventListener('touchstart', resetIdleTimer, { passive: true });
       resetIdleTimer();
       return () => {
         clearTimeout(idleTimer);
+        timers.forEach(clearTimeout);
+        releaseAmbient('chaos');
         window.removeEventListener('touchstart', resetIdleTimer);
       };
     }
@@ -80,7 +88,12 @@ export default function ChaosManager() {
           'Zaman geçiyor. Kodlar eskiyor. Sen nasılsın?',
           'Boşluğa ne kadar uzun süre bakarsan, boşluk da sana o kadar bakar.',
         ];
+        if (!takeAmbient('chaos')) return;
         setIdleQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+        track(() => {
+          setIdleQuote(null);
+          releaseAmbient('chaos');
+        }, 8000);
       }, 120000);
     };
 
@@ -102,6 +115,7 @@ export default function ChaosManager() {
       timers.clear();
       clearTimeout(idleTimer);
       cancelAnimationFrame(idleRaf);
+      releaseAmbient('chaos');
       window.removeEventListener('mousemove', resetIdleTimer);
       window.removeEventListener('keydown', resetIdleTimer);
       window.removeEventListener('scroll', resetIdleTimer);

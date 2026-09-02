@@ -33,6 +33,7 @@ const Memorial = lazy(() => import('./components/sections/Memorial'));
 const NotFound = lazy(() => import('./components/sections/NotFound'));
 
 const ChaosManager = lazy(() => import('./components/events/ChaosManager'));
+const IdleWhispers = lazy(() => import('./components/events/IdleWhispers'));
 const EasterEggs = lazy(() => import('./components/events/EasterEggs'));
 const FlyingPen = lazy(() => import('./components/events/FlyingPen'));
 const FlyingMusic = lazy(() => import('./components/events/FlyingMusic'));
@@ -230,6 +231,7 @@ function AppShell() {
           {showChaos && (
             <Suspense fallback={null}>
               <ChaosManager />
+              <IdleWhispers />
               <EasterEggs />
             </Suspense>
           )}
