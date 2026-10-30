@@ -1,12 +1,12 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Line, Stars } from '@react-three/drei';
+import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { useTheme } from '../../../context/ThemeContext';
 import { DOMAIN_MAP, type DomainId } from '../../../themes/domains';
 import { APP_EVENTS } from '../../../utils/events';
 import { getNoteTraces, hashStarPos, NOTE_TRACES_EVENT, type NoteTrace } from '../../../utils/noteTraces';
-import { istanbulDayKey, samsunSkyBand } from '../../../utils/samsunTime';
+import { samsunSkyBand } from '../../../utils/samsunTime';
 
 const COLLAPSE_EVENT = APP_EVENTS.UNIVERSE_COLLAPSE;
 const RESTORE_EVENT = APP_EVENTS.UNIVERSE_RESTORE;
@@ -286,23 +286,6 @@ function TraceConstellation({
     [traces],
   );
 
-  const polylines = useMemo(() => {
-    const byDay = new Map<string, NoteTrace[]>();
-    for (const row of traces) {
-      const key = istanbulDayKey(row.t);
-      const list = byDay.get(key) ?? [];
-      list.push(row);
-      byDay.set(key, list);
-    }
-    const lines: [number, number, number][][] = [];
-    for (const list of byDay.values()) {
-      if (list.length < 2) continue;
-      list.sort((a, b) => a.t - b.t);
-      lines.push(list.map((row) => hashStarPos(row.id)));
-    }
-    return lines;
-  }, [traces]);
-
   if (stars.length === 0) return null;
 
   return (
@@ -317,17 +300,6 @@ function TraceConstellation({
             depthWrite={false}
           />
         </mesh>
-      ))}
-      {polylines.map((pts, i) => (
-        <Line
-          key={i}
-          points={pts}
-          color={particleColor}
-          lineWidth={1}
-          transparent
-          opacity={hushed ? 0.12 : 0.32}
-          depthWrite={false}
-        />
       ))}
     </group>
   );
