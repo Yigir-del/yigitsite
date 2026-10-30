@@ -66,6 +66,14 @@ export function useThrowableEdgeFlight(opts: {
     setDragging(false);
   }, [stopFlightAnim]);
 
+  const holdFlight = useCallback(() => {
+    if (throwResumeRef.current) {
+      clearTimeout(throwResumeRef.current);
+      throwResumeRef.current = null;
+    }
+    stopFlightAnim();
+  }, [stopFlightAnim]);
+
   const playFlight = useCallback(
     (fromExit?: Edge, fromPoint?: { x: number; y: number }) => {
       stopFlightAnim();
@@ -142,6 +150,18 @@ export function useThrowableEdgeFlight(opts: {
     }, 380);
   }, [playFlight, x, y]);
 
+  const resumeFlight = useCallback(
+    (delayMs = 280) => {
+      if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
+      if (pausedRef.current || draggingRef.current) return;
+      throwResumeRef.current = setTimeout(() => {
+        if (pausedRef.current || draggingRef.current) return;
+        playFlight(undefined, { x: x.get(), y: y.get() });
+      }, delayMs);
+    },
+    [playFlight, x, y]
+  );
+
   return {
     x,
     y,
@@ -150,5 +170,7 @@ export function useThrowableEdgeFlight(opts: {
     onDragStart,
     onDragEnd,
     freezeFlight,
+    holdFlight,
+    resumeFlight,
   };
 }

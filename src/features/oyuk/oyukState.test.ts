@@ -4,6 +4,8 @@ import {
   OYUK_INTRO_SEEN_KEY,
   OYUK_UNLOCKED_KEY,
   advanceCinematicPhase,
+  commitPendingOyukCinematic,
+  computeCoinTrajectoryFrame,
   finishCinematicArrival,
   getOyukState,
   isCinematicActive,
@@ -17,6 +19,13 @@ import {
   syncOyukFromStorage,
   writeAlms,
 } from './oyukState';
+import {
+  COIN_SOUND_MUTED_KEY,
+  isCoinSoundMuted,
+  playCoinImpactSound,
+  setCoinSoundMuted,
+  toggleCoinSoundMuted,
+} from './useCoinSound';
 import { OYUK_DEEPER_SECRET, OYUK_INSCRIPTIONS } from './oyukStory';
 import { OYUK_OPENING_LINE, OYUK_THRESHOLD_LINE } from './OyukDirector';
 import { PAGE_SEO } from '../../seo/config';
@@ -190,5 +199,104 @@ describe('OYUK donation & unlock state machine (§4 & §20.1)', () => {
     }
 
     expect(OYUK_DEEPER_SECRET.revealedText).toContain('beşinci sadaka');
+  });
+
+  it('defers 5th-donation cinematic start until the coin finishes landing in the container (§7)', () => {
+    resetOyukStateForTests({ alms: 4 });
+
+    // 5th click occurs: coin launches, deferCinematicStart is true
+    const fifth = recordBeggarDonation({
+      originRect: { left: 180, top: 220, width: 54, height: 70 },
+      returnPath: '/projeler',
+      deferCinematicStart: true,
+    });
+
+    expect(fifth.accepted).toBe(true);
+    expect(fifth.alms).toBe(5);
+    expect(fifth.triggeredCinematic).toBe(true);
+    expect(localStorage.getItem(ALMS_KEY)).toBe('5');
+
+    // While the coin is in the air, the cave transition MUST NOT have started yet
+    expect(getOyukState().phase).toBe('idle');
+    expect(getOyukState().pendingCinematic).toBe(true);
+    expect(getOyukState().unlocked).toBe(false);
+
+    // Rapid clicks while the 5th coin is still in flight are blocked
+    const midAirClick = recordBeggarDonation({
+      returnPath: '/projeler',
+      deferCinematicStart: true,
+    });
+    expect(midAirClick.accepted).toBe(false);
+    expect(getOyukState().alms).toBe(5);
+
+    // Coin lands in container -> impact sound -> impact glint completes -> commitPendingOyukCinematic
+    const committed = commitPendingOyukCinematic({
+      left: 182,
+      top: 220,
+      width: 54,
+      height: 70,
+    });
+    expect(committed).toBe(true);
+    expect(getOyukState().pendingCinematic).toBe(false);
+    expect(getOyukState().unlocked).toBe(true);
+    expect(getOyukState().phase).toBe('invitation');
+    expect(localStorage.getItem(OYUK_UNLOCKED_KEY)).toBe('1');
+    expect(localStorage.getItem(OYUK_INTRO_SEEN_KEY)).toBe('1');
+
+    // Duplicate commit calls are no-ops
+    expect(commitPendingOyukCinematic()).toBe(false);
+  });
+
+  it('computes parabolic coin trajectory across Launch -> Apex -> Fall into the container (§3)', () => {
+    const startPoint = { x: 220, y: 300 };
+    const targetPoint = { x: 200, y: 310 };
+    const riseHeight = 60;
+
+    const launchFrame = computeCoinTrajectoryFrame({
+      t: 0,
+      startPoint,
+      targetPoint,
+      riseHeight,
+    });
+    expect(launchFrame.x).toBeCloseTo(220, 1);
+    expect(launchFrame.y).toBeCloseTo(300, 1);
+
+    const apexFrame = computeCoinTrajectoryFrame({
+      t: 0.44,
+      startPoint,
+      targetPoint,
+      riseHeight,
+    });
+    // Rises 60px above min(300, 310) -> y = 240
+    expect(apexFrame.y).toBeCloseTo(240, 1);
+    expect(apexFrame.apexLight).toBeCloseTo(1, 2);
+
+    const impactFrame = computeCoinTrajectoryFrame({
+      t: 1,
+      startPoint,
+      targetPoint,
+      riseHeight,
+    });
+    // Lands accurately at the container target coordinates
+    expect(impactFrame.x).toBeCloseTo(200, 1);
+    expect(impactFrame.y).toBeCloseTo(310, 1);
+    expect(impactFrame.scale).toBeLessThan(1);
+  });
+
+  it('supports independent coin sound muting and handles unavailable Web Audio gracefully (§5)', () => {
+    setCoinSoundMuted(false);
+    expect(isCoinSoundMuted()).toBe(false);
+    expect(localStorage.getItem(COIN_SOUND_MUTED_KEY)).toBeNull();
+
+    // In Node test environment without AudioContext, playCoinImpactSound returns false without throwing
+    expect(playCoinImpactSound()).toBe(false);
+
+    const nextMuted = toggleCoinSoundMuted();
+    expect(nextMuted).toBe(true);
+    expect(isCoinSoundMuted()).toBe(true);
+    expect(localStorage.getItem(COIN_SOUND_MUTED_KEY)).toBe('1');
+
+    setCoinSoundMuted(false);
+    expect(isCoinSoundMuted()).toBe(false);
   });
 });

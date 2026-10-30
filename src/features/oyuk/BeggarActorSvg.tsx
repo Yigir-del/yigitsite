@@ -1,8 +1,12 @@
+import type { Ref } from 'react';
+
 interface BeggarActorSvgProps {
   size?: number;
   circleSize?: number;
   showLabel?: boolean;
   lookingLeft?: boolean;
+  cupRef?: Ref<SVGGElement>;
+  cupImpact?: boolean;
 }
 
 /**
@@ -15,6 +19,8 @@ export default function BeggarActorSvg({
   circleSize = 54,
   showLabel = true,
   lookingLeft = false,
+  cupRef,
+  cupImpact = false,
 }: BeggarActorSvgProps) {
   const eyeOffset = lookingLeft ? -2.2 : 0;
 
@@ -63,8 +69,34 @@ export default function BeggarActorSvg({
             strokeLinecap="round"
             fill="none"
           />
-          <path d="M22 52 H42 L40 58 H24 Z" fill="#8a7a60" stroke="#c4b8a0" strokeWidth="1" />
-          <ellipse cx="32" cy="52" rx="10" ry="2.5" fill="#a89870" />
+          <g
+            ref={cupRef}
+            data-beggar-cup="true"
+            className={cupImpact ? 'beggar-cup is-impacting' : 'beggar-cup'}
+          >
+            <path
+              d="M22 52 H42 L40 58 H24 Z"
+              fill={cupImpact ? '#9e8b66' : '#8a7a60'}
+              stroke={cupImpact ? '#e6cf94' : '#c4b8a0'}
+              strokeWidth="1"
+            />
+            <ellipse
+              cx="32"
+              cy="52"
+              rx="10"
+              ry="2.5"
+              fill={cupImpact ? '#cdb67e' : '#a89870'}
+            />
+            {cupImpact && (
+              <ellipse
+                cx="32"
+                cy="52"
+                rx="8.2"
+                ry="1.5"
+                fill="rgba(248, 232, 184, 0.65)"
+              />
+            )}
+          </g>
         </svg>
       </div>
 

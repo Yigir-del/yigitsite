@@ -12,6 +12,9 @@ export const OYUK_INTRO_SEEN_KEY = 'yigit_oyuk_intro_seen_v1';
 /** Required donation threshold to unlock OYUK (§4.2) */
 export const OYUK_DONATION_THRESHOLD = 5;
 
+/** Custom event dispatched once when OYUK unlocks after the 5th donation completes (§7) */
+export const OYUK_UNLOCK_EVENT = 'oyuk:unlocked';
+
 export type CinematicPhase =
   | 'idle'
   | 'invitation'
@@ -29,11 +32,76 @@ export interface ActorRect {
   height: number;
 }
 
+export interface CoinPoint {
+  x: number;
+  y: number;
+}
+
+/**
+ * Compute parabolic trajectory and 3D flip state for normalized flight time t in [0, 1].
+ */
+export function computeCoinTrajectoryFrame(params: {
+  t: number;
+  startPoint: CoinPoint;
+  targetPoint: CoinPoint;
+  riseHeight: number;
+}) {
+  const t = Math.max(0, Math.min(1, params.t));
+  const { startPoint, targetPoint, riseHeight } = params;
+
+  // Apex occurs at 44% of the flight duration
+  const apexT = 0.44;
+  const apexY = Math.min(startPoint.y, targetPoint.y) - riseHeight;
+
+  // Horizontal drift eases smoothly into the container center
+  const easeX = 1 - Math.pow(1 - t, 2.15);
+  const x = startPoint.x + (targetPoint.x - startPoint.x) * easeX;
+
+  // Vertical arc: decelerating launch up to apex, then gravity-accelerated fall into container
+  let y: number;
+  if (t <= apexT) {
+    const u = t / apexT;
+    const riseEase = 1 - (1 - u) * (1 - u); // easeOutQuad
+    y = startPoint.y + (apexY - startPoint.y) * riseEase;
+  } else {
+    const v = (t - apexT) / (1 - apexT);
+    const fallEase = v * v; // easeInQuad (gravity acceleration)
+    y = apexY + (targetPoint.y - apexY) * fallEase;
+  }
+
+  // 3D tumbling illusion (2.5 flips across the arc)
+  const rawCos = Math.cos(t * Math.PI * 5);
+  const sign = rawCos >= 0 ? 1 : -1;
+  const scaleY = sign * Math.max(0.2, Math.abs(rawCos));
+
+  const dir = startPoint.x <= targetPoint.x ? 1 : -1;
+  const rotateZ = dir * (-12 + t * 34);
+
+  // Brief specular light catch near the apex (t in [0.30, 0.58])
+  const apexLight = Math.max(0, 1 - Math.abs(t - apexT) / 0.14);
+
+  // Tucks inside the container rim in the final 14% of the fall
+  const rimTuck = t > 0.86 ? (t - 0.86) / 0.14 : 0;
+  const scale = (1 + apexLight * 0.08) * (1 - rimTuck * 0.28);
+  const opacity = t < 0.06 ? t / 0.06 : 1 - rimTuck * 0.82;
+
+  return {
+    x,
+    y,
+    scale,
+    scaleY,
+    rotateZ,
+    apexLight,
+    opacity,
+  };
+}
+
 export interface OyukRuntimeState {
   alms: number;
   unlocked: boolean;
   introSeen: boolean;
   phase: CinematicPhase;
+  pendingCinematic: boolean;
   originRect: ActorRect | null;
   returnPath: string;
   lastPointer: { x: number; y: number } | null;
@@ -104,6 +172,7 @@ let state: OyukRuntimeState = {
   unlocked: typeof window !== 'undefined' ? readOyukUnlocked() : false,
   introSeen: typeof window !== 'undefined' ? readOyukIntroSeen() : false,
   phase: 'idle',
+  pendingCinematic: false,
   originRect: null,
   returnPath: '/',
   lastPointer: null,
@@ -118,6 +187,19 @@ function emitChange() {
 function setState(partial: Partial<OyukRuntimeState>) {
   state = { ...state, ...partial };
   emitChange();
+}
+
+function dispatchOyukUnlockEvent(almsCount: number) {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent(OYUK_UNLOCK_EVENT, {
+        detail: { alms: almsCount },
+      }),
+    );
+  } catch {
+    /* ignore in non-DOM test environments */
+  }
 }
 
 export function getOyukState(): OyukRuntimeState {
@@ -174,15 +256,21 @@ export interface DonationOutcome {
 /**
  * Process a deliberate beggar donation click/keypress (§4.1–§4.4).
  * - Always increments and persists `yigit_beggar_alms` when accepted.
- * - Rejects if the cinematic sequence is currently running or if `isDragging` is true.
+ * - Rejects if the cinematic sequence is currently running, if a 5th-coin cinematic
+ *   handoff is pending (`pendingCinematic`), or if `isDragging` is true.
  * - Unlocks OYUK and triggers the cinematic on the 5th donation (or the next
  *   deliberate donation for existing visitors who already have >= 5 donations
  *   but have never unlocked OYUK).
+ * - When `deferCinematicStart: true` is passed, increments the count and locks
+ *   `pendingCinematic: true` while the 5th coin is in the air, deferring the
+ *   actual OYUK unlock event and `invitation` phase until `commitPendingOyukCinematic()`
+ *   is called upon coin landing completion (§7).
  */
 export function recordBeggarDonation(opts?: {
   isDragging?: boolean;
   originRect?: ActorRect | null;
   returnPath?: string;
+  deferCinematicStart?: boolean;
 }): DonationOutcome {
   if (opts?.isDragging) {
     return {
@@ -194,7 +282,7 @@ export function recordBeggarDonation(opts?: {
     };
   }
 
-  if (isCinematicActive(state.phase)) {
+  if (isCinematicActive(state.phase) || state.pendingCinematic) {
     return {
       accepted: false,
       alms: state.alms,
@@ -213,16 +301,37 @@ export function recordBeggarDonation(opts?: {
 
   // Trigger the secret journey exactly once when reaching >= 5 donations
   if (nextAlms >= OYUK_DONATION_THRESHOLD && (!alreadyUnlocked || !alreadySawIntro)) {
+    const safeReturnPath =
+      opts?.returnPath && opts.returnPath !== '/oyuk' ? opts.returnPath : '/';
+
+    if (opts?.deferCinematicStart) {
+      setState({
+        alms: nextAlms,
+        pendingCinematic: true,
+        originRect: opts?.originRect ?? null,
+        returnPath: safeReturnPath,
+      });
+      return {
+        accepted: true,
+        alms: nextAlms,
+        triggeredCinematic: true,
+        unlocked: false,
+        alreadyUnlockedBefore: false,
+      };
+    }
+
     writeOyukUnlocked(true);
     writeOyukIntroSeen(true);
     setState({
       alms: nextAlms,
       unlocked: true,
       introSeen: true,
+      pendingCinematic: false,
       phase: 'invitation',
       originRect: opts?.originRect ?? null,
-      returnPath: opts?.returnPath && opts.returnPath !== '/oyuk' ? opts.returnPath : '/',
+      returnPath: safeReturnPath,
     });
+    dispatchOyukUnlockEvent(nextAlms);
     return {
       accepted: true,
       alms: nextAlms,
@@ -247,17 +356,39 @@ export function recordBeggarDonation(opts?: {
   };
 }
 
+/**
+ * Called by the 5th coin's completion callback once the coin has landed in the
+ * beggar's container, played its impact sound, and finished its impact glint (§7).
+ */
+export function commitPendingOyukCinematic(freshOriginRect?: ActorRect | null): boolean {
+  if (!state.pendingCinematic || isCinematicActive(state.phase)) {
+    return false;
+  }
+
+  writeOyukUnlocked(true);
+  writeOyukIntroSeen(true);
+  setState({
+    unlocked: true,
+    introSeen: true,
+    pendingCinematic: false,
+    phase: 'invitation',
+    originRect: freshOriginRect ?? state.originRect,
+  });
+  dispatchOyukUnlockEvent(state.alms);
+  return true;
+}
+
 export function advanceCinematicPhase(next: CinematicPhase): void {
   setState({ phase: next });
 }
 
 export function finishCinematicArrival(): void {
-  setState({ phase: 'arrived' });
+  setState({ phase: 'arrived', pendingCinematic: false });
 }
 
 export function resetCinematicToIdle(): void {
-  if (state.phase !== 'idle' || state.originRect !== null) {
-    setState({ phase: 'idle', originRect: null });
+  if (state.phase !== 'idle' || state.originRect !== null || state.pendingCinematic) {
+    setState({ phase: 'idle', originRect: null, pendingCinematic: false });
   }
 }
 
@@ -285,6 +416,7 @@ export function resetOyukStateForTests(initial?: Partial<OyukRuntimeState>): voi
     unlocked: initial?.unlocked ?? false,
     introSeen: initial?.introSeen ?? false,
     phase: initial?.phase ?? 'idle',
+    pendingCinematic: initial?.pendingCinematic ?? false,
     originRect: initial?.originRect ?? null,
     returnPath: initial?.returnPath ?? '/',
     lastPointer: initial?.lastPointer ?? null,
