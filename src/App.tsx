@@ -16,9 +16,10 @@ import { getPrefersReducedMotion, usePrefersReducedMotion } from './hooks/usePre
 import { useAtmosphereStage } from './hooks/useAtmosphereStage';
 import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
 import { trackPageView } from './utils/analytics';
-import { isKnownRoute } from './utils/routes';
+import { isKnownRoute, isOyukRoute } from './utils/routes';
 import { APP_EVENTS } from './utils/events';
 import { ensureGlobalNoteEventListener } from './utils/notesStore';
+import { isCinematicActive, useOyukState } from './features/oyuk/oyukState';
 
 if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
   window.history.scrollRestoration = 'manual';
@@ -31,6 +32,8 @@ const Thoughts = lazy(() => import('./components/sections/Thoughts'));
 const Studio = lazy(() => import('./components/sections/Studio'));
 const Contact = lazy(() => import('./components/sections/Contact'));
 const Memorial = lazy(() => import('./components/sections/Memorial'));
+const OyukScene = lazy(() => import('./features/oyuk/OyukScene'));
+const OyukDirector = lazy(() => import('./features/oyuk/OyukDirector'));
 const NotFound = lazy(() => import('./components/sections/NotFound'));
 
 const ChaosManager = lazy(() => import('./components/events/ChaosManager'));
@@ -83,6 +86,7 @@ function Analytics() {
   const location = useLocation();
 
   useEffect(() => {
+    if (isOyukRoute(location.pathname)) return;
     const send = () => trackPageView(location.pathname + location.search);
 
     if (typeof window.requestIdleCallback === 'function') {
@@ -156,6 +160,7 @@ function AnimatedRoutes() {
             <Route path="/iletisim" element={<Contact />} />
             <Route path="/miras" element={<Memorial />} />
             <Route path="/atam" element={<Memorial />} />
+            <Route path="/oyuk" element={<OyukScene />} />
 
             {/* Yönlendirmeler (Redirects) */}
             <Route path="/portfolio" element={<Navigate to="/projeler" replace />} />
@@ -178,15 +183,22 @@ function AppShell() {
   const isMobilePerf = useIsMobilePerf();
   const { isQuiet } = useMemorial();
   const { ready } = useAtmosphereStage();
+  const location = useLocation();
+  const reducedMotion = usePrefersReducedMotion();
+  const oyuk = useOyukState();
+
+  const isOyukPage = isOyukRoute(location.pathname);
+  const is404Page = !isKnownRoute(location.pathname);
+  const oyukCinematicRunning = isCinematicActive(oyuk.phase);
 
   useEffect(() => {
     ensureGlobalNoteEventListener();
   }, []);
 
   const toggleWorld = useCallback(() => {
-    if (isQuiet || getPrefersReducedMotion()) return;
+    if (isQuiet || isOyukPage || oyukCinematicRunning || getPrefersReducedMotion()) return;
     setUpsideDown((v) => !v);
-  }, [isQuiet]);
+  }, [isQuiet, isOyukPage, oyukCinematicRunning]);
 
   useEffect(() => {
     window.addEventListener(APP_EVENTS.WORLD_FLIP, toggleWorld);
@@ -194,8 +206,10 @@ function AppShell() {
   }, [toggleWorld]);
 
   useEffect(() => {
-    if (isQuiet && upsideDown) setUpsideDown(false);
-  }, [isQuiet, upsideDown]);
+    if ((isQuiet || isOyukPage || oyukCinematicRunning) && upsideDown) {
+      setUpsideDown(false);
+    }
+  }, [isQuiet, isOyukPage, oyukCinematicRunning, upsideDown]);
 
   useEffect(() => {
     const stage = document.querySelector('.app-container') as HTMLElement | null;
@@ -226,29 +240,25 @@ function AppShell() {
     };
   }, [upsideDown]);
 
-  const location = useLocation();
-  const reducedMotion = usePrefersReducedMotion();
-  const is404Page = !isKnownRoute(location.pathname);
-
-  const showCharacters = !isQuiet && !is404Page && ready('characters');
-  const showChaos = !isQuiet && !is404Page && ready('chaos');
+  const showCharacters = !isQuiet && !isOyukPage && !is404Page && ready('characters');
+  const showChaos = !isQuiet && !isOyukPage && !is404Page && !oyukCinematicRunning && ready('chaos');
 
   return (
     <>
       <div className="atmosphere-fill" aria-hidden />
-      <Background hushed={isQuiet} />
-      {!isMobilePerf && (
+      {!isOyukPage && <Background hushed={isQuiet} />}
+      {!isMobilePerf && !isOyukPage && (
         <Suspense fallback={null}>
           <WireframePyramid />
         </Suspense>
       )}
-      <ThemeSelector />
+      {!isOyukPage && <ThemeSelector />}
 
       <Shell>
         <ScrollToTop />
         <Analytics />
         {!isMobilePerf && <ScrollTriggerSync />}
-        <div className={`app-container${isQuiet ? ' is-quiet' : ''}`}>
+        <div className={`app-container${isQuiet ? ' is-quiet' : ''}${isOyukPage ? ' is-oyuk' : ''}`}>
           {showChaos && (
             <Suspense fallback={null}>
               <ChaosManager />
@@ -256,15 +266,15 @@ function AppShell() {
               <EasterEggs />
             </Suspense>
           )}
-          {!isQuiet && <FakeMenu />}
+          {!isQuiet && !isOyukPage && !oyukCinematicRunning && <FakeMenu />}
 
           {showCharacters && (
             <Suspense fallback={null}>
               <FlyingPen />
               <FlyingMusic />
+              <FlyingBeggar />
               {!isMobilePerf && (
                 <>
-                  <FlyingBeggar />
                   <FlyingSage />
                   <SocialDrifters />
                 </>
@@ -272,13 +282,13 @@ function AppShell() {
             </Suspense>
           )}
 
-          {isQuiet && !isMobilePerf && (
+          {isQuiet && !isOyukPage && !isMobilePerf && (
             <Suspense fallback={null}>
               <SocialDrifters />
             </Suspense>
           )}
 
-          <Navigation />
+          {!isOyukPage && <Navigation />}
 
           <main
             style={{
@@ -290,15 +300,26 @@ function AppShell() {
             <AnimatedRoutes />
           </main>
 
-          <Footer />
+          {!isOyukPage && <Footer />}
         </div>
       </Shell>
 
-      {!isMobilePerf && !isQuiet && !reducedMotion && ready('characters') && (
+      {oyuk.phase !== 'idle' && (
         <Suspense fallback={null}>
-          <CustomCursor />
+          <OyukDirector />
         </Suspense>
       )}
+
+      {!isMobilePerf &&
+        !isQuiet &&
+        !isOyukPage &&
+        !oyukCinematicRunning &&
+        !reducedMotion &&
+        ready('characters') && (
+          <Suspense fallback={null}>
+            <CustomCursor />
+          </Suspense>
+        )}
       {!isMobilePerf && (
         <div className="noise-overlay" style={{ mixBlendMode: 'overlay', pointerEvents: 'none' }} />
       )}

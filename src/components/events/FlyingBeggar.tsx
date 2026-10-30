@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useThrowableEdgeFlight } from '../../hooks/useThrowableEdgeFlight';
+import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 import {
   BEGGAR_OWN,
   BEGGAR_TO_SAGE,
@@ -10,67 +12,87 @@ import {
   shouldJab,
   type FlyerSpeakDetail,
 } from '../../utils/flyerDialogue';
+import BeggarActorSvg from '../../features/oyuk/BeggarActorSvg';
+import {
+  isCinematicActive,
+  recordBeggarDonation,
+  recordLastPointer,
+  setOyukReturnPath,
+  useOyukState,
+} from '../../features/oyuk/oyukState';
 
-/** Angry beggar — mostly heckles the king; rarely jabs the sage with a mapped reply */
-const ALMS_KEY = 'yigit_beggar_alms';
-
-function readAlms() {
-  try {
-    const n = Number(localStorage.getItem(ALMS_KEY));
-    return Number.isFinite(n) && n >= 0 ? Math.min(Math.floor(n), 99999) : 0;
-  } catch {
-    return 0;
-  }
-}
-
-function writeAlms(n: number) {
-  try {
-    localStorage.setItem(ALMS_KEY, String(n));
-  } catch {
-    /* private mode */
-  }
-}
-
+/** Angry beggar — mostly heckles the king; on the 5th donation, unlocks OYUK */
 export default function FlyingBeggar() {
-  const { x, y, visible, dragging, onDragStart, onDragEnd } = useThrowableEdgeFlight({
-    durationMin: 16,
-    durationMax: 24,
-  });
+  const isMobilePerf = useIsMobilePerf();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const oyuk = useOyukState();
+  const cinematicRunning = isCinematicActive(oyuk.phase);
+
+  const { x, y, visible, dragging, onDragStart, onDragEnd, freezeFlight } =
+    useThrowableEdgeFlight({
+      durationMin: 16,
+      durationMax: 24,
+      paused: isMobilePerf || cinematicRunning,
+    });
+
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const actorRef = useRef<HTMLDivElement | null>(null);
   const busyRef = useRef(false);
   const draggedRef = useRef(false);
-  const [alms, setAlms] = useState(0);
 
-  useEffect(() => {
-    setAlms(readAlms());
-  }, []);
-
-  const say = useCallback((text: string, holdMs = 5000) => {
+  const clearSpeechTimers = useCallback(() => {
+    if (hideRef.current) {
+      clearTimeout(hideRef.current);
+      hideRef.current = null;
+    }
     if (replyRef.current) {
       clearTimeout(replyRef.current);
       replyRef.current = null;
     }
-    busyRef.current = true;
-    setLine(text);
-    setShowBubble(true);
-    if (hideRef.current) clearTimeout(hideRef.current);
-    hideRef.current = setTimeout(() => {
-      setShowBubble(false);
-      busyRef.current = false;
-    }, holdMs);
+    busyRef.current = false;
   }, []);
 
+  const say = useCallback(
+    (text: string, holdMs = 5000) => {
+      if (isCinematicActive()) return;
+      if (replyRef.current) {
+        clearTimeout(replyRef.current);
+        replyRef.current = null;
+      }
+      busyRef.current = true;
+      setLine(text);
+      setShowBubble(true);
+      if (hideRef.current) clearTimeout(hideRef.current);
+      hideRef.current = setTimeout(() => {
+        setShowBubble(false);
+        busyRef.current = false;
+      }, holdMs);
+    },
+    [],
+  );
+
   useEffect(() => {
+    if (cinematicRunning) {
+      clearSpeechTimers();
+      setShowBubble(false);
+      freezeFlight();
+    }
+  }, [cinematicRunning, clearSpeechTimers, freezeFlight]);
+
+  useEffect(() => {
+    if (isMobilePerf || cinematicRunning) return;
+
     const emit = (detail: FlyerSpeakDetail) => {
       window.dispatchEvent(new CustomEvent(FLYER_SPEAK, { detail }));
     };
 
     const speak = () => {
-      if (busyRef.current || document.hidden) return;
+      if (busyRef.current || document.hidden || isCinematicActive()) return;
 
       if (shouldJab(0.15)) {
         const jab = pickRandom(BEGGAR_TO_SAGE);
@@ -88,6 +110,7 @@ export default function FlyingBeggar() {
     const speakLoop = setInterval(speak, 10000 + Math.random() * 4000);
 
     const onFlyerSpeak = (e: Event) => {
+      if (isCinematicActive()) return;
       const detail = (e as CustomEvent<FlyerSpeakDetail>).detail;
       if (!detail || detail.from !== 'sage' || detail.kind !== 'jab') return;
 
@@ -107,35 +130,132 @@ export default function FlyingBeggar() {
     return () => {
       clearTimeout(firstSpeak);
       clearInterval(speakLoop);
-      if (hideRef.current) clearTimeout(hideRef.current);
-      if (replyRef.current) clearTimeout(replyRef.current);
+      clearSpeechTimers();
       if (dragResetRef.current) clearTimeout(dragResetRef.current);
       window.removeEventListener(FLYER_SPEAK, onFlyerSpeak);
     };
-  }, [say]);
+  }, [isMobilePerf, cinematicRunning, say, clearSpeechTimers]);
 
-  if (!visible) {
+  const measureActorRect = () => {
+    const el = actorRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width || 54,
+      height: rect.height || 70,
+    };
+  };
+
+  const giveAlms = (clientX?: number, clientY?: number) => {
+    if (draggedRef.current || cinematicRunning) return;
+    if (typeof clientX === 'number' && typeof clientY === 'number' && clientX > 0 && clientY > 0) {
+      recordLastPointer(clientX, clientY);
+    }
+
+    const originRect = measureActorRect();
+    const outcome = recordBeggarDonation({
+      isDragging: draggedRef.current,
+      originRect,
+      returnPath: location.pathname,
+    });
+
+    if (!outcome.accepted) return;
+
+    if (outcome.triggeredCinematic) {
+      // Handoff to OyukDirector — suppress ordinary line immediately (§5 & §7.1)
+      clearSpeechTimers();
+      setShowBubble(false);
+      freezeFlight();
+      return;
+    }
+
+    if (outcome.alreadyUnlockedBefore && outcome.alms % 2 === 0) {
+      say('O deliği hâlâ hatırlıyor musun kral?', 3400);
+      return;
+    }
+
+    say('Kral lütfetti. Hâlâ açım.', 2800);
+  };
+
+  const revisitOyuk = () => {
+    if (cinematicRunning) return;
+    setOyukReturnPath(location.pathname);
+    navigate('/oyuk');
+  };
+
+  const almsFooter = (
+    <div className="beggar-alms" aria-live="polite">
+      <span>Toplam bağış · oyun: {oyuk.alms.toLocaleString('tr-TR')}</span>
+      {oyuk.unlocked && !cinematicRunning && (
+        <button
+          type="button"
+          className="beggar-oyuk-revisit"
+          onClick={revisitOyuk}
+          title="O deliği hâlâ hatırlıyor musun kral?"
+          aria-label="Oyuk mağarasına dön"
+        >
+          · oyuk&apos;a in ↘
+        </button>
+      )}
+    </div>
+  );
+
+  // Lightweight mobile beggar badge (§12.2) — no continuous edge-flight loop
+  if (isMobilePerf) {
     return (
-      <p className="beggar-alms" aria-live="polite">
-        Toplam bağış · oyun: {alms.toLocaleString('tr-TR')}
-      </p>
+      <>
+        {!cinematicRunning && (
+          <div
+            ref={actorRef}
+            role="button"
+            tabIndex={0}
+            aria-label="Sinirli dilenci — bağış bırak"
+            title="Sinirli dilenci — kral bağışlasın"
+            className="beggar-mobile-badge"
+            onClick={(e) => giveAlms(e.clientX, e.clientY)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                giveAlms();
+              }
+            }}
+          >
+            <AnimatePresence mode="wait">
+              {showBubble && line && (
+                <motion.div
+                  key={line}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -3 }}
+                  transition={{ duration: 0.18 }}
+                  className="flyer-bubble beggar-mobile-bubble"
+                >
+                  {line}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <BeggarActorSvg size={28} circleSize={44} showLabel={false} />
+          </div>
+        )}
+        {almsFooter}
+      </>
     );
   }
 
-  const giveAlms = () => {
-    if (draggedRef.current) return;
-    const next = alms + 1;
-    setAlms(next);
-    writeAlms(next);
-    say('Kral lütfetti. Hâlâ açım.', 2800);
-  };
+  if (!visible) {
+    return almsFooter;
+  }
 
   return (
     <>
       <motion.div
+        ref={actorRef}
         role="button"
-        tabIndex={0}
+        tabIndex={cinematicRunning ? -1 : 0}
         aria-label="Sinirli dilenci — bağış bırak"
+        aria-hidden={cinematicRunning}
         style={{
           x,
           y,
@@ -148,9 +268,10 @@ export default function FlyingBeggar() {
           flexDirection: 'column',
           alignItems: 'center',
           gap: '0.35rem',
-          pointerEvents: 'auto',
+          pointerEvents: cinematicRunning ? 'none' : 'auto',
+          opacity: cinematicRunning ? 0 : 1,
         }}
-        drag
+        drag={!cinematicRunning}
         dragMomentum
         dragElastic={0.2}
         whileDrag={{ scale: 1.15, cursor: 'grabbing', zIndex: 200 }}
@@ -164,9 +285,9 @@ export default function FlyingBeggar() {
           dragResetRef.current = setTimeout(() => {
             draggedRef.current = false;
             dragResetRef.current = null;
-          }, 40);
+          }, 60);
         }}
-        onClick={giveAlms}
+        onClick={(e) => giveAlms(e.clientX, e.clientY)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -219,51 +340,9 @@ export default function FlyingBeggar() {
           </AnimatePresence>
         </div>
 
-        <div
-          style={{
-            width: '54px',
-            height: '54px',
-            borderRadius: '50%',
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 14px var(--glow)',
-            userSelect: 'none',
-            position: 'relative',
-            zIndex: 0,
-          }}
-          aria-hidden
-        >
-          <svg width="34" height="34" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="32" cy="30" r="22" fill="#2a2030" stroke="var(--accent-pale-gray)" strokeWidth="2" />
-            <path d="M18 22 L28 26" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M46 22 L36 26" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
-            <circle cx="24" cy="30" r="3" fill="#f8fafc" />
-            <circle cx="40" cy="30" r="3" fill="#f8fafc" />
-            <path d="M24 42 Q32 36 40 42" stroke="#f8fafc" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-            <path d="M22 52 H42 L40 58 H24 Z" fill="#8a7a60" stroke="#c4b8a0" strokeWidth="1" />
-            <ellipse cx="32" cy="52" rx="10" ry="2.5" fill="#a89870" />
-          </svg>
-        </div>
-
-        <span
-          style={{
-            fontSize: '0.55rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--text-muted)',
-            opacity: 0.7,
-            pointerEvents: 'none',
-          }}
-        >
-          dilenci
-        </span>
+        <BeggarActorSvg />
       </motion.div>
-      <p className="beggar-alms" aria-live="polite">
-        Toplam bağış · oyun: {alms.toLocaleString('tr-TR')}
-      </p>
+      {almsFooter}
     </>
   );
 }

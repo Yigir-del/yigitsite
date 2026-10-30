@@ -19,12 +19,14 @@ export function useThrowableEdgeFlight(opts: {
   durationMin?: number;
   durationMax?: number;
   preferHorizontal?: boolean;
+  paused?: boolean;
 } = {}) {
   const {
     startDelay = 0,
     durationMin = 16,
     durationMax = 24,
     preferHorizontal = true,
+    paused = false,
   } = opts;
 
   const [ready, setReady] = useState(startDelay <= 0);
@@ -34,6 +36,8 @@ export function useThrowableEdgeFlight(opts: {
   const y = useMotionValue(0);
   const exitRef = useRef<Edge | undefined>(undefined);
   const draggingRef = useRef(false);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
   const controlsRef = useRef<AnimationPlaybackControls[]>([]);
   const throwResumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const runIdRef = useRef(0);
@@ -52,9 +56,20 @@ export function useThrowableEdgeFlight(opts: {
     runIdRef.current += 1;
   }, []);
 
+  const freezeFlight = useCallback(() => {
+    if (throwResumeRef.current) {
+      clearTimeout(throwResumeRef.current);
+      throwResumeRef.current = null;
+    }
+    stopFlightAnim();
+    draggingRef.current = false;
+    setDragging(false);
+  }, [stopFlightAnim]);
+
   const playFlight = useCallback(
     (fromExit?: Edge, fromPoint?: { x: number; y: number }) => {
       stopFlightAnim();
+      if (pausedRef.current) return;
       const runId = runIdRef.current;
       const { durationMin: dMin, durationMax: dMax, preferHorizontal: horiz } = optsRef.current;
 
@@ -87,7 +102,7 @@ export function useThrowableEdgeFlight(opts: {
 
       void Promise.all([cx, cy]).then(() => {
         if (runId !== runIdRef.current) return;
-        if (draggingRef.current) return;
+        if (draggingRef.current || pausedRef.current) return;
         playFlight(exitRef.current);
       });
     },
@@ -96,16 +111,20 @@ export function useThrowableEdgeFlight(opts: {
 
   useEffect(() => {
     if (!ready) return;
+    if (paused) {
+      freezeFlight();
+      return;
+    }
     playFlight(undefined);
     return () => {
       stopFlightAnim();
       if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
     };
-    // Boot once when ready — playFlight chains itself afterward
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready]);
+  }, [ready, paused]);
 
   const onDragStart = useCallback(() => {
+    if (pausedRef.current) return;
     if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
     stopFlightAnim();
     draggingRef.current = true;
@@ -114,7 +133,9 @@ export function useThrowableEdgeFlight(opts: {
 
   const onDragEnd = useCallback(() => {
     if (throwResumeRef.current) clearTimeout(throwResumeRef.current);
+    if (pausedRef.current) return;
     throwResumeRef.current = setTimeout(() => {
+      if (pausedRef.current) return;
       draggingRef.current = false;
       setDragging(false);
       playFlight(undefined, { x: x.get(), y: y.get() });
@@ -128,5 +149,6 @@ export function useThrowableEdgeFlight(opts: {
     dragging,
     onDragStart,
     onDragEnd,
+    freezeFlight,
   };
 }

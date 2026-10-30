@@ -107,7 +107,7 @@ export default function SEOHead({ page }: SEOHeadProps) {
   const fullTitle = SITE.titleTemplate.replace('%s', seo.title);
   const ogImage = seo.ogImage ?? SITE.ogImage;
   const keywords = seo.keywords ?? SITE.keywords;
-  const isNotFound = page === 'notFound';
+  const isNoIndex = page === 'notFound' || page === 'oyuk';
 
   return (
     <>
@@ -122,12 +122,12 @@ export default function SEOHead({ page }: SEOHeadProps) {
         <meta
           name="robots"
           content={
-            isNotFound
+            isNoIndex
               ? 'noindex, nofollow'
               : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
           }
         />
-        <meta name="googlebot" content={isNotFound ? 'noindex, nofollow' : 'index, follow'} />
+        <meta name="googlebot" content={isNoIndex ? 'noindex, nofollow' : 'index, follow'} />
 
         {/* ── Canonical ── */}
         <link rel="canonical" href={seo.canonical} />
@@ -169,8 +169,8 @@ export default function SEOHead({ page }: SEOHeadProps) {
         <link rel="sitemap" type="application/xml" title={SITE.name} href={`${SITE.url}/sitemap.xml`} />
       </Helmet>
 
-      {/* JSON-LD schema her sayfada tekrar edilir — Google için OK */}
-      <JsonLdSchemas canonical={seo.canonical} />
+      {/* Gizli veya 404 sayfalarında JSON-LD reklam şeması yayınlanmaz */}
+      {!isNoIndex && <JsonLdSchemas canonical={seo.canonical} />}
     </>
   );
 }

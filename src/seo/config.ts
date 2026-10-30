@@ -45,6 +45,7 @@ export type PageKey =
   | 'studio'
   | 'contact'
   | 'memorial'
+  | 'oyuk'
   | 'notFound';
 
 export interface PageSEO {
@@ -141,6 +142,11 @@ export const PAGE_SEO: Record<PageKey, PageSEO> = {
       'anıt',
     ].join(', '),
     canonical: `${SITE.url}/miras`,
+  },
+  oyuk: {
+    title: 'Oyuk',
+    description: 'Her şey görünmek için yapılmadı.',
+    canonical: `${SITE.url}/oyuk`,
   },
   notFound: {
     title: 'Sayfa Bulunamadı (404)',
