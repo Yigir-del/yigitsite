@@ -27,10 +27,15 @@ export function ensureSchema() {
         CREATE TABLE IF NOT EXISTS studio_photos (
           id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
           url TEXT NOT NULL,
+          alt VARCHAR(255) DEFAULT 'İsimsiz Eser',
           size VARCHAR(50) DEFAULT 'medium',
           date VARCHAR(255),
           created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
         )
+      `;
+      await pool.sql`
+        ALTER TABLE studio_photos
+        ADD COLUMN IF NOT EXISTS alt VARCHAR(255) DEFAULT 'İsimsiz Eser'
       `;
       await pool.sql`
         CREATE TABLE IF NOT EXISTS wreath_meta (

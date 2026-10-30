@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { APP_EVENTS, dispatchAppEvent } from '../../utils/events';
 
 const sentences = [
   "Şu an CSS biliyormuş gibi yapıyorum.",
@@ -30,34 +31,47 @@ export default function Footer() {
     else if (next === 8) setEndMessage("Hâlâ mı?");
     else if (next === 14) setEndMessage("Son uyarı.");
     else if (next >= FLIP_THRESHOLD) {
-      window.dispatchEvent(new Event('world-flip'));
+      dispatchAppEvent(APP_EVENTS.WORLD_FLIP);
       setEndMessage("...tamam.");
       clicksRef.current = 0;
     }
   };
 
   return (
-    <footer className="site-footer" style={{
-      padding: '4rem 2rem',
-      textAlign: 'center',
-      borderTop: '1px solid var(--glass-border)',
-      position: 'relative',
-      zIndex: 10,
-      transition: 'border-color 1.2s ease',
-    }}>
+    <footer
+      className="site-footer"
+      style={{
+        padding: '4rem 2rem',
+        textAlign: 'center',
+        borderTop: '1px solid var(--glass-border)',
+        position: 'relative',
+        zIndex: 10,
+        transition: 'border-color 1.2s ease',
+      }}
+    >
       <p style={{ opacity: 0.7, marginBottom: '2rem', paddingInline: '0.5rem' }}>{quote}</p>
 
       <div
+        role="button"
+        tabIndex={0}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
         style={{ marginTop: '4rem', cursor: 'pointer', padding: '2rem' }}
       >
-        <span style={{
-          fontSize: '0.8rem',
-          letterSpacing: '2px',
-          opacity: 0.5,
-          textTransform: 'uppercase',
-          color: 'var(--text-muted)',
-        }}>
+        <span
+          style={{
+            fontSize: '0.8rem',
+            letterSpacing: '2px',
+            opacity: 0.5,
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+          }}
+        >
           {endMessage}
         </span>
       </div>

@@ -3,16 +3,18 @@ import { useFrame } from '@react-three/fiber';
 import { Line, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { useTheme } from '../../../context/ThemeContext';
+import { DOMAIN_MAP, type DomainId } from '../../../themes/domains';
+import { APP_EVENTS } from '../../../utils/events';
 import { getNoteTraces, hashStarPos, NOTE_TRACES_EVENT, type NoteTrace } from '../../../utils/noteTraces';
 import { istanbulDayKey, samsunSkyBand } from '../../../utils/samsunTime';
 
-const COLLAPSE_EVENT = 'universe-404-collapse';
-const RESTORE_EVENT  = 'universe-404-restore';
+const COLLAPSE_EVENT = APP_EVENTS.UNIVERSE_COLLAPSE;
+const RESTORE_EVENT = APP_EVENTS.UNIVERSE_RESTORE;
 
 // ── Falling Stars Component ──
 function MovingStars({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
-  const starsRef      = useRef<THREE.Group>(null);
-  const collapseTime  = useRef(0);
+  const starsRef = useRef<THREE.Group>(null);
+  const collapseTime = useRef(0);
 
   useFrame((state, delta) => {
     if (!starsRef.current) return;
@@ -68,21 +70,21 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
   const [clickCount, setClickCount] = useState(0);
 
   // Refs for the three meshes: intact sphere, upper half, lower half
-  const mainRef  = useRef<THREE.Mesh>(null);
+  const mainRef = useRef<THREE.Mesh>(null);
   const upperRef = useRef<THREE.Mesh>(null);
   const lowerRef = useRef<THREE.Mesh>(null);
 
   // Collapse animation state (mutable – NOT React state, updated each frame)
   const cs = useRef({
-    phase:    'intact' as 'intact' | 'shaking' | 'splitting' | 'gone',
-    elapsed:  0,
-    upperVY:  0,
-    lowerVY:  0,
-    opacity:  1.0,
+    phase: 'intact' as 'intact' | 'shaking' | 'splitting' | 'gone',
+    elapsed: 0,
+    upperVY: 0,
+    lowerVY: 0,
+    opacity: 1.0,
   });
 
   // Cracking flash overlay (a ring plane flash)
-  const crackRef  = useRef<THREE.Mesh>(null);
+  const crackRef = useRef<THREE.Mesh>(null);
 
   useEffect(() => {
     return () => {
@@ -94,9 +96,9 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
     if (collapsed) {
       cs.current = { phase: 'shaking', elapsed: 0, upperVY: 0, lowerVY: 0, opacity: 1 };
     } else {
-      cs.current.phase   = 'intact';
+      cs.current.phase = 'intact';
       cs.current.opacity = 1;
-      if (mainRef.current)  mainRef.current.visible  = true;
+      if (mainRef.current) mainRef.current.visible = true;
       if (upperRef.current) upperRef.current.visible = false;
       if (lowerRef.current) lowerRef.current.visible = false;
       if (crackRef.current) crackRef.current.visible = false;
@@ -124,15 +126,15 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
       if (crackRef.current && state.elapsed > 1.0) {
         crackRef.current.visible = true;
         const mat = crackRef.current.material as THREE.MeshBasicMaterial;
-        mat.opacity = 0.85 * Math.sin((state.elapsed - 1.0) * Math.PI / 0.4);
+        mat.opacity = 0.85 * Math.sin(((state.elapsed - 1.0) * Math.PI) / 0.4);
       }
 
       // Transition to splitting
       if (state.elapsed > 1.4) {
-        state.phase   = 'splitting';
+        state.phase = 'splitting';
         state.elapsed = 0;
 
-        if (mainRef.current)  mainRef.current.visible  = false;
+        if (mainRef.current) mainRef.current.visible = false;
         if (crackRef.current) crackRef.current.visible = false;
 
         if (upperRef.current) {
@@ -180,8 +182,8 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
     }
   });
 
-  const baseColor   = clickCount > 5 ? '#ff4444' : '#ffffff';
-  const emissive    = clickCount > 5 ? '#ff0000' : '#444444';
+  const baseColor = clickCount > 5 ? '#ff4444' : '#ffffff';
+  const emissive = clickCount > 5 ? '#ff0000' : '#444444';
   const emissiveInt = hushed ? 0.35 : 0.5;
 
   return (
@@ -191,8 +193,20 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
         ref={mainRef}
         position={[5, 3, -10]}
         onClick={hushed ? undefined : () => setClickCount((c) => c + 1)}
-        onPointerOver={hushed ? undefined : () => { document.body.style.cursor = 'pointer'; }}
-        onPointerOut={hushed  ? undefined : () => { document.body.style.cursor = 'auto'; }}
+        onPointerOver={
+          hushed
+            ? undefined
+            : () => {
+                document.body.style.cursor = 'pointer';
+              }
+        }
+        onPointerOut={
+          hushed
+            ? undefined
+            : () => {
+                document.body.style.cursor = 'auto';
+              }
+        }
       >
         <sphereGeometry args={[1.5, 32, 32]} />
         <meshStandardMaterial
@@ -248,7 +262,13 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
   );
 }
 
-function TraceConstellation({ hushed }: { hushed: boolean }) {
+function TraceConstellation({
+  hushed,
+  particleColor,
+}: {
+  hushed: boolean;
+  particleColor: string;
+}) {
   const [traces, setTraces] = useState<NoteTrace[]>(() => getNoteTraces());
 
   useEffect(() => {
@@ -291,7 +311,7 @@ function TraceConstellation({ hushed }: { hushed: boolean }) {
         <mesh key={star.id} position={star.pos}>
           <sphereGeometry args={[0.09, 6, 6]} />
           <meshBasicMaterial
-            color="#e8eef8"
+            color={particleColor}
             transparent
             opacity={hushed ? 0.35 : 0.85}
             depthWrite={false}
@@ -302,7 +322,7 @@ function TraceConstellation({ hushed }: { hushed: boolean }) {
         <Line
           key={i}
           points={pts}
-          color="#c8d8f0"
+          color={particleColor}
           lineWidth={1}
           transparent
           opacity={hushed ? 0.12 : 0.32}
@@ -313,25 +333,53 @@ function TraceConstellation({ hushed }: { hushed: boolean }) {
   );
 }
 
-// ── Root Scene ──
-export default function Muryokusho({ hushed = false }: { hushed?: boolean }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const { theme } = useTheme();
+// oxlint-disable-next-line react/only-export-components
+export function resolveSceneAtmosphere(theme: DomainId, hushed: boolean) {
+  const domain = DOMAIN_MAP[theme] ?? DOMAIN_MAP.Muryokusho;
   const sky = !hushed && theme === 'Muryokusho' ? samsunSkyBand() : 'night';
   const ambient = hushed ? 0.42 : sky === 'day' ? 0.58 : sky === 'dusk' ? 0.53 : 0.5;
   const dir = hushed ? 0.85 : sky === 'day' ? 1.08 : 1;
   const fogFar = sky === 'day' ? 18 : sky === 'dusk' ? 16 : 15;
-  const fogColor = sky === 'day' ? '#141c2a' : '#0d131f';
-  const bgColor = sky === 'day' ? '#101820' : '#0d131f';
+
+  const isDefaultDomain = theme === 'Muryokusho';
+  const fogColor = isDefaultDomain
+    ? sky === 'day'
+      ? '#141c2a'
+      : domain.fogHint
+    : domain.fogHint;
+  const bgColor = isDefaultDomain
+    ? sky === 'day'
+      ? '#101820'
+      : domain.fogHint
+    : domain.fogHint;
+
+  return {
+    ambient,
+    dir,
+    fogFar,
+    fogColor,
+    bgColor,
+    particleColor: domain.particleHint,
+  };
+}
+
+// ── Root Scene ──
+export default function Muryokusho({ hushed = false }: { hushed?: boolean }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const { theme } = useTheme();
+  const { ambient, dir, fogFar, fogColor, bgColor, particleColor } = resolveSceneAtmosphere(
+    theme,
+    hushed,
+  );
 
   useEffect(() => {
     const onCollapse = () => setCollapsed(true);
-    const onRestore  = () => setCollapsed(false);
+    const onRestore = () => setCollapsed(false);
     window.addEventListener(COLLAPSE_EVENT, onCollapse);
-    window.addEventListener(RESTORE_EVENT,  onRestore);
+    window.addEventListener(RESTORE_EVENT, onRestore);
     return () => {
       window.removeEventListener(COLLAPSE_EVENT, onCollapse);
-      window.removeEventListener(RESTORE_EVENT,  onRestore);
+      window.removeEventListener(RESTORE_EVENT, onRestore);
     };
   }, []);
 
@@ -339,10 +387,10 @@ export default function Muryokusho({ hushed = false }: { hushed?: boolean }) {
     <>
       <color attach="background" args={[bgColor]} />
       <ambientLight intensity={ambient} />
-      <directionalLight position={[-10, 10, 5]} intensity={dir} />
+      <directionalLight position={[-10, 10, 5]} intensity={dir} color={particleColor} />
       <MovingStars hushed={hushed} collapsed={collapsed} />
       <Moon hushed={hushed} collapsed={collapsed} />
-      {!collapsed && <TraceConstellation hushed={hushed} />}
+      {!collapsed && <TraceConstellation hushed={hushed} particleColor={particleColor} />}
       <fog attach="fog" args={[fogColor, 5, fogFar]} />
     </>
   );

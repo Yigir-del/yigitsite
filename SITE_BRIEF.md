@@ -167,7 +167,8 @@ yigitsite/
 │   ├── photo.ts              Blob proxy (private → stream)
 │   ├── upload.ts             POST raw body → Blob + Postgres
 │   ├── wreaths.ts            GET/POST çelenk (1/gün/ziyaretçi)
-│   └── initDb.ts             CREATE TABLE IF NOT EXISTS
+│   └── admin/                login.ts + session.ts (httpOnly cookie oturumu)
+├── server/                   db.ts (ensureSchema), auth.ts, validate.ts, rateLimit.ts, image.ts, blobUrl.ts, http.ts
 ├── public/                   sitemap.xml, favicon, og-image, Ataturk1930s.jpg
 ├── src/
 │   ├── main.tsx              StrictMode + Helmet + Router
@@ -180,13 +181,13 @@ yigitsite/
 │   │   ├── layout/           Navigation, Footer
 │   │   ├── sections/         Sayfa gövdeleri (App bunları lazy import eder)
 │   │   └── ui/               FakeMenu, ThemeSelector, PageTransition, CustomCursor
-│   ├── pages/                ÇOĞU ÖLÜ WRAPPER. App sadece NotesWall kullanır
+│   ├── pages/                NotesWall.tsx (ana sayfa iz duvarı)
 │   ├── context/              ThemeContext, MemorialContext
 │   ├── hooks/                useIsMobilePerf, useAtmosphereStage, uçuş hook’ları
 │   ├── data/                 projects.ts (canlı), notes.ts (tip + unused seed), thoughts.ts (unused)
 │   ├── seo/                  config.ts + SEOHead.tsx
 │   ├── themes/domains.ts     3 domain CSS token seti
-│   └── utils/                flightPath, flyerDialogue, analytics
+│   └── utils/                notesStore, events, motion, flightPath, flyerDialogue, samsunTime, noteTraces, routes, analytics
 ├── SITE_CANON.md             Kısa ses kanonu
 └── SITE_BRIEF.md             Bu dosya
 ```
@@ -318,7 +319,7 @@ Birçok sayfa hâlâ **inline style** (Contact terminal yeşili, About padding, 
 - index: `notes_created_at_idx`
 
 **studio_photos**
-- `id UUID PK`, `url`, `size`, `date`, `created_at`
+- `id UUID PK`, `url`, `size`, `date`, `alt VARCHAR(255) DEFAULT 'İsimsiz Eser'`, `created_at`
 
 **wreath_meta**
 - tek satır `id=1`, `total BIGINT`

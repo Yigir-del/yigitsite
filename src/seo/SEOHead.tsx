@@ -165,8 +165,8 @@ export default function SEOHead({ page }: SEOHeadProps) {
         {/* ── Manifest & Icons ── */}
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="alternate" type="application/rss+xml" title={SITE.name} href={`${SITE.url}/sitemap.xml`} />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="sitemap" type="application/xml" title={SITE.name} href={`${SITE.url}/sitemap.xml`} />
       </Helmet>
 
       {/* JSON-LD schema her sayfada tekrar edilir — Google için OK */}

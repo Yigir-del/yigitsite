@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import type { Note } from '../../data/notes';
 import { planWanderHop, randomOffscreenStart } from '../../utils/flightPath';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import { ensureGlobalNoteEventListener, submitNote } from '../../utils/notesStore';
 
 const NOTE_TEXT_MAX = 500;
 const NOTE_AUTHOR_MAX = 40;
@@ -14,11 +14,20 @@ export default function FlyingPen() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [authorName, setAuthorName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    ensureGlobalNoteEventListener();
+  }, []);
 
   useEffect(() => {
     if (!isModalOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsModalOpen(false);
+      if (e.key === 'Escape' && !isSubmitting) {
+        setIsModalOpen(false);
+        setSubmitError(null);
+      }
     };
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -27,10 +36,10 @@ export default function FlyingPen() {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKey);
     };
-  }, [isModalOpen]);
+  }, [isModalOpen, isSubmitting]);
 
   useEffect(() => {
-    if (isMobilePerf) return;
+    if (isMobilePerf || isModalOpen) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
 
@@ -47,107 +56,94 @@ export default function FlyingPen() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [isMobilePerf]);
+  }, [isMobilePerf, isModalOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!noteText.trim() || noteText.trim().length > NOTE_TEXT_MAX) return;
+    const trimmed = noteText.trim();
+    if (!trimmed || trimmed.length > NOTE_TEXT_MAX || isSubmitting) return;
 
-    const now = new Date();
-    const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+    setIsSubmitting(true);
+    setSubmitError(null);
 
-    const newNote: Note = {
-      id: Date.now().toString(),
-      text: noteText,
+    const result = await submitNote({
+      text: trimmed,
       author: authorName.trim() || 'Gizemli Yabancı',
-      x: 0, y: 0, rotation: 0, isAdmin: false,
-      date: formattedDate
-    };
+    });
 
-    window.dispatchEvent(new CustomEvent('add-note', { detail: newNote }));
-    
+    setIsSubmitting(false);
+
+    if (!result.ok) {
+      setSubmitError(result.error || 'İz bırakılamadı. Tekrar dene.');
+      return;
+    }
+
     setNoteText('');
     setAuthorName('');
+    setSubmitError(null);
     setIsModalOpen(false);
   };
 
-  const penButtonStyle: React.CSSProperties = isMobilePerf
-    ? {
-        position: 'fixed',
-        right: '1rem',
-        bottom: '1rem',
-        left: 'auto',
-        top: 'auto',
-        background: 'var(--glass-bg)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: '50%',
-        width: '50px',
-        height: '50px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--text-main)',
-        cursor: 'pointer',
-        zIndex: 90,
-        boxShadow: '0 0 15px var(--glow)',
-        transform: 'none',
-      }
-    : {
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        background: 'var(--glass-bg)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: '50%',
-        width: '50px',
-        height: '50px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--text-main)',
-        cursor: 'grab',
-        zIndex: 90,
-        boxShadow: '0 0 15px var(--glow)',
-      };
+  const openModal = () => {
+    setSubmitError(null);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (isSubmitting) return;
+    setSubmitError(null);
+    setIsModalOpen(false);
+  };
+
+  const penIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 19l7-7 3 3-7 7-3-3z" />
+      <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+      <path d="M2 2l7.586 7.586" />
+      <circle cx="11" cy="11" r="2" />
+    </svg>
+  );
 
   return (
     <>
       {isMobilePerf ? (
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={openModal}
           title="Bırakmak istediğin bir iz var mı?"
           aria-label="Bırakmak istediğin bir iz var mı?"
-          style={penButtonStyle}
+          className="flying-pen-btn flying-pen-btn--mobile"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-            <path d="M2 2l7.586 7.586"></path>
-            <circle cx="11" cy="11" r="2"></circle>
-          </svg>
+          {penIcon}
         </button>
       ) : (
-      <motion.button
-        onClick={() => setIsModalOpen(true)}
-        title="Bırakmak istediğin bir iz var mı?"
-        aria-label="Bırakmak istediğin bir iz var mı?"
-        drag
-        dragMomentum={true}
-        whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
-        initial={false}
-        animate={{ x: position.x, y: position.y }}
-        transition={{ duration: flightDuration, ease: "easeInOut" }}
-        style={penButtonStyle}
-        whileHover={{ scale: 1.1, boxShadow: 'var(--hover-scale-glow)' }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-          <path d="M2 2l7.586 7.586"></path>
-          <circle cx="11" cy="11" r="2"></circle>
-        </svg>
-      </motion.button>
+        <motion.button
+          type="button"
+          onClick={openModal}
+          title="Bırakmak istediğin bir iz var mı?"
+          aria-label="Bırakmak istediğin bir iz var mı?"
+          className="flying-pen-btn flying-pen-btn--desktop"
+          drag
+          dragMomentum
+          whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
+          initial={false}
+          animate={{ x: position.x, y: position.y }}
+          transition={{ duration: flightDuration, ease: 'easeInOut' }}
+          whileHover={{ scale: 1.1, boxShadow: 'var(--hover-scale-glow)' }}
+        >
+          {penIcon}
+        </motion.button>
       )}
 
       {/* Note Input Modal */}
@@ -156,27 +152,21 @@ export default function FlyingPen() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="note-modal-title"
-          style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0, 0, 0, 0.8)',
-          backdropFilter: 'blur(8px)',
-          zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div className="fade-in note-modal-box" style={{
-            background: 'var(--bg-main)',
-            border: '1px solid var(--accent-muted-blue)',
-            borderRadius: '12px',
-            padding: '3rem',
-            width: '90%',
-            maxWidth: '500px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-            boxSizing: 'border-box',
-          }}>
-            <h2 id="note-modal-title" style={{ marginBottom: '2rem', textAlign: 'center' }}>Bir Not Bırak</h2>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          className="note-modal-backdrop"
+          onClick={closeModal}
+        >
+          <div
+            className="fade-in note-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="note-modal-title" className="note-modal__title">
+              Bir Not Bırak
+            </h2>
+            <form onSubmit={handleSubmit} className="note-modal__form">
               <div>
-                <label htmlFor="note-text" className="visually-hidden">Not</label>
+                <label htmlFor="note-text" className="visually-hidden">
+                  Not
+                </label>
                 <textarea
                   id="note-text"
                   value={noteText}
@@ -185,23 +175,14 @@ export default function FlyingPen() {
                   required
                   maxLength={NOTE_TEXT_MAX}
                   autoFocus
-                  style={{
-                    width: '100%',
-                    height: '150px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'inherit',
-                    fontSize: '1rem',
-                    resize: 'none',
-                    outline: 'none',
-                  }}
+                  disabled={isSubmitting}
+                  className="note-modal__textarea"
                 />
               </div>
               <div>
-                <label htmlFor="note-author" className="visually-hidden">İsim (isteğe bağlı)</label>
+                <label htmlFor="note-author" className="visually-hidden">
+                  İsim (isteğe bağlı)
+                </label>
                 <input
                   id="note-author"
                   type="text"
@@ -209,62 +190,38 @@ export default function FlyingPen() {
                   onChange={(e) => setAuthorName(e.target.value.slice(0, NOTE_AUTHOR_MAX))}
                   placeholder="İsmin (İsteğe bağlı)"
                   maxLength={NOTE_AUTHOR_MAX}
-                  style={{
-                    width: '100%',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                  }}
+                  disabled={isSubmitting}
+                  className="note-modal__input"
                 />
               </div>
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+
+              {submitError && (
+                <p className="note-modal__error" role="alert">
+                  {submitError}
+                </p>
+              )}
+
+              <div className="note-modal__actions">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  style={{
-                    padding: '0.8rem 1.5rem',
-                    background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    color: 'var(--text-primary)',
-                    borderRadius: '8px',
-                    cursor: 'pointer'
-                  }}
+                  onClick={closeModal}
+                  disabled={isSubmitting}
+                  className="note-modal__btn note-modal__btn--cancel"
                 >
                   Vazgeç
                 </button>
                 <button
                   type="submit"
-                  style={{
-                    padding: '0.8rem 1.5rem',
-                    background: 'var(--accent-muted-blue)',
-                    border: 'none',
-                    color: 'var(--text-primary)',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
+                  disabled={isSubmitting || !noteText.trim()}
+                  className="note-modal__btn note-modal__btn--submit"
                 >
-                  Gönder
+                  {isSubmitting ? 'Gönderiliyor…' : 'Gönder'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      <style>{`
-        .fade-in {
-          animation: fadeIn 0.3s ease-out forwards;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </>
   );
 }

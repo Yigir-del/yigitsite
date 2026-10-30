@@ -3,17 +3,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../../seo/SEOHead';
 import { Home, FolderGit2, RotateCcw } from 'lucide-react';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
+import { APP_EVENTS, dispatchAppEvent } from '../../utils/events';
 import './NotFound.css';
 
 // ── CUSTOM EVENTS (signals to existing world components) ──
 const UNIVERSE_EVENTS = {
-  COLLAPSE:  'universe-404-collapse',
-  RESTORE:   'universe-404-restore',
-  PAUSE:     'universe-404-pause',
+  COLLAPSE: APP_EVENTS.UNIVERSE_COLLAPSE,
+  RESTORE: APP_EVENTS.UNIVERSE_RESTORE,
+  PAUSE: APP_EVENTS.UNIVERSE_PAUSE,
 } as const;
 
-function fireEvent(name: string, detail?: unknown) {
-  window.dispatchEvent(new CustomEvent(name, { detail }));
+function fireEvent(name: (typeof UNIVERSE_EVENTS)[keyof typeof UNIVERSE_EVENTS]) {
+  dispatchAppEvent(name);
 }
 
 // ── STAGE TYPES ──
@@ -34,8 +36,10 @@ type RareStep = 'DOTS' | 'APPROACHING' | 'ARRIVED' | 'LEAVING';
 // Paints individual falling / exploding / shooting stars on top of the
 // Three.js scene without replacing its background.
 interface StarParticle {
-  x: number; y: number;
-  vx: number; vy: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
   size: number;
   alpha: number;
   decay: number;
@@ -48,37 +52,44 @@ function spawnCollapseStar(w: number, h: number): StarParticle {
   const y = Math.random() * h * 0.6;
   const behavior = (['fall', 'shoot', 'explode', 'fade'] as const)[Math.floor(Math.random() * 4)];
   return {
-    x, y,
+    x,
+    y,
     vx: behavior === 'shoot' ? (Math.random() - 0.5) * 18 : (Math.random() - 0.5) * 0.5,
-    vy: behavior === 'fall'  ? Math.random() * 3 + 1.5
-      : behavior === 'shoot' ? (Math.random() - 0.5) * 8
-      : 0,
+    vy:
+      behavior === 'fall'
+        ? Math.random() * 3 + 1.5
+        : behavior === 'shoot'
+          ? (Math.random() - 0.5) * 8
+          : 0,
     size: Math.random() * 2.5 + 1,
     alpha: 1,
     decay: behavior === 'fade' ? 0.008 : 0.015,
     behavior,
-    explodeParticles: behavior === 'explode'
-      ? Array.from({ length: 10 }, () => ({
-          x: 0, y: 0,
-          vx: (Math.random() - 0.5) * 4,
-          vy: (Math.random() - 0.5) * 4,
-          a: 1,
-          size: Math.random() * 1.2 + 0.3,
-        }))
-      : undefined,
+    explodeParticles:
+      behavior === 'explode'
+        ? Array.from({ length: 10 }, () => ({
+            x: 0,
+            y: 0,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            a: 1,
+            size: Math.random() * 1.2 + 0.3,
+          }))
+        : undefined,
   };
 }
 
 function useCollapseCanvas(active: boolean) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const starsRef  = useRef<StarParticle[]>([]);
-  const rafRef    = useRef<number>(0);
+  const starsRef = useRef<StarParticle[]>([]);
+  const rafRef = useRef<number>(0);
   const tickCountRef = useRef<number>(0);
 
   useEffect(() => {
     if (!active) {
       cancelAnimationFrame(rafRef.current);
       starsRef.current = [];
+      tickCountRef.current = 0;
       return;
     }
 
@@ -87,8 +98,10 @@ function useCollapseCanvas(active: boolean) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    tickCountRef.current = 0;
+
     const resize = () => {
-      canvas.width  = window.innerWidth;
+      canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
     resize();
@@ -144,7 +157,7 @@ function useCollapseCanvas(active: boolean) {
           if (s.behavior === 'shoot') {
             ctx.globalAlpha = Math.max(0, s.alpha * 0.4);
             ctx.strokeStyle = '#d8e6ff';
-            ctx.lineWidth   = s.size * 0.5;
+            ctx.lineWidth = s.size * 0.5;
             ctx.beginPath();
             ctx.moveTo(s.x, s.y);
             ctx.lineTo(s.x - s.vx * 8, s.y - s.vy * 8);
@@ -183,8 +196,8 @@ function BeggarAvatar({ panic = false, shrug = false }: { panic?: boolean; shrug
         <>
           <circle cx="24" cy="30" r="4.5" fill="#fff" />
           <circle cx="40" cy="30" r="4.5" fill="#fff" />
-          <circle cx="24" cy="30" r="2"   fill="#000" />
-          <circle cx="40" cy="30" r="2"   fill="#000" />
+          <circle cx="24" cy="30" r="2" fill="#000" />
+          <circle cx="40" cy="30" r="2" fill="#000" />
           <ellipse cx="32" cy="42" rx="6" ry="7" fill="#f8fafc" stroke="#8a7a60" strokeWidth="1.5" />
         </>
       ) : (
@@ -232,19 +245,25 @@ function SageAvatar({ eyesClosed = false, smile = false }: { eyesClosed?: boolea
 
 // ── DOM HELPER: apply/remove classes to universe elements ──
 const selectors = {
-  nav:      '.site-nav',
-  footer:   '.site-footer',
-  pyramid:  '.sacred-pyramid-wrapper',
+  nav: '.site-nav',
+  footer: '.site-footer',
+  pyramid: '.sacred-pyramid-wrapper',
 };
 
-function universeCollapseNav() { document.querySelector(selectors.nav)?.classList.add('reality-collapsed-nav'); }
-function universeCollapseFooter() { document.querySelector(selectors.footer)?.classList.add('reality-collapsed-footer'); }
-function universeCollapsePyramid() { document.querySelector(selectors.pyramid)?.classList.add('reality-collapsed-pyramid'); }
+function universeCollapseNav() {
+  document.querySelector(selectors.nav)?.classList.add('reality-collapsed-nav');
+}
+function universeCollapseFooter() {
+  document.querySelector(selectors.footer)?.classList.add('reality-collapsed-footer');
+}
+function universeCollapsePyramid() {
+  document.querySelector(selectors.pyramid)?.classList.add('reality-collapsed-pyramid');
+}
 
 function universeRestoreAll() {
-  document.querySelector(selectors.nav)?.classList.remove(
-    'reality-disabled-nav', 'reality-collapsed-nav',
-  );
+  document
+    .querySelector(selectors.nav)
+    ?.classList.remove('reality-disabled-nav', 'reality-collapsed-nav');
   document.querySelector(selectors.footer)?.classList.remove('reality-collapsed-footer');
   document.querySelector(selectors.pyramid)?.classList.remove('reality-collapsed-pyramid');
   document.body.classList.remove('cinema-shake');
@@ -253,23 +272,25 @@ function universeRestoreAll() {
 // ── MAIN COMPONENT ──
 export default function NotFound() {
   const isMobilePerf = useIsMobilePerf();
-  const navigate     = useNavigate();
+  const reducedMotion = usePrefersReducedMotion();
+  const useStaticFallback = isMobilePerf || reducedMotion;
+  const navigate = useNavigate();
 
   const [isRare] = useState(() => {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).has('rare') || Math.random() < 0.01;
   });
 
-  const [stage,        setStage]        = useState<Stage>('PAGE_LOAD');
-  const [rareStep,     setRareStep]     = useState<RareStep>('DOTS');
+  const [stage, setStage] = useState<Stage>('PAGE_LOAD');
+  const [rareStep, setRareStep] = useState<RareStep>('DOTS');
   const [beggarSpeech, setBeggarSpeech] = useState<string | null>(null);
-  const [sageSpeech,   setSageSpeech]   = useState<string | null>(null);
+  const [sageSpeech, setSageSpeech] = useState<string | null>(null);
   const [sageEyesClosed, setSageEyesClosed] = useState(false);
-  const [sageSmile,       setSageSmile]     = useState(false);
+  const [sageSmile, setSageSmile] = useState(false);
 
   // Final-void text typewriter
-  const [showCursor,    setShowCursor]    = useState(false);
-  const [typedText,     setTypedText]     = useState('');
+  const [showCursor, setShowCursor] = useState(false);
+  const [typedText, setTypedText] = useState('');
   const [showReturnBtn, setShowReturnBtn] = useState(false);
 
   // Collapse canvas active flag
@@ -282,19 +303,25 @@ export default function NotFound() {
     return id;
   }, []);
   const clearAllTimers = useCallback(() => {
-    timersRef.current.forEach((id) => clearTimeout(id as number));
+    timersRef.current.forEach((id) => {
+      clearTimeout(id as number);
+      clearInterval(id as number);
+    });
     timersRef.current = [];
   }, []);
 
   // ── DESKTOP SCRIPTED SEQUENCE ──
   useEffect(() => {
-    if (isMobilePerf) return;
+    if (useStaticFallback) return;
     if (isRare) {
       setStage('RARE_EVENT');
       addTimer(() => setRareStep('APPROACHING'), 5000);
-      addTimer(() => setRareStep('ARRIVED'),     20000);
-      addTimer(() => setRareStep('LEAVING'),     23500);
-      addTimer(() => { universeRestoreAll(); navigate('/', { replace: true }); }, 28500);
+      addTimer(() => setRareStep('ARRIVED'), 20000);
+      addTimer(() => setRareStep('LEAVING'), 23500);
+      addTimer(() => {
+        universeRestoreAll();
+        navigate('/', { replace: true });
+      }, 28500);
       return () => clearAllTimers();
     }
 
@@ -359,7 +386,7 @@ export default function NotFound() {
       universeRestoreAll();
       fireEvent(UNIVERSE_EVENTS.RESTORE);
     };
-  }, [isMobilePerf, isRare, navigate, addTimer, clearAllTimers]);
+  }, [useStaticFallback, isRare, navigate, addTimer, clearAllTimers]);
 
   // ── USER CLICK: RETURN BEFORE COLLAPSE ──
   const handleUserSaved = useCallback(() => {
@@ -393,26 +420,85 @@ export default function NotFound() {
     addTimer(() => navigate('/', { replace: true }), 3000);
   }, [clearAllTimers, navigate, addTimer]);
 
-  // ── MOBILE FALLBACK ──
-  if (isMobilePerf) {
+  // ── MOBILE / REDUCED MOTION FALLBACK ──
+  if (useStaticFallback) {
     return (
-      <section className="not-found-section" aria-label="Sayfa Bulunamadı"
-        style={{ minHeight: '75vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '4rem 2rem' }}>
+      <section
+        className="not-found-section"
+        aria-label="Sayfa Bulunamadı"
+        style={{
+          minHeight: '75vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          padding: '4rem 2rem',
+        }}
+      >
         <SEOHead page="notFound" />
-        <h1 className="glitch" data-text="404"
-          style={{ fontSize: 'clamp(5rem, 15vw, 9rem)', fontWeight: 800, lineHeight: 1, margin: 0, letterSpacing: '4px' }}>
+        <h1
+          className="glitch"
+          data-text="404"
+          style={{
+            fontSize: 'clamp(5rem, 15vw, 9rem)',
+            fontWeight: 800,
+            lineHeight: 1,
+            margin: 0,
+            letterSpacing: '4px',
+          }}
+        >
           404
         </h1>
-        <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', marginBottom: '1rem' }}>Sayfa Bulunamadı</h2>
-        <p style={{ color: 'var(--text-muted)', maxWidth: '480px', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '2.5rem' }}>
+        <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', marginBottom: '1rem' }}>
+          Sayfa Bulunamadı
+        </h2>
+        <p
+          style={{
+            color: 'var(--text-muted)',
+            maxWidth: '480px',
+            fontSize: '1.05rem',
+            lineHeight: 1.6,
+            marginBottom: '2.5rem',
+          }}
+        >
           Aradığınız adres silinmiş, değiştirilmiş veya hiç var olmamış olabilir.
         </p>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', padding: '.8rem 1.5rem', borderRadius: '8px', background: 'var(--accent-muted-blue)', color: '#fff', textDecoration: 'none', fontWeight: 500 }}>
-            <Home size={18} aria-hidden />Ana Sayfaya Dön
+          <Link
+            to="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '.5rem',
+              padding: '.8rem 1.5rem',
+              borderRadius: '8px',
+              background: 'var(--accent-muted-blue)',
+              color: '#fff',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            <Home size={18} aria-hidden />
+            Ana Sayfaya Dön
           </Link>
-          <Link to="/projeler" style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', padding: '.8rem 1.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(255,255,255,.05)', color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 500 }}>
-            <FolderGit2 size={18} aria-hidden />Projelerim
+          <Link
+            to="/projeler"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '.5rem',
+              padding: '.8rem 1.5rem',
+              borderRadius: '8px',
+              border: '1px solid var(--glass-border)',
+              background: 'rgba(255,255,255,.05)',
+              color: 'var(--text-main)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            <FolderGit2 size={18} aria-hidden />
+            Projelerim
           </Link>
         </div>
       </section>
@@ -429,10 +515,21 @@ export default function NotFound() {
         )}
         {(rareStep === 'APPROACHING' || rareStep === 'ARRIVED' || rareStep === 'LEAVING') && (
           <div className="rare-beggar-container">
-            <div className={`rare-beggar-figure ${rareStep === 'APPROACHING' ? 'rare-approaching' : rareStep === 'LEAVING' ? 'rare-leaving' : ''}`}>
+            <div
+              className={`rare-beggar-figure ${
+                rareStep === 'APPROACHING'
+                  ? 'rare-approaching'
+                  : rareStep === 'LEAVING'
+                    ? 'rare-leaving'
+                    : ''
+              }`}
+            >
               <BeggarAvatar shrug={rareStep === 'LEAVING'} />
               {rareStep === 'ARRIVED' && (
-                <div className="speech-bubble" style={{ bottom: '115%', left: '50%', transform: 'translateX(-50%)' }}>
+                <div
+                  className="speech-bubble"
+                  style={{ bottom: '115%', left: '50%', transform: 'translateX(-50%)' }}
+                >
                   Adresi ben de bulamadım.
                 </div>
               )}
@@ -465,9 +562,7 @@ export default function NotFound() {
       >
         <SEOHead page="notFound" />
 
-        {showCursor && typedText === '' && (
-          <span className="blinking-cursor" />
-        )}
+        {showCursor && typedText === '' && <span className="blinking-cursor" />}
 
         {typedText !== '' && (
           <p
@@ -491,6 +586,7 @@ export default function NotFound() {
 
         {showReturnBtn && (
           <button
+            type="button"
             onClick={handleReturnSequence}
             style={{
               display: 'inline-flex',
@@ -570,7 +666,7 @@ export default function NotFound() {
               fontWeight: 800,
               lineHeight: 1,
               margin: 0,
-              color: 'var(--text-primary)',
+              color: 'var(--text-main)',
               letterSpacing: '4px',
               transition: 'color 0.5s ease',
             }}
@@ -604,17 +700,33 @@ export default function NotFound() {
 
         {/* ACTION BUTTONS */}
         {!isCollapsing && (
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '2rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '1rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '2rem',
+            }}
+          >
             <Link
               to="/"
               onClick={(e) => {
-                if (stage !== 'PAGE_LOAD') { e.preventDefault(); handleUserSaved(); }
+                if (stage !== 'PAGE_LOAD') {
+                  e.preventDefault();
+                  handleUserSaved();
+                }
               }}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: '.5rem',
-                padding: '.8rem 1.6rem', borderRadius: '8px',
-                background: 'var(--accent-muted-blue, #4b6b8b)', color: '#fff',
-                textDecoration: 'none', fontWeight: 500,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '.5rem',
+                padding: '.8rem 1.6rem',
+                borderRadius: '8px',
+                background: 'var(--accent-muted-blue, #4b6b8b)',
+                color: '#fff',
+                textDecoration: 'none',
+                fontWeight: 500,
                 transition: 'transform 0.2s',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
@@ -627,14 +739,26 @@ export default function NotFound() {
             <Link
               to="/projeler"
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: '.5rem',
-                padding: '.8rem 1.6rem', borderRadius: '8px',
-                border: '1px solid var(--glass-border)', background: 'rgba(255,255,255,.05)',
-                color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 500,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '.5rem',
+                padding: '.8rem 1.6rem',
+                borderRadius: '8px',
+                border: '1px solid var(--glass-border)',
+                background: 'rgba(255,255,255,.05)',
+                color: 'var(--text-main)',
+                textDecoration: 'none',
+                fontWeight: 500,
                 transition: 'transform 0.2s, background 0.2s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = 'rgba(255,255,255,.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.background = 'rgba(255,255,255,.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.background = 'rgba(255,255,255,.05)';
+              }}
             >
               <FolderGit2 size={18} aria-hidden />
               Projelerim

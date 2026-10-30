@@ -2,9 +2,7 @@ import { lazy, Suspense, useEffect, useState, useCallback, type ReactNode } from
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ReactLenis, useLenis } from '@studio-freight/react-lenis';
-import { ScrollTrigger } from './lib/gsapSetup';
 import Background from './components/canvas/Background';
-import WireframePyramid from './components/canvas/WireframePyramid';
 import FakeMenu from './components/ui/FakeMenu';
 import Navigation from './components/layout/Navigation';
 import Footer from './components/layout/Footer';
@@ -19,11 +17,14 @@ import { useAtmosphereStage } from './hooks/useAtmosphereStage';
 import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
 import { trackPageView } from './utils/analytics';
 import { isKnownRoute } from './utils/routes';
+import { APP_EVENTS } from './utils/events';
+import { ensureGlobalNoteEventListener } from './utils/notesStore';
 
 if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
   window.history.scrollRestoration = 'manual';
 }
 
+const WireframePyramid = lazy(() => import('./components/canvas/WireframePyramid'));
 const About = lazy(() => import('./components/sections/About'));
 const Projects = lazy(() => import('./components/sections/Projects'));
 const Thoughts = lazy(() => import('./components/sections/Thoughts'));
@@ -45,6 +46,7 @@ const CustomCursor = lazy(() => import('./components/ui/CustomCursor'));
 function ScrollToTop() {
   const { pathname } = useLocation();
   const lenis = useLenis();
+  const isMobilePerf = useIsMobilePerf();
 
   useEffect(() => {
     const reset = () => {
@@ -61,14 +63,18 @@ function ScrollToTop() {
     const raf = requestAnimationFrame(reset);
     const later = window.setTimeout(() => {
       reset();
-      ScrollTrigger.refresh();
+      if (!isMobilePerf) {
+        void import('./lib/gsapSetup').then(({ ScrollTrigger }) => {
+          ScrollTrigger.refresh();
+        });
+      }
     }, 80);
 
     return () => {
       cancelAnimationFrame(raf);
       window.clearTimeout(later);
     };
-  }, [pathname, lenis]);
+  }, [pathname, lenis, isMobilePerf]);
 
   return null;
 }
@@ -95,15 +101,23 @@ function Analytics() {
 function ScrollTriggerSync() {
   useEffect(() => {
     let raf = 0;
+    let triggerModule: typeof import('./lib/gsapSetup') | null = null;
+    let cancelled = false;
+
+    void import('./lib/gsapSetup').then((mod) => {
+      if (!cancelled) triggerModule = mod;
+    });
+
     const onScroll = () => {
-      if (raf) return;
+      if (raf || !triggerModule) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        ScrollTrigger.update();
+        triggerModule?.ScrollTrigger.update();
       });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
+      cancelled = true;
       window.removeEventListener('scroll', onScroll);
       cancelAnimationFrame(raf);
     };
@@ -165,14 +179,18 @@ function AppShell() {
   const { isQuiet } = useMemorial();
   const { ready } = useAtmosphereStage();
 
+  useEffect(() => {
+    ensureGlobalNoteEventListener();
+  }, []);
+
   const toggleWorld = useCallback(() => {
     if (isQuiet || getPrefersReducedMotion()) return;
     setUpsideDown((v) => !v);
   }, [isQuiet]);
 
   useEffect(() => {
-    window.addEventListener('world-flip', toggleWorld);
-    return () => window.removeEventListener('world-flip', toggleWorld);
+    window.addEventListener(APP_EVENTS.WORLD_FLIP, toggleWorld);
+    return () => window.removeEventListener(APP_EVENTS.WORLD_FLIP, toggleWorld);
   }, [toggleWorld]);
 
   useEffect(() => {
@@ -219,9 +237,12 @@ function AppShell() {
     <>
       <div className="atmosphere-fill" aria-hidden />
       <Background hushed={isQuiet} />
-      {!isMobilePerf && <WireframePyramid />}
+      {!isMobilePerf && (
+        <Suspense fallback={null}>
+          <WireframePyramid />
+        </Suspense>
+      )}
       <ThemeSelector />
-
 
       <Shell>
         <ScrollToTop />

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useThrowableEdgeFlight } from '../../hooks/useThrowableEdgeFlight';
 import {
@@ -24,7 +24,11 @@ export default function FlyingSage() {
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busyRef = useRef(false);
 
-  const say = (text: string, holdMs = 5000) => {
+  const say = useCallback((text: string, holdMs = 5000) => {
+    if (replyRef.current) {
+      clearTimeout(replyRef.current);
+      replyRef.current = null;
+    }
     busyRef.current = true;
     setLine(text);
     setShowBubble(true);
@@ -33,7 +37,7 @@ export default function FlyingSage() {
       setShowBubble(false);
       busyRef.current = false;
     }, holdMs);
-  };
+  }, []);
 
   useEffect(() => {
     const emit = (detail: FlyerSpeakDetail) => {
@@ -41,7 +45,7 @@ export default function FlyingSage() {
     };
 
     const speak = () => {
-      if (busyRef.current) return;
+      if (busyRef.current || document.hidden) return;
 
       if (shouldJab(0.15)) {
         const jab = pickRandom(SAGE_TO_BEGGAR);
@@ -68,6 +72,7 @@ export default function FlyingSage() {
       if (replyRef.current) clearTimeout(replyRef.current);
       busyRef.current = true;
       replyRef.current = setTimeout(() => {
+        replyRef.current = null;
         say(reply, 5000);
       }, 1500);
     };
@@ -81,7 +86,7 @@ export default function FlyingSage() {
       if (replyRef.current) clearTimeout(replyRef.current);
       window.removeEventListener(FLYER_SPEAK, onFlyerSpeak);
     };
-  }, []);
+  }, [say]);
 
   if (!visible) return null;
 

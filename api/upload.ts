@@ -48,6 +48,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await ensureSchema();
+  } catch (error) {
+    console.error('upload schema error:', error);
+    return sendError(res, 500, 'Veritabanı şu an kullanılamıyor');
+  }
+
+  try {
     const filenameHeader = String(req.headers['x-filename'] || 'photo.jpg').slice(0, LIMITS.filename);
     const size = parsePhotoSize(req.headers['x-size']);
     const altHeader = String(req.headers['x-alt'] || '');
@@ -62,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!body.length) return sendError(res, 400, 'Boş dosya');
 
     const kind = sniffImage(body);
-    if (!kind) return sendError(res, 400, 'Desteklenmeyen görsel');
+    if (!kind) return sendError(res, 400, 'Desteklenmeyen görsel formatı (JPEG, PNG, GIF, WebP, AVIF)');
 
     const blob = await put(sanitizeFilename(filenameHeader), body, {
       access: 'private',
@@ -73,9 +79,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const date = new Date().toLocaleDateString('tr-TR');
     try {
       const { rows } = await pool.sql`
-        INSERT INTO studio_photos (url, size, date)
-        VALUES (${blob.url}, ${size}, ${date})
-        RETURNING id, url, size, date
+        INSERT INTO studio_photos (url, alt, size, date)
+        VALUES (${blob.url}, ${alt}, ${size}, ${date})
+        RETURNING id, url, alt, size, date
       `;
       const row = rows[0];
       return res.status(200).json({
@@ -83,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'photo',
         src: `/api/photo?url=${encodeURIComponent(row.url)}`,
         url: row.url,
-        alt,
+        alt: row.alt || alt,
         size: row.size,
         date: row.date,
       });
@@ -101,6 +107,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return sendError(res, 413, 'Fotoğraf 4.5MB sınırını aşıyor. Daha küçük bir görsel dene.');
     }
     console.error('Upload Error:', error);
-    return sendError(res, 400, 'Yükleme başarısız');
+    return sendError(res, 500, 'Yükleme başarısız');
   }
 }

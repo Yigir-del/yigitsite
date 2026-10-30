@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { istanbulDayKey } from '../../utils/samsunTime';
 
 const STORAGE_DAY_KEY = 'yigit_wreath_day';
 
@@ -9,15 +10,6 @@ type WreathState = {
   submitting: boolean;
   error: string | null;
 };
-
-function istanbulDayKey(): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Istanbul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-}
 
 function readLocalLeftToday(): boolean {
   try {

@@ -65,11 +65,17 @@ export function verifySessionToken(token: string, now = Date.now()): boolean {
   return true;
 }
 
-function parseCookieHeader(header: string | undefined, name: string): string | null {
+export function parseCookieHeader(header: string | undefined, name: string): string | null {
   if (!header) return null;
   for (const part of header.split(';')) {
     const [rawKey, ...rest] = part.trim().split('=');
-    if (rawKey === name) return decodeURIComponent(rest.join('='));
+    if (rawKey === name) {
+      try {
+        return decodeURIComponent(rest.join('='));
+      } catch {
+        return null;
+      }
+    }
   }
   return null;
 }

@@ -1,4 +1,13 @@
-import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+  type ReactNode,
+} from 'react';
 import {
   type DomainId,
   DEFAULT_DOMAIN,
@@ -27,62 +36,63 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionProgress, setTransitionProgress] = useState(0);
   const busyRef = useRef(false);
-  const rafRef = useRef<number | null>(null);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const swapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const endTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    applyDomainCss(theme);
+    applyDomainCss(DEFAULT_DOMAIN);
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      timersRef.current.forEach(clearTimeout);
+      if (swapTimerRef.current) clearTimeout(swapTimerRef.current);
+      if (endTimerRef.current) clearTimeout(endTimerRef.current);
     };
   }, []);
 
-  const setTheme = useCallback((newTheme: DomainId) => {
-    if (newTheme === theme || busyRef.current) return;
-    if (!DOMAIN_MAP[newTheme]) return;
+  const setTheme = useCallback(
+    (newTheme: DomainId) => {
+      if (newTheme === theme || busyRef.current) return;
+      if (!DOMAIN_MAP[newTheme]) return;
 
-    busyRef.current = true;
-    setIsTransitioning(true);
-    setNextTheme(newTheme);
-    setTransitionProgress(0);
+      busyRef.current = true;
+      setIsTransitioning(true);
+      setNextTheme(newTheme);
+      setTransitionProgress(0.01);
 
-    const start = performance.now();
-    let swapped = false;
+      if (swapTimerRef.current) clearTimeout(swapTimerRef.current);
+      if (endTimerRef.current) clearTimeout(endTimerRef.current);
 
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / TRANSITION_MS);
-      setTransitionProgress(t);
-
-      if (!swapped && now - start >= SWAP_AT_MS) {
-        swapped = true;
+      swapTimerRef.current = setTimeout(() => {
         setThemeState(newTheme);
         applyDomainCss(newTheme);
-      }
+        setTransitionProgress(0.5);
+      }, SWAP_AT_MS);
 
-      if (t < 1) {
-        rafRef.current = requestAnimationFrame(tick);
-      } else {
+      endTimerRef.current = setTimeout(() => {
         setIsTransitioning(false);
         setNextTheme(null);
         setTransitionProgress(0);
         busyRef.current = false;
-        rafRef.current = null;
-      }
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-  }, [theme]);
-
-  return (
-    <ThemeContext.Provider
-      value={{ theme, nextTheme, setTheme, isTransitioning, transitionProgress }}
-    >
-      {children}
-    </ThemeContext.Provider>
+        swapTimerRef.current = null;
+        endTimerRef.current = null;
+      }, TRANSITION_MS);
+    },
+    [theme],
   );
+
+  const value = useMemo<ThemeContextProps>(
+    () => ({
+      theme,
+      nextTheme,
+      setTheme,
+      isTransitioning,
+      transitionProgress,
+    }),
+    [theme, nextTheme, setTheme, isTransitioning, transitionProgress],
+  );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
+// oxlint-disable-next-line react/only-export-components
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {

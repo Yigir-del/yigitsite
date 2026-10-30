@@ -50,7 +50,7 @@ export default function FlyingMusic() {
   }, [shouldMountPlayer, isPlaying, iframeKey]);
 
   useEffect(() => {
-    if (isMobilePerf) return;
+    if (isMobilePerf || isExpanded) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
 
@@ -67,7 +67,7 @@ export default function FlyingMusic() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [isMobilePerf]);
+  }, [isMobilePerf, isExpanded]);
 
   useEffect(() => {
     return () => {
@@ -122,6 +122,15 @@ export default function FlyingMusic() {
     openPanel();
   }, [isExpanded, minimizePanel, openPanel]);
 
+  useEffect(() => {
+    if (!isExpanded) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') minimizePanel();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isExpanded, minimizePanel]);
+
   const showSassyQuote = useCallback(() => {
     const attempts = searchAttemptsRef.current;
 
@@ -159,6 +168,7 @@ export default function FlyingMusic() {
   );
 
   const showPlayer = shouldMountPlayer && isPlaying;
+  const toggleTitle = isPlaying ? 'Müzik çalıyor — aç/küçült' : 'Müzik Kutusu';
 
   return (
     <>
@@ -166,7 +176,9 @@ export default function FlyingMusic() {
         <button
           type="button"
           onClick={togglePanel}
-          title={isPlaying ? 'Müzik çalıyor — aç/küçült' : 'Müzik Kutusu'}
+          title={toggleTitle}
+          aria-label={toggleTitle}
+          aria-expanded={isExpanded}
           style={{
             position: 'fixed',
             right: '1rem',
@@ -189,8 +201,11 @@ export default function FlyingMusic() {
         </button>
       ) : (
         <motion.button
+          type="button"
           onClick={togglePanel}
-          title={isPlaying ? 'Müzik çalıyor — aç/küçült' : 'Müzik Kutusu'}
+          title={toggleTitle}
+          aria-label={toggleTitle}
+          aria-expanded={isExpanded}
           drag={!isExpanded}
           dragMomentum={true}
           whileDrag={{ scale: 1.2, cursor: 'grabbing' }}
@@ -266,6 +281,7 @@ export default function FlyingMusic() {
               type="button"
               onClick={minimizePanel}
               title="Küçült — müzik çalmaya devam eder"
+              aria-label="Küçült — müzik çalmaya devam eder"
               style={{
                 background: 'transparent',
                 border: '1px solid var(--glass-border)',
@@ -284,6 +300,7 @@ export default function FlyingMusic() {
               type="button"
               onClick={stopMusic}
               title="Durdur ve kapat"
+              aria-label="Durdur ve kapat"
               style={{
                 background: 'transparent',
                 border: '1px solid var(--glass-border)',
@@ -306,6 +323,7 @@ export default function FlyingMusic() {
             <input
               type="text"
               placeholder="Şarkı ara..."
+              aria-label="Şarkı ara"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               style={{

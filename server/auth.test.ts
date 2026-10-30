@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { loginCredentialsOk, signSession, verifySessionToken } from './auth.js';
+import type { VercelRequest } from '@vercel/node';
+import {
+  SESSION_COOKIE,
+  loginCredentialsOk,
+  parseCookieHeader,
+  readSession,
+  signSession,
+  verifySessionToken,
+} from './auth.js';
 
 const SECRET = 'a'.repeat(32);
 
@@ -30,5 +38,14 @@ describe('session tokens', () => {
     expect(loginCredentialsOk('kral', 'sifre')).toBe(true);
     expect(loginCredentialsOk('kral', 'yanlis')).toBe(false);
     expect(loginCredentialsOk('', '')).toBe(false);
+  });
+
+  it('does not throw on malformed percent-encoded cookie headers', () => {
+    process.env.ADMIN_SESSION_SECRET = SECRET;
+    const token = signSession(Date.now() + 60_000, SECRET);
+    const header = `bad=%E0%A4%A; ${SESSION_COOKIE}=${encodeURIComponent(token)}`;
+    expect(parseCookieHeader(header, 'bad')).toBeNull();
+    expect(parseCookieHeader(header, SESSION_COOKIE)).toBe(token);
+    expect(readSession({ headers: { cookie: header } } as unknown as VercelRequest)).toBe(true);
   });
 });

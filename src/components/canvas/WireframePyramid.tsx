@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useTheme } from '../../context/ThemeContext';
+import { DOMAIN_MAP, type DomainId } from '../../themes/domains';
 
 /**
  * Sacred Geometry 3D Wireframe Pyramid Component.
@@ -19,13 +20,17 @@ export default function WireframePyramid() {
 
   useEffect(() => {
     inspectRef.current = isInspecting;
-    if (isInspecting) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none'; // Lock Safari/Chrome pull-to-refresh
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    }
+    if (!isInspecting) return;
+
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouchAction;
+    };
   }, [isInspecting]);
 
   useEffect(() => {
@@ -43,7 +48,6 @@ export default function WireframePyramid() {
   }, []);
 
   useEffect(() => {
-    // 2.5s gentle atmospheric emergence
     const timer = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(timer);
   }, []);
@@ -183,7 +187,6 @@ export default function WireframePyramid() {
         uniform float uOpacity;
 
         void main() {
-          // Extremely subtle, silky traveling starlight shimmer along wireframe edges
           float wave = sin(vProgress * 10.0 - uTime * uEnergySpeed + vPos.y * 2.5);
           float pulse = pow(0.5 + 0.5 * wave, 4.0);
 
@@ -216,7 +219,7 @@ export default function WireframePyramid() {
     let animId = 0;
     let prevTime = performance.now();
     let yRot = 0;
-    
+
     // Drag & Multi-Touch State
     let dragRotX = 0;
     let velX = 0;
@@ -249,14 +252,13 @@ export default function WireframePyramid() {
         lastPointerX = e.clientX;
         lastPointerY = e.clientY;
       } else if (activePointers.size === 2) {
-        isDragging = false; // Disable rotation while zooming
+        isDragging = false;
         initialPinchDistance = getPinchDistance();
       }
     };
-    
+
     const onPointerMove = (e: PointerEvent) => {
       if (!inspectRef.current) return;
-      // Prevent browser gestures colliding with 3D interactions
       e.preventDefault();
 
       if (activePointers.has(e.pointerId)) {
@@ -267,7 +269,6 @@ export default function WireframePyramid() {
         const currentDistance = getPinchDistance();
         if (initialPinchDistance > 0) {
           const zoomDelta = currentDistance / initialPinchDistance;
-          // Clamp target zoom between 0.6x and 2.5x to prevent extreme zooming
           targetPinchZoom = Math.min(Math.max(targetPinchZoom * zoomDelta, 0.6), 2.5);
           initialPinchDistance = currentDistance;
         }
@@ -280,33 +281,29 @@ export default function WireframePyramid() {
       dragDistance += Math.sqrt(dx * dx + dy * dy);
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
-      
-      // Directly apply rotation for instant 1:1 feel on mobile
+
       yRot += dx * 0.006;
       dragRotX += dy * 0.006;
-      
-      // Store velocity for momentum release
+
       velY = dx * 0.006;
       velX = dy * 0.006;
     };
-    
+
     const onPointerUp = (e: PointerEvent) => {
       activePointers.delete(e.pointerId);
-      
+
       if (activePointers.size < 2) {
         initialPinchDistance = 0;
       }
       if (activePointers.size === 1) {
-        // Resume drag tracking for remaining finger
         const remainingPointer = Array.from(activePointers.values())[0];
         isDragging = true;
         lastPointerX = remainingPointer.x;
         lastPointerY = remainingPointer.y;
       }
-      
+
       if (activePointers.size === 0) {
         if (isDragging && dragDistance < 5 && inspectRef.current) {
-          // It was a tap, not a drag. Close the inspection mode.
           setIsInspecting(false);
           targetPinchZoom = 1.0;
         }
@@ -315,7 +312,6 @@ export default function WireframePyramid() {
     };
 
     window.addEventListener('pointerdown', onPointerDown);
-    // passive: false is critical here so e.preventDefault() works
     window.addEventListener('pointermove', onPointerMove, { passive: false });
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
@@ -345,11 +341,11 @@ export default function WireframePyramid() {
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // Domain Theme Configurations (Apple-level subtlety)
-    const getThemeConfig = (domId: string) => {
+    const getThemeConfig = (domId: DomainId) => {
+      const domain = DOMAIN_MAP[domId] ?? DOMAIN_MAP.Muryokusho;
       if (domId === 'FukumaMizushi') {
         return {
-          stroke: '#ff5555',
+          stroke: domain.pyramidStroke,
           pulse: '#ffcccc',
           glow: 'rgba(255, 40, 40, 0.25)',
           speed: 2.2,
@@ -359,7 +355,7 @@ export default function WireframePyramid() {
       }
       if (domId === 'KangoAneitei') {
         return {
-          stroke: '#b866ff',
+          stroke: domain.pyramidStroke,
           pulse: '#e9d5ff',
           glow: 'rgba(160, 60, 240, 0.25)',
           speed: 1.2,
@@ -367,9 +363,8 @@ export default function WireframePyramid() {
           opacity: 0.16,
         };
       }
-      // Muryokusho
       return {
-        stroke: '#d8e6ff',
+        stroke: domain.pyramidStroke,
         pulse: '#ffffff',
         glow: 'rgba(100, 170, 255, 0.25)',
         speed: 1.6,
@@ -383,6 +378,11 @@ export default function WireframePyramid() {
 
     // --- Main Frame Loop ---
     const tick = (now: number) => {
+      if (document.visibilityState === 'hidden') {
+        animId = 0;
+        return;
+      }
+
       const dt = Math.min((now - prevTime) / 1000, 0.1);
       prevTime = now;
       const timeSec = now / 1000;
@@ -390,20 +390,18 @@ export default function WireframePyramid() {
       // 1. Organic Precession & Drag Rotation
       if (inspectRef.current) {
         if (!isDragging) {
-          // Fluid momentum on touch release
           velY *= 0.94;
           velX *= 0.94;
           yRot += velY;
           dragRotX += velX;
-          
+
           if (Math.abs(velY) < 0.001) {
-             yRot += 0.003 * dt * 60; // slow auto-rotation
+            yRot += 0.003 * dt * 60;
           }
         }
       } else {
-        // Reset zoom state smoothly when closing
         targetPinchZoom = 1.0;
-        
+
         velY *= 0.85;
         velX *= 0.85;
         dragRotX += (0 - dragRotX) * 0.08;
@@ -452,9 +450,8 @@ export default function WireframePyramid() {
       if (containerRef.current) {
         const isMobile = window.innerWidth < 768;
         if (inspectRef.current) {
-          const tx = (window.innerWidth / 2) - (window.innerWidth - 75);
-          const ty = (window.innerHeight / 2) - 69;
-          // Dynamically scale based on viewport to fit Safe Areas and different mobile screens beautifully
+          const tx = window.innerWidth / 2 - (window.innerWidth - 75);
+          const ty = window.innerHeight / 2 - 69;
           const baseInspectScale = isMobile ? Math.min(window.innerWidth / 160, 2.4) : 4;
           const inspectScale = baseInspectScale * currentPinchZoom;
           containerRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${inspectScale})`;
@@ -468,10 +465,24 @@ export default function WireframePyramid() {
       animId = requestAnimationFrame(tick);
     };
 
-    animId = requestAnimationFrame(tick);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !animId) {
+        prevTime = performance.now();
+        animId = requestAnimationFrame(tick);
+      } else if (document.visibilityState === 'hidden' && animId) {
+        cancelAnimationFrame(animId);
+        animId = 0;
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    if (document.visibilityState === 'visible') {
+      animId = requestAnimationFrame(tick);
+    }
 
     return () => {
       cancelAnimationFrame(animId);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
@@ -501,6 +512,7 @@ export default function WireframePyramid() {
           pointerEvents: isInspecting ? 'auto' : 'none',
           transition: 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
+        aria-hidden="true"
       />
 
       <div
@@ -528,31 +540,31 @@ export default function WireframePyramid() {
           willChange: 'transform, opacity',
         }}
       >
-      {/* Soft Ambient Background Glow */}
-      <div
-        ref={glowRef}
-        style={{
-          position: 'absolute',
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          opacity: 0.35,
-          pointerEvents: 'none',
-          transition: 'box-shadow 1s ease',
-          filter: 'blur(12px)',
-        }}
-      />
+        {/* Soft Ambient Background Glow */}
+        <div
+          ref={glowRef}
+          style={{
+            position: 'absolute',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            opacity: 0.35,
+            pointerEvents: 'none',
+            transition: 'box-shadow 1s ease',
+            filter: 'blur(12px)',
+          }}
+        />
 
-      {/* 3D WebGL Canvas */}
-      <canvas
-        ref={canvasRef}
-        style={{
-          width: '110px',
-          height: '110px',
-          display: 'block',
-        }}
-      />
-    </div>
+        {/* 3D WebGL Canvas */}
+        <canvas
+          ref={canvasRef}
+          style={{
+            width: '110px',
+            height: '110px',
+            display: 'block',
+          }}
+        />
+      </div>
     </>
   );
 }

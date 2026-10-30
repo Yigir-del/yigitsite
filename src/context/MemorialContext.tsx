@@ -32,6 +32,7 @@ function isMemorialPath(pathname: string) {
 
 let memorialPrefetch: Promise<unknown> | null = null;
 
+// oxlint-disable-next-line react/only-export-components
 export function prefetchMemorialChunk() {
   if (!memorialPrefetch) {
     memorialPrefetch = Promise.all([
@@ -143,6 +144,7 @@ export function MemorialProvider({ children }: { children: ReactNode }) {
   return <MemorialContext.Provider value={value}>{children}</MemorialContext.Provider>;
 }
 
+// oxlint-disable-next-line react/only-export-components
 export function useMemorial() {
   const ctx = useContext(MemorialContext);
   if (!ctx) {

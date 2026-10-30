@@ -19,12 +19,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     try {
       const { rows } = await pool.sql`
-        SELECT id, url, size, date FROM studio_photos ORDER BY created_at DESC LIMIT 100
+        SELECT id, url, alt, size, date
+        FROM studio_photos
+        ORDER BY created_at DESC
+        LIMIT 100
       `;
       const formatted = rows.map((row) => ({
         id: row.id,
         type: 'photo',
         src: `/api/photo?url=${encodeURIComponent(row.url)}`,
+        alt: row.alt || 'İsimsiz Eser',
         size: row.size,
         date: row.date,
       }));

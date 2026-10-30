@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   motion,
   animate,
@@ -90,6 +90,7 @@ function ThrowableDrifter({
       role="link"
       tabIndex={0}
       title={d.tooltip}
+      aria-label={d.tooltip}
       drag
       dragMomentum
       dragElastic={0.25}
@@ -159,12 +160,14 @@ function ThrowableDrifter({
 export default function SocialDrifters() {
   const { isQuiet } = useMemorial();
   const [drifters, setDrifters] = useState<Drifter[]>([]);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isQuiet) {
-      timersRef.current.forEach(clearTimeout);
-      timersRef.current = [];
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
       setDrifters([]);
       return;
     }
@@ -172,7 +175,7 @@ export default function SocialDrifters() {
     let cancelled = false;
 
     const spawnDrifter = () => {
-      if (cancelled) return;
+      if (cancelled || document.hidden) return;
       setDrifters((prev) => {
         if (prev.length >= 2) return prev;
 
@@ -204,23 +207,28 @@ export default function SocialDrifters() {
       });
     };
 
-    const first = setTimeout(function loop() {
-      spawnDrifter();
-      const next = setTimeout(loop, 9000 + Math.random() * 12000);
-      timersRef.current.push(next);
-    }, 3000);
-    timersRef.current.push(first);
+    const scheduleNext = (delayMs: number) => {
+      timerRef.current = setTimeout(() => {
+        if (cancelled) return;
+        spawnDrifter();
+        scheduleNext(9000 + Math.random() * 12000);
+      }, delayMs);
+    };
+
+    scheduleNext(3000);
 
     return () => {
       cancelled = true;
-      timersRef.current.forEach(clearTimeout);
-      timersRef.current = [];
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [isQuiet]);
 
-  const expire = (id: string) => {
+  const expire = useCallback((id: string) => {
     setDrifters((prev) => prev.filter((d) => d.id !== id));
-  };
+  }, []);
 
   if (isQuiet) {
     return (
@@ -231,6 +239,7 @@ export default function SocialDrifters() {
           target="_blank"
           rel="noopener noreferrer"
           title="GitHub"
+          aria-label="GitHub"
         >
           <GithubIcon />
         </a>
@@ -240,6 +249,7 @@ export default function SocialDrifters() {
           target="_blank"
           rel="noopener noreferrer"
           title="LinkedIn"
+          aria-label="LinkedIn"
         >
           <LinkedinIcon />
         </a>

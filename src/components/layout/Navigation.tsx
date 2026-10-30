@@ -60,8 +60,13 @@ export default function Navigation() {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);
 
@@ -73,6 +78,7 @@ export default function Navigation() {
 
   const renderLink = (item: { path: string; label: string }, variant: 'desktop' | 'panel') => {
     const isMemorial = item.path === MEMORIAL_PATH;
+    const isActive = active === item.path;
     const base = variant === 'desktop' ? 'site-nav__link' : 'site-nav__panel-link';
     const memorialClass = isMemorial
       ? variant === 'desktop'
@@ -84,11 +90,12 @@ export default function Navigation() {
       <a
         key={item.path}
         href={item.path}
-        className={`${base}${active === item.path ? ' is-active' : ''}${memorialClass}`}
+        className={`${base}${isActive ? ' is-active' : ''}${memorialClass}`}
         onClick={handleNav(item.path)}
         onPointerEnter={isMemorial ? prefetchMemorial : undefined}
         onFocus={isMemorial ? prefetchMemorial : undefined}
         aria-label={isMemorial ? 'Anıtkabir — Atatürk' : undefined}
+        aria-current={isActive ? 'page' : undefined}
         title={isMemorial ? 'Anıtkabir' : undefined}
       >
         {isMemorial ? <AnitkabirIcon /> : <span>{item.label}</span>}
@@ -122,6 +129,7 @@ export default function Navigation() {
         className={`site-nav__panel${open ? ' is-open' : ''}`}
         role="dialog"
         aria-modal="true"
+        aria-label="Mobil navigasyon menüsü"
         hidden={!open}
       >
         <div className="site-nav__panel-inner">

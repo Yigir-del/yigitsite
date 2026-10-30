@@ -21,8 +21,10 @@ export const DOMAINS: DomainConfig[] = [
     css: {
       '--bg-deep-charcoal': '#0a0a14',
       '--bg-dark-navy': '#0d131f',
+      '--bg-main': '#0d131f',
       '--bg-soft-gray': '#1e2024',
       '--text-main': '#e2e8f0',
+      '--text-primary': '#e2e8f0',
       '--text-muted': '#94a3b8',
       '--accent-muted-blue': '#4b6b8b',
       '--accent-desaturated-cyan': '#395c6b',
@@ -65,8 +67,10 @@ export const DOMAINS: DomainConfig[] = [
     css: {
       '--bg-deep-charcoal': '#140505',
       '--bg-dark-navy': '#1a0808',
+      '--bg-main': '#1a0808',
       '--bg-soft-gray': '#2a1212',
       '--text-main': '#fecaca',
+      '--text-primary': '#fecaca',
       '--text-muted': '#f87171',
       '--accent-muted-blue': '#991b1b',
       '--accent-desaturated-cyan': '#7f1d1d',
@@ -109,8 +113,10 @@ export const DOMAINS: DomainConfig[] = [
     css: {
       '--bg-deep-charcoal': '#0a0512',
       '--bg-dark-navy': '#12091c',
+      '--bg-main': '#12091c',
       '--bg-soft-gray': '#1d122b',
       '--text-main': '#e9d5ff',
+      '--text-primary': '#e9d5ff',
       '--text-muted': '#c084fc',
       '--accent-muted-blue': '#6b21a8',
       '--accent-desaturated-cyan': '#581c87',
@@ -154,11 +160,10 @@ export const DEFAULT_DOMAIN: DomainId = 'Muryokusho';
 
 export function applyDomainCss(id: DomainId) {
   const styles = DOMAIN_MAP[id]?.css;
-  if (!styles) return;
+  if (!styles || typeof document === 'undefined') return;
   const root = document.documentElement;
   root.setAttribute('data-domain', id);
   for (const [key, value] of Object.entries(styles)) {
     root.style.setProperty(key, value);
   }
 }
-
