@@ -1,6 +1,6 @@
-/** One ambient voice at a time — idle whispers, ChaosManager idle quotes, and Reality Anomalies. */
+/** One ambient voice at a time — idle whispers and ChaosManager idle quotes. */
 
-export type Slot = 'chaos' | 'whisper' | 'anomaly';
+export type Slot = 'chaos' | 'whisper';
 
 let current: Slot | null = null;
 

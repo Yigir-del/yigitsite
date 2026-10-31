@@ -10,8 +10,6 @@ import {
 export const ACHIEVEMENTS_STORAGE_KEY = 'yigit_achievements_v1';
 export const ACHIEVEMENTS_SCHEMA_VERSION = 2;
 
-const CANONICAL_DOMAINS = ['Muryokusho', 'FukumaMizushi', 'KangoAneitei'] as const;
-
 export interface StoredAchievementData {
   version: number;
   unlocked: Partial<Record<AchievementId, number>>;
@@ -350,30 +348,10 @@ export function clearAchievementToastQueue(): void {
  * domain themes (`Muryokusho`, `FukumaMizushi`, `KangoAneitei`) have been experienced (§7.2 #6).
  */
 export function recordDomainThemeInteraction(
-  domainId: string,
+  _domainId: string,
   _isExplicitSwitch = false,
 ): void {
-  if (!domainId) return;
-
-  if (!state.seenDomains.includes(domainId)) {
-    const nextDomains = [...state.seenDomains, domainId];
-    updateState(
-      {
-        version: ACHIEVEMENTS_SCHEMA_VERSION,
-        unlocked: state.unlocked,
-        seenDomains: nextDomains,
-        discoveredInscriptions: state.discoveredInscriptions,
-        oyukCompletedVisits: state.oyukCompletedVisits,
-        goldenTrophyAwarded: state.goldenTrophyAwarded,
-      },
-      state.toastQueue,
-    );
-  }
-
-  const allThreeSeen = CANONICAL_DOMAINS.every((d) => state.seenDomains.includes(d));
-  if (allThreeSeen) {
-    unlockAchievement('all_domains');
-  }
+  // Theme switching disabled (§3) — single MURYOKUSHO identity
 }
 
 /**

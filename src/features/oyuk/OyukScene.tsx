@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import SEOHead from '../../seo/SEOHead';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
@@ -72,11 +72,10 @@ export default function OyukScene() {
       recordOyukExited();
       recordWorldMemoryOyukExited();
     }
+    // The cinematic director owns navigation: flashlight fade → dark passage →
+    // navigate(returnTarget) → destination ready → dissolve. Navigating here would race it.
     startOyukExit(returnTarget);
-    if (reducedMotion) {
-      navigate(returnTarget);
-    }
-  }, [isExiting, isUnlocked, navigate, reducedMotion, returnTarget]);
+  }, [isExiting, isUnlocked, returnTarget]);
 
   // Track OYUK entry & exit (§19.01 & Living Universe §4)
   useEffect(() => {
@@ -529,22 +528,6 @@ export default function OyukScene() {
               </p>
             )}
           </div>
-
-          {/* Deep cave floor carved route whispers — fair in-world clues for hidden routes */}
-          <nav
-            className="oyuk-portal-whispers"
-            aria-label="Mağara tabanına kazınmış gizli geçitler"
-          >
-            <Link to="/dusunceler" className="oyuk-portal-whisper">
-              · düşünceler defteri ↗
-            </Link>
-            <Link to="/studyom" className="oyuk-portal-whisper">
-              · sessiz stüdyo ↗
-            </Link>
-            <Link to="/kayip-iz" className="oyuk-portal-whisper">
-              · silinmiş geçit (404) ↗
-            </Link>
-          </nav>
         </div>
       </div>
 

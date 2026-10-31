@@ -30,9 +30,7 @@ import {
 import {
   cancelLunarHold,
   completeLunarHold,
-  dismissLunarSecret,
   getLunarSecretSnapshot,
-  LUNAR_SECRET_INSCRIPTIONS,
   resetLunarSecretForTests,
   startLunarHold,
   triggerLunarClick,
@@ -40,12 +38,7 @@ import {
 } from './lunarSecret/lunarSecretStore';
 import {
   activateCurrentAnomaly,
-  ANOMALY_COOLDOWN_MS,
-  ANOMALY_MESSAGES,
-  beginClosingCurrentAnomaly,
-  closeCurrentAnomaly,
   getAnomalySnapshot,
-  MAX_ANOMALIES_PER_SESSION,
   resetAnomalyStoreForTests,
   trySpawnAnomaly,
 } from './anomalies/anomalyStore';
@@ -72,10 +65,7 @@ import {
   submitNote,
 } from '../utils/notesStore';
 import {
-  getActiveAmbientSlot,
-  releaseAmbient,
   resetAmbientSlotForTests,
-  takeAmbient,
 } from '../utils/ambientSlot';
 import {
   commitPendingOyukCinematic,
@@ -352,112 +342,27 @@ describe('MURYOKUSHO — THE LIVING UNIVERSE (§4–§18)', () => {
     });
   });
 
-  describe('3. The Moon’s Hidden Secret (§6 & §18.3)', () => {
-    it('preserves short-click blood-moon counter while revealing the hidden side on deliberate hold', () => {
-      // 6 short clicks increment clickCount normally (> 5 turns blood red)
-      for (let i = 1; i <= 6; i++) {
-        expect(triggerLunarClick()).toBe(i);
-      }
-      expect(getLunarSecretSnapshot().clickCount).toBe(6);
+  describe('3. Atmospheric Scenery Moon (§4)', () => {
+    it('ensures the Moon is a non-interactive scenic backdrop and clicks/holds do nothing (§4)', () => {
+      // Clicks are inert
+      expect(triggerLunarClick()).toBe(0);
+      expect(getLunarSecretSnapshot().clickCount).toBe(0);
       expect(getLunarSecretSnapshot().secretRevealed).toBe(false);
 
-      // Incomplete hold cancels cleanly without revealing secret or changing clickCount
+      // Holds are inert
       startLunarHold();
-      updateLunarHoldProgress(0.45);
-      expect(getLunarSecretSnapshot().holding).toBe(true);
-      expect(getLunarSecretSnapshot().holdProgress).toBeCloseTo(0.45, 2);
+      updateLunarHoldProgress(0.5);
+      expect(getLunarSecretSnapshot().secretRevealed).toBe(false);
       cancelLunarHold();
-      expect(getLunarSecretSnapshot().holding).toBe(false);
-      expect(getLunarSecretSnapshot().holdProgress).toBe(0);
-      expect(getLunarSecretSnapshot().secretRevealed).toBe(false);
-      expect(getLunarSecretSnapshot().clickCount).toBe(6);
-
-      // Completed hold reveals the Moon's secret without incrementing clickCount
-      startLunarHold();
-      const revealed = completeLunarHold();
-      expect(revealed.secretRevealed).toBe(true);
-      expect(revealed.secretCount).toBe(1);
-      expect(revealed.clickCount).toBe(6);
-      expect(LUNAR_SECRET_INSCRIPTIONS).toContain(revealed.activeInscription);
-      expect(revealed.activeInscription).toBe('Gökyüzünün de sakladığı şeyler var.');
-      expect(getWorldMemoryState().hasDiscoveredMoonSecret).toBe(true);
-
-      // Dismiss returns smoothly to normal state
-      dismissLunarSecret();
       expect(getLunarSecretSnapshot().secretRevealed).toBe(false);
     });
   });
 
-  describe('4. Reality Anomalies (§7 & §18.4)', () => {
-    it('enforces single active anomaly, ambientSlot coordination, route suppression, cooldown, and session cap', () => {
-      // Suppressed on /oyuk, /miras, and 404
-      expect(
-        trySpawnAnomaly({ pathname: '/oyuk', now: 100_000 }).reason,
-      ).toBe('suppressed_route_or_cinematic');
-      expect(
-        trySpawnAnomaly({ pathname: '/miras', now: 100_000 }).reason,
-      ).toBe('suppressed_route_or_cinematic');
-      expect(
-        trySpawnAnomaly({ pathname: '/bilinmeyen', isNotFoundPage: true, now: 100_000 }).reason,
-      ).toBe('suppressed_route_or_cinematic');
-
-      // Blocked when ambientSlot is occupied by ChaosManager or IdleWhispers
-      expect(takeAmbient('chaos')).toBe(true);
-      expect(
-        trySpawnAnomaly({ pathname: '/', now: 100_000 }).reason,
-      ).toBe('ambient_slot_busy');
-      releaseAmbient('chaos');
-
-      // Spawns cleanly when slot is free
-      const first = trySpawnAnomaly({ pathname: '/', now: 100_000 });
-      expect(first.spawned).toBe(true);
-      expect(getActiveAmbientSlot()).toBe('anomaly');
-
-      // Cannot spawn a second while one is active
-      expect(
-        trySpawnAnomaly({ pathname: '/', now: 101_000 }).reason,
-      ).toBe('already_active');
-
-      // Clicking/activating reveals curated message and records world memory
-      const activated = activateCurrentAnomaly();
-      expect(activated?.phase).toBe('activated');
-      expect(ANOMALY_MESSAGES).toContain(activated?.message);
-      expect(getWorldMemoryState().hasDiscoveredAnomaly).toBe(true);
-
-      beginClosingCurrentAnomaly();
-      expect(getAnomalySnapshot().current?.phase).toBe('closing');
-      closeCurrentAnomaly(105_000);
+  describe('4. Reality Anomalies Disabled (§2)', () => {
+    it('ensures reality anomalies are completely disabled and never spawn background fractures (§2)', () => {
+      const res = trySpawnAnomaly({ pathname: '/', now: 100_000 });
+      expect(res.spawned).toBe(false);
       expect(getAnomalySnapshot().current).toBeNull();
-      expect(getActiveAmbientSlot()).toBeNull();
-
-      // Cooldown blocks immediate respawn
-      expect(
-        trySpawnAnomaly({ pathname: '/', now: 105_000 + ANOMALY_COOLDOWN_MS - 500 }).reason,
-      ).toBe('cooldown');
-
-      // Spawn 2nd and 3rd after cooldowns to reach session cap (MAX_ANOMALIES_PER_SESSION = 3)
-      const second = trySpawnAnomaly({
-        pathname: '/',
-        now: 105_000 + ANOMALY_COOLDOWN_MS + 100,
-      });
-      expect(second.spawned).toBe(true);
-      closeCurrentAnomaly(200_000);
-
-      const third = trySpawnAnomaly({
-        pathname: '/',
-        now: 200_000 + ANOMALY_COOLDOWN_MS + 100,
-      });
-      expect(third.spawned).toBe(true);
-      closeCurrentAnomaly(300_000);
-
-      // 4th attempt in same session is blocked by session cap
-      const fourth = trySpawnAnomaly({
-        pathname: '/',
-        now: 300_000 + ANOMALY_COOLDOWN_MS + 100,
-      });
-      expect(fourth.spawned).toBe(false);
-      expect(fourth.reason).toBe('session_cap_reached');
-      expect(getAnomalySnapshot().spawnCountThisSession).toBe(MAX_ANOMALIES_PER_SESSION);
     });
   });
 
@@ -615,9 +520,9 @@ describe('MURYOKUSHO — THE LIVING UNIVERSE (§4–§18)', () => {
       expect(getOyukState().phase).toBe('idle');
     });
 
-    it('never expands or falsely triggers the 10-achievement catalog when living-universe interactions occur (§14)', () => {
-      expect(TOTAL_REQUIRED_ACHIEVEMENTS).toBe(10);
-      expect(ACHIEVEMENT_DEFINITIONS.length).toBe(11); // 10 required + golden_trophy
+    it('never expands or falsely triggers the 9-achievement catalog when living-universe interactions occur (§14)', () => {
+      expect(TOTAL_REQUIRED_ACHIEVEMENTS).toBe(9);
+      expect(ACHIEVEMENT_DEFINITIONS.length).toBe(10); // 9 required + golden_trophy
 
       // Trigger all new living-universe systems
       recordWorldMemoryMoonSecret();

@@ -1,13 +1,10 @@
 import { useSyncExternalStore } from 'react';
-import { recordWorldMemoryMoonSecret } from '../worldMemory/worldMemoryStore';
 
-export const LUNAR_HOLD_DURATION_MS = 750;
-export const LUNAR_REVEAL_AUTO_DISMISS_MS = 6800;
+export const LUNAR_HOLD_DURATION_MS = 0;
+export const LUNAR_REVEAL_AUTO_DISMISS_MS = 0;
 
 export const LUNAR_SECRET_INSCRIPTIONS = [
   'Gökyüzünün de sakladığı şeyler var.',
-  'Buradan bakınca her şey küçük.',
-  'Ayın karanlık yüzü yalnızca bekleyene döner.',
 ] as const;
 
 export interface ProjectedMoon {
@@ -70,85 +67,24 @@ export function useLunarSecret(): LunarSecretSnapshot {
 }
 
 /**
- * Normal short click on the Moon — preserves original clickCount (> 5 turns blood red).
+ * Normal short click on the Moon — disabled (§4).
+ * Clicking the moon does absolutely nothing.
  */
 export function triggerLunarClick(): number {
-  const nextCount = snapshot.clickCount + 1;
-  snapshot = {
-    ...snapshot,
-    clickCount: nextCount,
-  };
-  emitChange();
-  return nextCount;
+  return 0;
 }
 
-export function startLunarHold(): void {
-  if (snapshot.holding && snapshot.holdProgress === 0) return;
-  snapshot = {
-    ...snapshot,
-    holding: true,
-    holdProgress: 0,
-  };
-  emitChange();
-}
+export function startLunarHold(): void {}
 
-export function updateLunarHoldProgress(progress: number): void {
-  const clamped = Math.max(0, Math.min(1, progress));
-  if (Math.abs(snapshot.holdProgress - clamped) < 0.01 && snapshot.holding) return;
-  snapshot = {
-    ...snapshot,
-    holding: true,
-    holdProgress: clamped,
-  };
-  emitChange();
-}
+export function updateLunarHoldProgress(_progress: number): void {}
 
-export function cancelLunarHold(): void {
-  if (!snapshot.holding && snapshot.holdProgress === 0) return;
-  snapshot = {
-    ...snapshot,
-    holding: false,
-    holdProgress: 0,
-  };
-  emitChange();
-}
+export function cancelLunarHold(): void {}
 
-/**
- * Completes the deliberate press-and-hold gesture on the Moon (§6.2 & §6.3).
- * Does NOT increment ordinary clickCount; reveals the hidden side and records world memory.
- */
 export function completeLunarHold(): LunarSecretSnapshot {
-  const nextSecretCount = snapshot.secretCount + 1;
-  const inscription =
-    LUNAR_SECRET_INSCRIPTIONS[
-      (nextSecretCount - 1) % LUNAR_SECRET_INSCRIPTIONS.length
-    ];
-
-  snapshot = {
-    ...snapshot,
-    holding: false,
-    holdProgress: 1,
-    secretRevealed: true,
-    secretCount: nextSecretCount,
-    activeInscription: inscription,
-  };
-  recordWorldMemoryMoonSecret();
-  emitChange();
   return snapshot;
 }
 
-export function dismissLunarSecret(): void {
-  if (!snapshot.secretRevealed && snapshot.holdProgress === 0 && !snapshot.holding) {
-    return;
-  }
-  snapshot = {
-    ...snapshot,
-    holding: false,
-    holdProgress: 0,
-    secretRevealed: false,
-  };
-  emitChange();
-}
+export function dismissLunarSecret(): void {}
 
 export function setProjectedMoon(next: ProjectedMoon): void {
   const prev = snapshot.projectedMoon;

@@ -1,31 +1,28 @@
 import { useTheme } from '../../context/ThemeContext';
-import { DOMAINS, DOMAIN_MAP } from '../../themes/domains';
+import { DOMAIN_MAP } from '../../themes/domains';
 
+/**
+ * Decorative Domain Watermark (§3.1).
+ * Completely non-interactive: clicking does nothing, no theme switching, no cycling.
+ * Displays canonical "RYOIKI TENKAI / MURYOKUSHO".
+ */
 export default function ThemeSelector() {
-  const { theme, nextTheme, setTheme, isTransitioning } = useTheme();
-
-  const cycleTheme = () => {
-    if (isTransitioning) return;
-    const currentIndex = DOMAINS.findIndex((d) => d.id === theme);
-    const nextIndex = (currentIndex + 1) % DOMAINS.length;
-    setTheme(DOMAINS[nextIndex].id);
-  };
-
-  const activeThemeId = nextTheme ?? theme;
-  const currentConfig = DOMAIN_MAP[activeThemeId] || DOMAINS[0];
+  const { theme } = useTheme();
+  const currentConfig = DOMAIN_MAP[theme] || DOMAIN_MAP.Muryokusho;
 
   return (
-    <button
-      type="button"
+    <div
       className="domain-watermark"
-      onClick={cycleTheme}
-      aria-label={`Domain Expansion: ${currentConfig.label}. Click to switch theme.`}
-      title="Ryōiki Tenkai — Click to switch domain"
-      data-domain={activeThemeId}
-      data-transitioning={isTransitioning ? 'true' : 'false'}
+      aria-hidden="true"
+      data-domain={theme}
+      style={{
+        pointerEvents: 'none',
+        cursor: 'default',
+        userSelect: 'none',
+      }}
     >
       <div className="domain-watermark__eyebrow">RYOIKI TENKAI</div>
       <div className="domain-watermark__name">{currentConfig.label}</div>
-    </button>
+    </div>
   );
 }

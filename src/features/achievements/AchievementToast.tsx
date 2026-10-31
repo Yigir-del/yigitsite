@@ -1,9 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { isKnownRoute, isMemorialRoute } from '../../utils/routes';
 import { isCinematicActive, useOyukState } from '../oyuk/oyukState';
-import { playGoldenTrophySound } from '../oyuk/useCoinSound';
+import {
+  claimAchievementSound,
+  playAchievementUnlockSound,
+  playGoldenTrophySound,
+  primeCoinAudio,
+} from '../oyuk/useCoinSound';
 import { ACHIEVEMENT_DEFINITIONS_MAP } from './definitions';
 import {
   shiftAchievementToast,
@@ -27,7 +32,6 @@ export default function AchievementToast() {
   const location = useLocation();
   const navigate = useNavigate();
   const oyuk = useOyukState();
-  const playedGoldenChimeForRef = useRef<number | null>(null);
 
   const onMemorial = isMemorialRoute(location.pathname);
   const on404Cinematic = !isKnownRoute(location.pathname);
@@ -35,13 +39,28 @@ export default function AchievementToast() {
   const activeItem =
     !onMemorial && !on404Cinematic && !cinematicActive ? (queue[0] ?? null) : null;
 
+  // Browsers keep audio locked until a user gesture; unlock the shared context on the first one
+  // so the unlock cue is audible when the toast later appears.
+  useEffect(() => {
+    const unlock = () => primeCoinAudio();
+    window.addEventListener('pointerdown', unlock, { once: true, passive: true });
+    window.addEventListener('keydown', unlock, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+  }, []);
   useEffect(() => {
     if (!activeItem) return;
 
     const isGolden = activeItem.id === 'golden_trophy';
-    if (isGolden && playedGoldenChimeForRef.current !== activeItem.unlockedAt) {
-      playedGoldenChimeForRef.current = activeItem.unlockedAt;
-      playGoldenTrophySound();
+    // One cue per toast, exactly when the toast appears (golden keeps its own, different chime).
+    if (claimAchievementSound(`${activeItem.id}-${activeItem.unlockedAt}`)) {
+      if (isGolden) {
+        playGoldenTrophySound();
+      } else {
+        playAchievementUnlockSound();
+      }
     }
 
     const duration = isGolden ? GOLDEN_TOAST_MS : ORDINARY_TOAST_MS;

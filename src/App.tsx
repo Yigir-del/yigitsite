@@ -86,8 +86,6 @@ const FlyingSage = lazy(() => import('./components/events/FlyingSage'));
 const SocialDrifters = lazy(() => import('./components/events/SocialDrifters'));
 const CustomCursor = lazy(() => import('./components/ui/CustomCursor'));
 const WorldMemoryTrace = lazy(() => import('./features/worldMemory/WorldMemoryTrace'));
-const LunarSecretOverlay = lazy(() => import('./features/lunarSecret/LunarSecretOverlay'));
-const RealityAnomalyOverlay = lazy(() => import('./features/anomalies/RealityAnomalyOverlay'));
 const NoteStarsOverlay = lazy(() => import('./features/noteStars/NoteStarsOverlay'));
 
 function ScrollToTop() {
@@ -309,13 +307,11 @@ function AppShell() {
               <ChaosManager />
               <IdleWhispers />
               <EasterEggs />
-              <RealityAnomalyOverlay isNotFoundPage={is404Page} />
             </Suspense>
           )}
           {!isQuiet && !isOyukPage && !is404Page && !oyukCinematicRunning && (
             <Suspense fallback={null}>
               <WorldMemoryTrace />
-              <LunarSecretOverlay isNotFoundPage={is404Page} />
               <NoteStarsOverlay isNotFoundPage={is404Page} />
             </Suspense>
           )}

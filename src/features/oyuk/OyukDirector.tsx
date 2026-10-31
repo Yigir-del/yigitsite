@@ -33,6 +33,14 @@ export default function OyukDirector() {
   const isMobilePerf = useIsMobilePerf();
   const stepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Stable refs so route changes (which re-create `navigate`) never reset in-flight step timers.
+  const navigateRef = useRef(navigate);
+  const returnPathRef = useRef(oyuk.returnPath);
+  const phaseRef = useRef(oyuk.phase);
+  navigateRef.current = navigate;
+  returnPathRef.current = oyuk.returnPath;
+  phaseRef.current = oyuk.phase;
+
   const [viewport, setViewport] = useState(() => ({
     w: typeof window !== 'undefined' ? window.innerWidth : 1280,
     h: typeof window !== 'undefined' ? window.innerHeight : 800,
@@ -78,16 +86,27 @@ export default function OyukDirector() {
 
   const navigateToCave = useCallback(() => {
     if (window.location.pathname !== '/oyuk') {
-      navigate('/oyuk', {
+      navigateRef.current('/oyuk', {
         state: {
           fromOyukCinematic: true,
-          returnTo: oyuk.returnPath || '/',
+          returnTo: returnPathRef.current || '/',
         },
       });
     }
-  }, [navigate, oyuk.returnPath]);
+  }, []);
+
+  /** Leaves the cave for the stored return path (idempotent; never re-enters the cave). */
+  const navigateToReturnTarget = useCallback(() => {
+    const raw = returnPathRef.current;
+    const target = raw && raw !== '/oyuk' ? raw : '/';
+    if (window.location.pathname === '/oyuk') {
+      navigateRef.current(target);
+    }
+  }, []);
 
   const skipToCave = useCallback(() => {
+    // An exit in progress must never be converted into a cave entrance.
+    if (phaseRef.current === 'exiting') return;
     clearStepTimer();
     advanceCinematicPhase('entering');
     navigateToCave();
@@ -99,9 +118,9 @@ export default function OyukDirector() {
     }, 120);
   }, [clearStepTimer, navigateToCave]);
 
-  // Keyboard Escape skip support (§10.4)
+  // Keyboard Escape skip support (§10.4) — entrance only. Exit is owned by the cave scene.
   useEffect(() => {
-    if (!isCinematicActive(oyuk.phase)) return;
+    if (!isCinematicActive(oyuk.phase) || oyuk.phase === 'exiting') return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -164,17 +183,20 @@ export default function OyukDirector() {
       }
 
       case 'exiting': {
-        const target =
-          oyuk.returnPath && oyuk.returnPath !== '/oyuk' ? oyuk.returnPath : '/';
-        const delay = reducedMotion
+        // exit click → flashlight fade → dark passage → navigate(returnTarget)
+        //   → destination ready → passage dissolve ('arrived') → idle
+        const fadeDelay = reducedMotion
           ? CINEMATIC_STEP_MS.exitingReduced
           : CINEMATIC_STEP_MS.exiting;
+        const settleDelay = reducedMotion
+          ? CINEMATIC_STEP_MS.exitSettleReduced
+          : CINEMATIC_STEP_MS.exitSettle;
         stepTimerRef.current = setTimeout(() => {
-          if (window.location.pathname === '/oyuk') {
-            navigate(target);
-          }
-          finishCinematicArrival();
-        }, delay);
+          navigateToReturnTarget();
+          stepTimerRef.current = setTimeout(() => {
+            finishCinematicArrival();
+          }, settleDelay);
+        }, fadeDelay);
         break;
       }
 
@@ -190,14 +212,21 @@ export default function OyukDirector() {
     }
 
     return () => clearStepTimer();
-  }, [oyuk.phase, oyuk.returnPath, reducedMotion, clearStepTimer, navigate, navigateToCave]);
+  }, [oyuk.phase, reducedMotion, clearStepTimer, navigateToCave, navigateToReturnTarget]);
 
-  // Master failsafe watchdog (§3.4): guarantees the user can never remain trapped on a dark overlay
+  // Master failsafe watchdog (§3.4): guarantees the user can never remain trapped on a dark overlay.
+  // The watchdog resolves toward the direction the journey was heading — an exit must never be
+  // converted into a cave entrance.
   const cinematicActive = isCinematicActive(oyuk.phase);
+  const isExitingPhase = oyuk.phase === 'exiting';
   useEffect(() => {
     if (!cinematicActive) return;
     const watchdog = setTimeout(() => {
-      navigateToCave();
+      if (isExitingPhase) {
+        navigateToReturnTarget();
+      } else {
+        navigateToCave();
+      }
       finishCinematicArrival();
       setTimeout(() => {
         resetCinematicToIdle();
@@ -205,13 +234,16 @@ export default function OyukDirector() {
     }, CINEMATIC_STEP_MS.failsafeMax);
 
     return () => clearTimeout(watchdog);
-  }, [cinematicActive, navigateToCave]);
+  }, [cinematicActive, isExitingPhase, navigateToCave, navigateToReturnTarget]);
 
-  // If user navigated to /oyuk via browser history while director was mid-transition, finish cleanly
+  // If user navigated to /oyuk via browser history while director was mid-transition, finish cleanly.
+  // `exiting` is deliberately excluded: the exit owns its own navigation and must not be treated as an
+  // interrupted entrance (which previously cancelled the exit and stranded the visitor in the cave).
   useEffect(() => {
     if (
       location.pathname === '/oyuk' &&
       oyuk.phase !== 'entering' &&
+      oyuk.phase !== 'exiting' &&
       oyuk.phase !== 'arrived' &&
       oyuk.phase !== 'idle'
     ) {

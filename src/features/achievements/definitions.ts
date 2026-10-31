@@ -4,7 +4,6 @@ export type AchievementId =
   | 'hidden_cave_symbol'
   | 'first_note'
   | 'music_rejected'
-  | 'all_domains'
   | 'world_flip'
   | 'sudo_discovered'
   | 'wreath_offered'
@@ -41,7 +40,7 @@ export interface AchievementDefinition {
   description: string;
   category: AchievementCategory;
   icon: AchievementIconKind;
-  /** True for the 10 required achievements; false for the final meta-achievement `golden_trophy` (§8) */
+  /** True for the 9 required achievements; false for the final meta-achievement `golden_trophy` (§9) */
   requiredForCompletion: boolean;
 }
 
@@ -57,7 +56,8 @@ export const ACHIEVEMENT_CATEGORY_LABELS: Record<
 };
 
 /**
- * Canonical 10 required achievements + 1 final Golden Trophy meta-achievement (§7.2, §8 & Additional 404 Update).
+ * Canonical 9 required achievements + 1 final Golden Trophy meta-achievement (§9).
+ * Theme-switching dependent achievement `all_domains` has been removed.
  */
 export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
   // ── 1–3: OYUK (Derinlik) ──
@@ -109,19 +109,10 @@ export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
     requiredForCompletion: true,
   },
 
-  // ── 6–8: THE UNIVERSE (Boşluk) ──
-  {
-    id: 'all_domains',
-    order: 6,
-    title: 'Üç Yüzlü Boşluk',
-    description: 'Boşluğun üç yüzünü de gördün.',
-    category: 'universe',
-    icon: 'cosmos',
-    requiredForCompletion: true,
-  },
+  // ── 6–7: THE UNIVERSE (Boşluk) ──
   {
     id: 'world_flip',
-    order: 7,
+    order: 6,
     title: 'Dünya Tersine Döndü',
     description: 'Bazı şeylere fazla tıklamamak gerekiyordu.',
     category: 'universe',
@@ -130,7 +121,7 @@ export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
   },
   {
     id: 'sudo_discovered',
-    order: 8,
+    order: 7,
     title: 'Yetkisiz Bilgelik',
     description: 'Sisteme hükmettiğini sandın.',
     category: 'universe',
@@ -138,10 +129,10 @@ export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
     requiredForCompletion: true,
   },
 
-  // ── 9: RESPECT (Saygı) ──
+  // ── 8: RESPECT (Saygı) ──
   {
     id: 'wreath_offered',
-    order: 9,
+    order: 8,
     title: 'Bir Çelenk',
     description: 'Bir iz de saygıyla bırakılır.',
     category: 'respect',
@@ -149,10 +140,10 @@ export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
     requiredForCompletion: true,
   },
 
-  // ── 10: CUSTOM 404 DISCOVERY (Saklı Olanlar) ──
+  // ── 9: CUSTOM 404 DISCOVERY (Saklı Olanlar) ──
   {
     id: 'not_found_discovered',
-    order: 10,
+    order: 9,
     title: 'Yanlış Kapı',
     description: 'Yanlış yere geldin. Belki de gelmen gereken yer burasıydı.',
     category: 'hidden',
@@ -160,10 +151,10 @@ export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
     requiredForCompletion: true,
   },
 
-  // ── FINAL META-ACHIEVEMENT — GOLDEN TROPHY (§8) ──
+  // ── FINAL META-ACHIEVEMENT — GOLDEN TROPHY (§9) ──
   {
     id: 'golden_trophy',
-    order: 11,
+    order: 10,
     title: 'Hiçliğin Kralı',
     description: 'Bütün izleri buldun. Artık hiçlik seni tanıyor.',
     category: 'trophy',
@@ -190,7 +181,7 @@ export const ACHIEVEMENT_CATEGORIES: ReadonlyArray<{
   {
     key: 'universe',
     label: 'Boşluk',
-    subtitle: 'Üç alan genişletmesi, ters dönen dünya ve sistemin çatlakları.',
+    subtitle: 'Ters dönen dünya ve sistemin derinlikleri.',
   },
   {
     key: 'hidden',

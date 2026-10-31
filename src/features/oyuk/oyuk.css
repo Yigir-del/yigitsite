@@ -254,11 +254,27 @@ html.has-oyuk-cursor * {
   );
 }
 
-.oyuk-director--entering .oyuk-director__backdrop,
-.oyuk-director--exiting .oyuk-director__backdrop {
+.oyuk-director--entering .oyuk-director__backdrop {
   opacity: 1;
   background: #020306;
   transition: opacity 0.22s ease;
+}
+
+/* Exit: the flashlight fades first, then the dark passage closes in (no instant cut to black) */
+.oyuk-director--exiting .oyuk-director__backdrop {
+  opacity: 1;
+  background: #020306;
+  transition: none;
+  animation: oyuk-exit-dim 0.62s cubic-bezier(0.4, 0, 0.6, 1) both;
+}
+
+@keyframes oyuk-exit-dim {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .oyuk-director--arrived {
@@ -609,13 +625,13 @@ html.has-oyuk-cursor * {
 
 .oyuk-cave.is-exiting .oyuk-wall--illuminated {
   opacity: 0;
-  transition: opacity 0.22s ease-out;
+  transition: opacity 0.5s ease-in-out;
 }
 
 .oyuk-viewport-layer.is-exiting .oyuk-torch-halo,
 .oyuk-viewport-layer.is-exiting .oyuk-torch-orb {
   opacity: 0 !important;
-  transition: opacity 0.2s ease-out !important;
+  transition: opacity 0.45s ease-in-out !important;
 }
 
 /* Scattered Cave Writings (§13.1 & §13.2) */
@@ -671,38 +687,6 @@ html.has-oyuk-cursor * {
 .oyuk-writing.is-discovered {
   opacity: 1;
   color: #e2e8f0;
-}
-
-.oyuk-portal-whispers {
-  position: absolute;
-  left: 52%;
-  top: 93.5%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1.25rem;
-  z-index: 5;
-}
-
-.oyuk-portal-link {
-  background: none;
-  border: none;
-  padding: 0.25rem 0.45rem;
-  font-family: var(--font-handwriting);
-  font-size: 1.05rem;
-  letter-spacing: 0.08em;
-  color: rgba(148, 163, 184, 0.52);
-  cursor: pointer;
-  pointer-events: auto;
-  transition: color 0.25s ease, opacity 0.25s ease;
-}
-
-.oyuk-portal-link:hover,
-.oyuk-portal-link:focus-visible {
-  color: #cbd5e1;
-  text-decoration: underline;
-  outline: none;
 }
 
 /* Optional Deeper Discovery Seal (§13.3) */

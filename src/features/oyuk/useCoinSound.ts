@@ -303,6 +303,100 @@ export function playGoldenTrophySound(): boolean {
   }
 }
 
+/**
+ * Plays an unlock chime at most once per achievement toast.
+ * Pure bookkeeping (no audio) so the de-duplication rule is unit-testable and shared by every caller.
+ */
+const claimedAchievementSounds = new Set<string>();
+
+export function claimAchievementSound(key: string): boolean {
+  if (!key || claimedAchievementSounds.has(key)) return false;
+  claimedAchievementSounds.add(key);
+  // Bounded memory: only the most recent claims matter for de-duplication.
+  if (claimedAchievementSounds.size > 64) {
+    const oldest = claimedAchievementSounds.values().next().value;
+    if (oldest !== undefined) claimedAchievementSounds.delete(oldest);
+  }
+  return true;
+}
+
+export function resetAchievementSoundClaimsForTests(): void {
+  claimedAchievementSounds.clear();
+}
+
+/**
+ * Short (~380ms), crystalline and slightly mysterious unlock cue for ordinary achievements.
+ * Two glassy partials (G6 → D7, a fifth apart) with a barely detuned shimmer twin and a soft
+ * low body, through a gentle lowpass. Reuses the shared AudioContext and respects the sound
+ * preference; safely no-ops when audio is unavailable or still locked by the browser.
+ */
+export function playAchievementUnlockSound(): boolean {
+  if (mutedState) return false;
+  const ctx = getOrCreateAudioContext();
+  if (!ctx) return false;
+
+  try {
+    if (ctx.state === 'suspended') {
+      void ctx.resume().catch(() => {});
+    }
+
+    const now = ctx.currentTime;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(6200, now);
+    filter.Q.setValueAtTime(0.5, now);
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.0001, now);
+    masterGain.gain.linearRampToValueAtTime(0.075, now + 0.008);
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+
+    filter.connect(masterGain);
+    masterGain.connect(ctx.destination);
+
+    const partials = [
+      { freq: 1567.98, delay: 0, gain: 0.5, decay: 0.3, type: 'sine' as const }, // G6
+      { freq: 1571.4, delay: 0, gain: 0.18, decay: 0.26, type: 'sine' as const }, // shimmer twin
+      { freq: 2349.32, delay: 0.058, gain: 0.42, decay: 0.32, type: 'sine' as const }, // D7
+      { freq: 783.99, delay: 0, gain: 0.16, decay: 0.2, type: 'triangle' as const }, // soft body
+    ];
+
+    const nodes: AudioNode[] = [filter, masterGain];
+    for (const p of partials) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      const startAt = now + p.delay;
+      osc.type = p.type;
+      osc.frequency.setValueAtTime(p.freq, startAt);
+
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.setValueAtTime(0.0001, startAt);
+      g.gain.linearRampToValueAtTime(p.gain, startAt + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, startAt + p.decay);
+
+      osc.connect(g);
+      g.connect(filter);
+      osc.start(startAt);
+      osc.stop(startAt + p.decay + 0.02);
+      nodes.push(osc, g);
+    }
+
+    setTimeout(() => {
+      for (const node of nodes) {
+        try {
+          node.disconnect();
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 520);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function useCoinSound() {
   const muted = useSyncExternalStore(subscribeMute, isCoinSoundMuted, isCoinSoundMuted);
 

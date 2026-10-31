@@ -381,8 +381,7 @@ html.world-flipped body {
   top: 1.75rem;
   left: 1.75rem;
   z-index: 205;
-  pointer-events: auto;
-  cursor: pointer;
+  pointer-events: none; cursor: default;
   background: transparent;
   border: none;
   padding: 0;
@@ -2078,3 +2077,4 @@ html.scene-quiet {
   font-size: 0.9rem;
   margin-top: 0.5rem;
 }
+

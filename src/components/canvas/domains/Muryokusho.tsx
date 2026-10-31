@@ -14,11 +14,6 @@ import {
 } from '../../../utils/noteTraces';
 import { samsunSkyBand } from '../../../utils/samsunTime';
 import {
-  setProjectedMoon,
-  triggerLunarClick,
-  useLunarSecret,
-} from '../../../features/lunarSecret/lunarSecretStore';
-import {
   setProjectedOwnedStars,
   useNoteStars,
   type ProjectedStarPoint,
@@ -27,7 +22,7 @@ import {
 const COLLAPSE_EVENT = APP_EVENTS.UNIVERSE_COLLAPSE;
 const RESTORE_EVENT = APP_EVENTS.UNIVERSE_RESTORE;
 
-// ── Falling Stars Component ──
+// ── Falling Stars Component (Subtle mouse parallax & slow celestial drift) ──
 function MovingStars({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
   const starsRef = useRef<THREE.Group>(null);
   const collapseTime = useRef(0);
@@ -37,16 +32,13 @@ function MovingStars({ hushed, collapsed }: { hushed: boolean; collapsed: boolea
 
     if (collapsed) {
       collapseTime.current += delta;
-      // Accelerate stars downward – they pour off the sky
       const fallSpeed = Math.min(collapseTime.current * 0.6, 4.5);
       starsRef.current.position.y -= delta * fallSpeed;
-      // Tumble faster and faster
       starsRef.current.rotation.x -= delta * (0.12 + collapseTime.current * 0.04);
-      starsRef.current.rotation.y -= delta * (0.10 + collapseTime.current * 0.03);
+      starsRef.current.rotation.y -= delta * (0.1 + collapseTime.current * 0.03);
       return;
     }
 
-    // Normal behaviour
     collapseTime.current = 0;
     const speed = hushed ? 0.04 : 1;
     starsRef.current.rotation.x -= delta * 0.02 * speed;
@@ -81,19 +73,20 @@ function MovingStars({ hushed, collapsed }: { hushed: boolean; collapsed: boolea
   );
 }
 
-// ── Moon that cracks and splits in two + reveals its hidden side on hold (§6) ──
+/**
+ * Atmospheric Scenery Moon (§4).
+ * Completely non-interactive:
+ * - Clicking does nothing (no handlers, no cursor change, no pointer events).
+ * - No click counters, no red moon, no rings, no tooltips.
+ * - Restrained gray-silver surface with natural shading.
+ * - Preserves custom 404 splitting animation only when the universe collapses.
+ */
 function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
-  const lunar = useLunarSecret();
-  const clickCount = lunar.clickCount;
-
-  // Refs for the three meshes: intact sphere, upper half, lower half
   const mainRef = useRef<THREE.Mesh>(null);
   const upperRef = useRef<THREE.Mesh>(null);
   const lowerRef = useRef<THREE.Mesh>(null);
-  const projCenterRef = useRef(new THREE.Vector3());
-  const projEdgeRef = useRef(new THREE.Vector3());
+  const crackRef = useRef<THREE.Mesh>(null);
 
-  // Collapse animation state (mutable – NOT React state, updated each frame)
   const cs = useRef({
     phase: 'intact' as 'intact' | 'shaking' | 'splitting' | 'gone',
     elapsed: 0,
@@ -101,9 +94,6 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
     lowerVY: 0,
     opacity: 1.0,
   });
-
-  // Cracking flash overlay (a ring plane flash)
-  const crackRef = useRef<THREE.Mesh>(null);
 
   useEffect(() => {
     return () => {
@@ -127,69 +117,28 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
     }
   }, [collapsed]);
 
-  useFrame((r3fState, delta) => {
+  useFrame((_, delta) => {
     const state = cs.current;
-
-    // Project 3D Moon coordinates to viewport so LunarSecretOverlay aligns 1:1 (§6.6)
-    if (state.phase === 'intact' && mainRef.current && !hushed) {
-      const center = projCenterRef.current.copy(mainRef.current.position);
-      const edge = projEdgeRef.current.copy(mainRef.current.position).add(new THREE.Vector3(1.5, 0, 0));
-      center.project(r3fState.camera);
-      edge.project(r3fState.camera);
-
-      const width = r3fState.size.width;
-      const height = r3fState.size.height;
-      if (width > 0 && height > 0 && center.z < 1) {
-        const screenX = (center.x * 0.5 + 0.5) * width;
-        const screenY = (-center.y * 0.5 + 0.5) * height;
-        const edgeX = (edge.x * 0.5 + 0.5) * width;
-        const radiusPx = Math.max(28, Math.abs(edgeX - screenX));
-        setProjectedMoon({
-          x: screenX,
-          y: screenY,
-          radiusPx,
-          visible: true,
-        });
-      }
-
-      // Smoothly rotate the Moon when held or when its hidden side is revealed (§6.3)
-      const targetRotY = lunar.secretRevealed
-        ? Math.PI
-        : lunar.holding
-          ? lunar.holdProgress * Math.PI * 0.65
-          : 0;
-      mainRef.current.rotation.y = THREE.MathUtils.lerp(
-        mainRef.current.rotation.y,
-        targetRotY,
-        Math.min(1, delta * 5.5),
-      );
-    } else if (state.phase !== 'intact') {
-      setProjectedMoon({ x: 0, y: 0, radiusPx: 42, visible: false });
-    }
-
     if (state.phase === 'intact') return;
 
     state.elapsed += delta;
 
-    // ── PHASE 1: Shaking (0 – 1.4 s) ──
+    // ── PHASE 1: 404 Universe Shaking (0 – 1.4 s) ──
     if (state.phase === 'shaking') {
       if (mainRef.current) {
         mainRef.current.position.x = 5 + Math.sin(state.elapsed * 28) * 0.09;
         mainRef.current.position.y = 3 + Math.cos(state.elapsed * 22) * 0.07;
-        // Subtle red glow on crack imminent
         const mat = mainRef.current.material as THREE.MeshStandardMaterial;
         const t = Math.min(state.elapsed / 1.4, 1);
         mat.emissive.setRGB(0.25 * t, 0.02 * t, 0.02 * t);
-        mat.emissiveIntensity = 0.5 + t * 1.5;
+        mat.emissiveIntensity = 0.35 + t * 0.8;
       }
-      // Flash crack line
       if (crackRef.current && state.elapsed > 1.0) {
         crackRef.current.visible = true;
         const mat = crackRef.current.material as THREE.MeshBasicMaterial;
         mat.opacity = 0.85 * Math.sin(((state.elapsed - 1.0) * Math.PI) / 0.4);
       }
 
-      // Transition to splitting
       if (state.elapsed > 1.4) {
         state.phase = 'splitting';
         state.elapsed = 0;
@@ -214,9 +163,8 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
       }
     }
 
-    // ── PHASE 2: Splitting (0 – ~2.5 s) ──
+    // ── PHASE 2: 404 Splitting (0 – ~2.5 s) ──
     if (state.phase === 'splitting') {
-      // Accelerate the halves apart
       state.upperVY = Math.min(state.upperVY + delta * 0.5, 2.2);
       state.lowerVY = Math.min(state.lowerVY + delta * 0.5, 2.2);
       state.opacity = Math.max(0, state.opacity - delta * 0.38);
@@ -242,55 +190,24 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
     }
   });
 
-  const baseColor =
-    clickCount > 5
-      ? '#ff4444'
-      : lunar.secretRevealed
-        ? '#dbeafe'
-        : '#ffffff';
-  const emissive =
-    clickCount > 5
-      ? '#ff0000'
-      : lunar.secretRevealed
-        ? '#3b82f6'
-        : lunar.holding
-          ? '#64748b'
-          : '#444444';
-  const emissiveInt = hushed ? 0.35 : lunar.secretRevealed ? 0.68 : 0.5;
+  const baseColor = '#cbd5e1';
+  const emissive = '#1e293b';
+  const emissiveInt = hushed ? 0.25 : 0.45;
 
   return (
     <>
-      {/* Full intact moon */}
-      <mesh
-        ref={mainRef}
-        position={[5, 3, -10]}
-        onClick={hushed ? undefined : () => triggerLunarClick()}
-        onPointerOver={
-          hushed
-            ? undefined
-            : () => {
-                document.body.style.cursor = 'pointer';
-              }
-        }
-        onPointerOut={
-          hushed
-            ? undefined
-            : () => {
-                document.body.style.cursor = 'auto';
-              }
-        }
-      >
-        <sphereGeometry args={[1.5, 32, 32]} />
+      {/* Full intact moon (Non-interactive scenic backdrop §4.1) */}
+      <mesh ref={mainRef} position={[5, 3, -10]}>
+        <sphereGeometry args={[1.5, 48, 48]} />
         <meshStandardMaterial
           color={baseColor}
           emissive={emissive}
           emissiveIntensity={emissiveInt}
-          roughness={0.8}
+          roughness={0.78}
         />
-        {clickCount > 5 && <pointLight color="#ff0000" intensity={2} distance={20} />}
       </mesh>
 
-      {/* Crack flash plane (horizontal ring at equator) */}
+      {/* Crack flash plane for 404 collapse */}
       <mesh ref={crackRef} position={[5, 3, -10]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
         <ringGeometry args={[1.45, 1.6, 64]} />
         <meshBasicMaterial
@@ -303,28 +220,28 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
         />
       </mesh>
 
-      {/* Upper half-sphere  (theta: 0 → π/2) */}
+      {/* Upper half-sphere for 404 split */}
       <mesh ref={upperRef} position={[5, 3, -10]} visible={false}>
         <sphereGeometry args={[1.5, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial
           color={baseColor}
-          emissive="#330808"
-          emissiveIntensity={0.6}
-          roughness={0.85}
+          emissive="#1e293b"
+          emissiveIntensity={0.4}
+          roughness={0.8}
           transparent
           opacity={1}
           side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Lower half-sphere  (theta: π/2 → π) */}
+      {/* Lower half-sphere for 404 split */}
       <mesh ref={lowerRef} position={[5, 3, -10]} visible={false}>
         <sphereGeometry args={[1.5, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
         <meshStandardMaterial
           color={baseColor}
-          emissive="#330808"
-          emissiveIntensity={0.6}
-          roughness={0.85}
+          emissive="#1e293b"
+          emissiveIntensity={0.4}
+          roughness={0.8}
           transparent
           opacity={1}
           side={THREE.DoubleSide}
@@ -357,7 +274,6 @@ function TraceConstellation({
 
   const ownedSet = useMemo(() => new Set(ownedNoteIds), [ownedNoteIds]);
 
-  // Ambient public stars exclude visitor-owned IDs so there are zero duplicate stars (§8.9)
   const ambientStars = useMemo(
     () =>
       traces
@@ -366,7 +282,6 @@ function TraceConstellation({
     [traces, ownedSet],
   );
 
-  // Visitor-owned stars sit at deterministic forward-camera coordinates (§8.8)
   const ownedStars = useMemo(
     () =>
       ownedNoteIds.map((id) => ({
@@ -460,7 +375,7 @@ export function resolveSceneAtmosphere(theme: DomainId, hushed: boolean) {
   };
 }
 
-// ── Root Scene ──
+// ── Root Scene (Restored clean original starfield & calm atmospheric scenery §6) ──
 export default function Muryokusho({ hushed = false }: { hushed?: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
   const { theme } = useTheme();

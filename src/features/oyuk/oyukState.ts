@@ -40,8 +40,12 @@ export const CINEMATIC_STEP_MS = {
   thresholdReduced: 1300,
   entering: 520,
   enteringReduced: 300,
-  exiting: 240,
-  exitingReduced: 80,
+  /** Flashlight fade + dark passage before the route actually changes */
+  exiting: 720,
+  exitingReduced: 120,
+  /** Time the destination page gets to mount behind the dark passage before it dissolves */
+  exitSettle: 280,
+  exitSettleReduced: 60,
   arrived: 460,
   failsafeMax: 9200,
 } as const;
@@ -219,6 +223,28 @@ export function writeOyukIntroSeen(seen = true): void {
   }
 }
 
+/**
+ * Document-lifetime semantics (OYUK journey reset):
+ * Donations, the OYUK unlock flag and the intro flag only live for the currently loaded
+ * document. A full reload (F5 / hard refresh / new tab) drops any stale persisted copy so the
+ * visitor has to donate five new coins. Achievements, world memory, note ownership and
+ * historical cave discoveries use their own keys and are intentionally left untouched.
+ */
+export function clearPersistedOyukJourney(): void {
+  try {
+    localStorage.removeItem(ALMS_KEY);
+    localStorage.removeItem(OYUK_UNLOCKED_KEY);
+    localStorage.removeItem(OYUK_INTRO_SEEN_KEY);
+  } catch {
+    /* private / quota mode */
+  }
+}
+
+// Module evaluation happens exactly once per document load, which is precisely the reset boundary.
+if (typeof window !== 'undefined') {
+  clearPersistedOyukJourney();
+}
+
 let state: OyukRuntimeState = {
   alms: typeof window !== 'undefined' ? readAlms() : 0,
   unlocked: typeof window !== 'undefined' ? readOyukUnlocked() : false,
@@ -266,9 +292,10 @@ export function subscribeOyukState(listener: () => void): () => void {
 }
 
 export function syncOyukFromStorage(): OyukRuntimeState {
-  const nextAlms = readAlms();
-  const nextUnlocked = readOyukUnlocked();
-  const nextIntroSeen = readOyukIntroSeen();
+  // Upward-only merge: another tab clearing storage on load must never downgrade this document.
+  const nextAlms = Math.max(state.alms, readAlms());
+  const nextUnlocked = state.unlocked || readOyukUnlocked();
+  const nextIntroSeen = state.introSeen || readOyukIntroSeen();
   if (
     state.alms !== nextAlms ||
     state.unlocked !== nextUnlocked ||
