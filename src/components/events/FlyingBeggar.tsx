@@ -27,6 +27,18 @@ import {
   type CoinPoint,
   type DonationOutcome,
 } from '../../features/oyuk/oyukState';
+import {
+  recordWorldMemoryEncounter,
+  selectContextualMemoryLine,
+} from '../../features/worldMemory/worldMemoryStore';
+import {
+  cancelActiveEncounter,
+  checkAndTriggerEncounter,
+  ENCOUNTER_EXCHANGES,
+  isEncounterActive,
+  registerEncounterActor,
+  type ActorFacing,
+} from '../../features/characterEncounters/encounterManager';
 
 interface ActiveCoinToss {
   id: number;
@@ -66,11 +78,13 @@ export default function FlyingBeggar() {
   const [showBubble, setShowBubble] = useState(false);
   const [activeCoin, setActiveCoin] = useState<ActiveCoinToss | null>(null);
   const [cupImpact, setCupImpact] = useState(false);
+  const [encounterFacing, setEncounterFacing] = useState<ActorFacing>(null);
 
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cupImpactTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mobileEncounterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const actorRef = useRef<HTMLDivElement | null>(null);
   const cupRef = useRef<SVGGElement | null>(null);
   const busyRef = useRef(false);
@@ -111,8 +125,10 @@ export default function FlyingBeggar() {
 
   useEffect(() => {
     if (cinematicRunning) {
+      cancelActiveEncounter();
       clearSpeechTimers();
       setShowBubble(false);
+      setEncounterFacing(null);
       freezeFlight();
     }
   }, [cinematicRunning, clearSpeechTimers, freezeFlight]);
@@ -120,6 +136,7 @@ export default function FlyingBeggar() {
   useEffect(() => {
     return () => {
       if (cupImpactTimerRef.current) clearTimeout(cupImpactTimerRef.current);
+      if (mobileEncounterTimerRef.current) clearTimeout(mobileEncounterTimerRef.current);
     };
   }, []);
 
@@ -134,9 +151,18 @@ export default function FlyingBeggar() {
       if (
         busyRef.current ||
         coinInFlightRef.current ||
+        isEncounterActive() ||
         document.hidden ||
         isCinematicActive()
       ) {
+        return;
+      }
+
+      // Living Universe (§4.4): Occasionally acknowledge visitor's past discoveries
+      const memoryLine = selectContextualMemoryLine('beggar');
+      if (memoryLine) {
+        say(memoryLine, 4800);
+        emit({ from: 'beggar', kind: 'own', line: memoryLine });
         return;
       }
 
@@ -156,7 +182,7 @@ export default function FlyingBeggar() {
     const speakLoop = setInterval(speak, 10000 + Math.random() * 4000);
 
     const onFlyerSpeak = (e: Event) => {
-      if (isCinematicActive() || coinInFlightRef.current) return;
+      if (isCinematicActive() || coinInFlightRef.current || isEncounterActive()) return;
       const detail = (e as CustomEvent<FlyerSpeakDetail>).detail;
       if (!detail || detail.from !== 'sage' || detail.kind !== 'jab') return;
 
@@ -193,6 +219,49 @@ export default function FlyingBeggar() {
       height: rect.height || 70,
     };
   }, []);
+
+  // Register Beggar actor with character encounter manager (§5)
+  useEffect(() => {
+    if (isMobilePerf) return;
+    return registerEncounterActor('beggar', {
+      getCenter: () => {
+        const rect = measureActorRect();
+        if (!rect) return null;
+        return {
+          x: rect.left + rect.width * 0.5,
+          y: rect.top + rect.height * 0.5,
+        };
+      },
+      isReady: () =>
+        visible && !cinematicRunning && !coinInFlightRef.current,
+      hold: (facing) => {
+        clearSpeechTimers();
+        setShowBubble(false);
+        setEncounterFacing(facing);
+        holdFlight();
+      },
+      sayLine: (text, holdMs) => {
+        say(text, holdMs);
+      },
+      clearSpeech: () => {
+        clearSpeechTimers();
+        setShowBubble(false);
+      },
+      resume: () => {
+        setEncounterFacing(null);
+        resumeFlight(240);
+      },
+    });
+  }, [
+    isMobilePerf,
+    visible,
+    cinematicRunning,
+    measureActorRect,
+    clearSpeechTimers,
+    holdFlight,
+    say,
+    resumeFlight,
+  ]);
 
   /**
    * Resolves the live viewport coordinates of the beggar's actual donation bowl SVG element.
@@ -340,9 +409,24 @@ export default function FlyingBeggar() {
     navigate('/oyuk');
   };
 
+  const triggerMobileEncounter = () => {
+    if (cinematicRunning || coinInFlightRef.current) return;
+    recordWorldMemoryEncounter();
+    const exchange = ENCOUNTER_EXCHANGES[0];
+    if (mobileEncounterTimerRef.current) {
+      clearTimeout(mobileEncounterTimerRef.current);
+      mobileEncounterTimerRef.current = null;
+    }
+    say(exchange[0].text, 1750);
+    mobileEncounterTimerRef.current = setTimeout(() => {
+      say(`Bilge: “${exchange[1].text}” — “${exchange[2].text}”`, 3200);
+      mobileEncounterTimerRef.current = null;
+    }, 1800);
+  };
+
   const almsFooter = (
     <div className="beggar-alms" aria-live="polite">
-      <span>Toplam bağış · oyun: {oyuk.alms.toLocaleString('tr-TR')}</span>
+      <span>Verdiğin altın: {oyuk.alms.toLocaleString('tr-TR')}</span>
       <button
         type="button"
         className="beggar-coin-mute-btn"
@@ -353,6 +437,17 @@ export default function FlyingBeggar() {
       >
         {coinMuted ? '· ♪ sessiz' : '· ♪ çınk'}
       </button>
+      {isMobilePerf && !cinematicRunning && (
+        <button
+          type="button"
+          className="beggar-coin-mute-btn"
+          onClick={triggerMobileEncounter}
+          title="Dilenciyi bilgeyle yüzleştir"
+          aria-label="Dilenciyi bilgeyle yüzleştir"
+        >
+          · bilgeyle yüzleştir
+        </button>
+      )}
       {oyuk.unlocked && !cinematicRunning && (
         <button
           type="button"
@@ -395,6 +490,7 @@ export default function FlyingBeggar() {
             className="beggar-mobile-badge"
             onClick={(e) => giveAlms(e.clientX, e.clientY)}
             onKeyDown={(e) => {
+              if (e.repeat) return;
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 giveAlms();
@@ -463,10 +559,15 @@ export default function FlyingBeggar() {
         whileDrag={{ scale: 1.15, cursor: 'grabbing', zIndex: 200 }}
         onDragStart={() => {
           draggedRef.current = true;
+          setEncounterFacing(null);
           onDragStart();
+        }}
+        onDrag={() => {
+          checkAndTriggerEncounter('beggar', { wasDragged: true });
         }}
         onDragEnd={() => {
           onDragEnd();
+          checkAndTriggerEncounter('beggar', { wasDragged: true });
           if (dragResetRef.current) clearTimeout(dragResetRef.current);
           dragResetRef.current = setTimeout(() => {
             draggedRef.current = false;
@@ -475,6 +576,7 @@ export default function FlyingBeggar() {
         }}
         onClick={(e) => giveAlms(e.clientX, e.clientY)}
         onKeyDown={(e) => {
+          if (e.repeat) return;
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             giveAlms();
@@ -526,7 +628,19 @@ export default function FlyingBeggar() {
           </AnimatePresence>
         </div>
 
-        <BeggarActorSvg cupRef={cupRef} cupImpact={cupImpact} />
+        <div
+          style={{
+            transform:
+              encounterFacing === 'right'
+                ? 'rotate(4deg) translateX(2px)'
+                : encounterFacing === 'left'
+                  ? 'rotate(-4deg) translateX(-2px)'
+                  : undefined,
+            transition: 'transform 0.28s ease',
+          }}
+        >
+          <BeggarActorSvg cupRef={cupRef} cupImpact={cupImpact} />
+        </div>
       </motion.div>
       {coinOverlay}
       {almsFooter}

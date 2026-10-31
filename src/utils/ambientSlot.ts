@@ -1,6 +1,6 @@
-/** One ambient voice at a time — idle whispers vs ChaosManager idle quotes. */
+/** One ambient voice at a time — idle whispers, ChaosManager idle quotes, and Reality Anomalies. */
 
-type Slot = 'chaos' | 'whisper';
+export type Slot = 'chaos' | 'whisper' | 'anomaly';
 
 let current: Slot | null = null;
 
@@ -12,4 +12,12 @@ export function takeAmbient(slot: Slot): boolean {
 
 export function releaseAmbient(slot: Slot) {
   if (current === slot) current = null;
+}
+
+export function getActiveAmbientSlot(): Slot | null {
+  return current;
+}
+
+export function resetAmbientSlotForTests() {
+  current = null;
 }

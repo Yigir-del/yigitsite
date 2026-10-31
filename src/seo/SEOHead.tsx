@@ -107,7 +107,7 @@ export default function SEOHead({ page }: SEOHeadProps) {
   const fullTitle = SITE.titleTemplate.replace('%s', seo.title);
   const ogImage = seo.ogImage ?? SITE.ogImage;
   const keywords = seo.keywords ?? SITE.keywords;
-  const isNoIndex = page === 'notFound' || page === 'oyuk';
+  const isNoIndex = page === 'notFound' || page === 'oyuk' || page === 'achievements';
 
   return (
     <>

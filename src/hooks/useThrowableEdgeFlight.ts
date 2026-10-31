@@ -72,6 +72,8 @@ export function useThrowableEdgeFlight(opts: {
       throwResumeRef.current = null;
     }
     stopFlightAnim();
+    draggingRef.current = false;
+    setDragging(false);
   }, [stopFlightAnim]);
 
   const playFlight = useCallback(

@@ -5,8 +5,24 @@ import * as THREE from 'three';
 import { useTheme } from '../../../context/ThemeContext';
 import { DOMAIN_MAP, type DomainId } from '../../../themes/domains';
 import { APP_EVENTS } from '../../../utils/events';
-import { getNoteTraces, hashStarPos, NOTE_TRACES_EVENT, type NoteTrace } from '../../../utils/noteTraces';
+import {
+  getNoteTraces,
+  hashOwnedStarPos,
+  hashStarPos,
+  NOTE_TRACES_EVENT,
+  type NoteTrace,
+} from '../../../utils/noteTraces';
 import { samsunSkyBand } from '../../../utils/samsunTime';
+import {
+  setProjectedMoon,
+  triggerLunarClick,
+  useLunarSecret,
+} from '../../../features/lunarSecret/lunarSecretStore';
+import {
+  setProjectedOwnedStars,
+  useNoteStars,
+  type ProjectedStarPoint,
+} from '../../../features/noteStars/noteStarsStore';
 
 const COLLAPSE_EVENT = APP_EVENTS.UNIVERSE_COLLAPSE;
 const RESTORE_EVENT = APP_EVENTS.UNIVERSE_RESTORE;
@@ -65,14 +81,17 @@ function MovingStars({ hushed, collapsed }: { hushed: boolean; collapsed: boolea
   );
 }
 
-// ── Moon that cracks and splits in two ──
+// ── Moon that cracks and splits in two + reveals its hidden side on hold (§6) ──
 function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
-  const [clickCount, setClickCount] = useState(0);
+  const lunar = useLunarSecret();
+  const clickCount = lunar.clickCount;
 
   // Refs for the three meshes: intact sphere, upper half, lower half
   const mainRef = useRef<THREE.Mesh>(null);
   const upperRef = useRef<THREE.Mesh>(null);
   const lowerRef = useRef<THREE.Mesh>(null);
+  const projCenterRef = useRef(new THREE.Vector3());
+  const projEdgeRef = useRef(new THREE.Vector3());
 
   // Collapse animation state (mutable – NOT React state, updated each frame)
   const cs = useRef({
@@ -98,15 +117,56 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
     } else {
       cs.current.phase = 'intact';
       cs.current.opacity = 1;
-      if (mainRef.current) mainRef.current.visible = true;
+      if (mainRef.current) {
+        mainRef.current.visible = true;
+        mainRef.current.position.set(5, 3, -10);
+      }
       if (upperRef.current) upperRef.current.visible = false;
       if (lowerRef.current) lowerRef.current.visible = false;
       if (crackRef.current) crackRef.current.visible = false;
     }
   }, [collapsed]);
 
-  useFrame((_, delta) => {
+  useFrame((r3fState, delta) => {
     const state = cs.current;
+
+    // Project 3D Moon coordinates to viewport so LunarSecretOverlay aligns 1:1 (§6.6)
+    if (state.phase === 'intact' && mainRef.current && !hushed) {
+      const center = projCenterRef.current.copy(mainRef.current.position);
+      const edge = projEdgeRef.current.copy(mainRef.current.position).add(new THREE.Vector3(1.5, 0, 0));
+      center.project(r3fState.camera);
+      edge.project(r3fState.camera);
+
+      const width = r3fState.size.width;
+      const height = r3fState.size.height;
+      if (width > 0 && height > 0 && center.z < 1) {
+        const screenX = (center.x * 0.5 + 0.5) * width;
+        const screenY = (-center.y * 0.5 + 0.5) * height;
+        const edgeX = (edge.x * 0.5 + 0.5) * width;
+        const radiusPx = Math.max(28, Math.abs(edgeX - screenX));
+        setProjectedMoon({
+          x: screenX,
+          y: screenY,
+          radiusPx,
+          visible: true,
+        });
+      }
+
+      // Smoothly rotate the Moon when held or when its hidden side is revealed (§6.3)
+      const targetRotY = lunar.secretRevealed
+        ? Math.PI
+        : lunar.holding
+          ? lunar.holdProgress * Math.PI * 0.65
+          : 0;
+      mainRef.current.rotation.y = THREE.MathUtils.lerp(
+        mainRef.current.rotation.y,
+        targetRotY,
+        Math.min(1, delta * 5.5),
+      );
+    } else if (state.phase !== 'intact') {
+      setProjectedMoon({ x: 0, y: 0, radiusPx: 42, visible: false });
+    }
+
     if (state.phase === 'intact') return;
 
     state.elapsed += delta;
@@ -182,9 +242,21 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
     }
   });
 
-  const baseColor = clickCount > 5 ? '#ff4444' : '#ffffff';
-  const emissive = clickCount > 5 ? '#ff0000' : '#444444';
-  const emissiveInt = hushed ? 0.35 : 0.5;
+  const baseColor =
+    clickCount > 5
+      ? '#ff4444'
+      : lunar.secretRevealed
+        ? '#dbeafe'
+        : '#ffffff';
+  const emissive =
+    clickCount > 5
+      ? '#ff0000'
+      : lunar.secretRevealed
+        ? '#3b82f6'
+        : lunar.holding
+          ? '#64748b'
+          : '#444444';
+  const emissiveInt = hushed ? 0.35 : lunar.secretRevealed ? 0.68 : 0.5;
 
   return (
     <>
@@ -192,7 +264,7 @@ function Moon({ hushed, collapsed }: { hushed: boolean; collapsed: boolean }) {
       <mesh
         ref={mainRef}
         position={[5, 3, -10]}
-        onClick={hushed ? undefined : () => setClickCount((c) => c + 1)}
+        onClick={hushed ? undefined : () => triggerLunarClick()}
         onPointerOver={
           hushed
             ? undefined
@@ -270,6 +342,8 @@ function TraceConstellation({
   particleColor: string;
 }) {
   const [traces, setTraces] = useState<NoteTrace[]>(() => getNoteTraces());
+  const { ownedNoteIds, selectedStarNoteId } = useNoteStars();
+  const projVecRef = useRef(new THREE.Vector3());
 
   useEffect(() => {
     const onTraces = (e: Event) => {
@@ -281,16 +355,53 @@ function TraceConstellation({
     return () => window.removeEventListener(NOTE_TRACES_EVENT, onTraces);
   }, []);
 
-  const stars = useMemo(
-    () => traces.map((row) => ({ id: row.id, pos: hashStarPos(row.id) })),
-    [traces],
+  const ownedSet = useMemo(() => new Set(ownedNoteIds), [ownedNoteIds]);
+
+  // Ambient public stars exclude visitor-owned IDs so there are zero duplicate stars (§8.9)
+  const ambientStars = useMemo(
+    () =>
+      traces
+        .filter((row) => !ownedSet.has(row.id))
+        .map((row) => ({ id: row.id, pos: hashStarPos(row.id) })),
+    [traces, ownedSet],
   );
 
-  if (stars.length === 0) return null;
+  // Visitor-owned stars sit at deterministic forward-camera coordinates (§8.8)
+  const ownedStars = useMemo(
+    () =>
+      ownedNoteIds.map((id) => ({
+        id,
+        pos: hashOwnedStarPos(id),
+      })),
+    [ownedNoteIds],
+  );
+
+  useFrame((r3fState) => {
+    if (ownedStars.length === 0 || hushed) return;
+    const width = r3fState.size.width;
+    const height = r3fState.size.height;
+    if (width <= 0 || height <= 0) return;
+
+    const nextProjected: Record<string, ProjectedStarPoint> = {};
+    for (const star of ownedStars) {
+      const vec = projVecRef.current.set(star.pos[0], star.pos[1], star.pos[2]);
+      vec.project(r3fState.camera);
+      const visible =
+        vec.z < 1 && vec.x >= -0.95 && vec.x <= 0.95 && vec.y >= -0.92 && vec.y <= 0.92;
+      nextProjected[star.id] = {
+        x: (vec.x * 0.5 + 0.5) * width,
+        y: (-vec.y * 0.5 + 0.5) * height,
+        visible,
+      };
+    }
+    setProjectedOwnedStars(nextProjected);
+  });
+
+  if (ambientStars.length === 0 && ownedStars.length === 0) return null;
 
   return (
     <group>
-      {stars.map((star) => (
+      {ambientStars.map((star) => (
         <mesh key={star.id} position={star.pos}>
           <sphereGeometry args={[0.09, 6, 6]} />
           <meshBasicMaterial
@@ -301,6 +412,20 @@ function TraceConstellation({
           />
         </mesh>
       ))}
+      {ownedStars.map((star) => {
+        const isSelected = selectedStarNoteId === star.id;
+        return (
+          <mesh key={`owned-${star.id}`} position={star.pos}>
+            <sphereGeometry args={[isSelected ? 0.17 : 0.13, 10, 10]} />
+            <meshBasicMaterial
+              color={isSelected ? '#fde68a' : '#fef3c7'}
+              transparent
+              opacity={hushed ? 0.45 : 0.96}
+              depthWrite={false}
+            />
+          </mesh>
+        );
+      })}
     </group>
   );
 }

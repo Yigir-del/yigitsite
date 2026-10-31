@@ -141,6 +141,7 @@ export default function NotesWall() {
   const isAdmin = useAdminSession();
   const { notes, loaded, error } = useNotesStore();
   const [dragFrontId, setDragFrontId] = useState<string | null>(null);
+  const wallRef = useRef<HTMLDivElement | null>(null);
 
   const positionedNotes = useMemo(
     () => computePositionedNotes(notes, isMobilePerf),
@@ -168,6 +169,7 @@ export default function NotesWall() {
 
   return (
     <div
+      ref={wallRef}
       className="page-container notes-wall-container"
       style={{
         height: `${containerHeightVh}vh`,

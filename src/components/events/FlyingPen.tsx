@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { planWanderHop, randomOffscreenStart } from '../../utils/flightPath';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 import { ensureGlobalNoteEventListener, submitNote } from '../../utils/notesStore';
+import { unlockAchievement } from '../../features/achievements/achievementStore';
 
 const NOTE_TEXT_MAX = 500;
 const NOTE_AUTHOR_MAX = 40;
@@ -78,6 +79,7 @@ export default function FlyingPen() {
       return;
     }
 
+    unlockAchievement('first_note');
     setNoteText('');
     setAuthorName('');
     setSubmitError(null);

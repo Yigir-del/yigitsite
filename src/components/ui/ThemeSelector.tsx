@@ -2,7 +2,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { DOMAINS, DOMAIN_MAP } from '../../themes/domains';
 
 export default function ThemeSelector() {
-  const { theme, setTheme, isTransitioning } = useTheme();
+  const { theme, nextTheme, setTheme, isTransitioning } = useTheme();
 
   const cycleTheme = () => {
     if (isTransitioning) return;
@@ -11,7 +11,8 @@ export default function ThemeSelector() {
     setTheme(DOMAINS[nextIndex].id);
   };
 
-  const currentConfig = DOMAIN_MAP[theme] || DOMAINS[0];
+  const activeThemeId = nextTheme ?? theme;
+  const currentConfig = DOMAIN_MAP[activeThemeId] || DOMAINS[0];
 
   return (
     <button
@@ -20,18 +21,11 @@ export default function ThemeSelector() {
       onClick={cycleTheme}
       aria-label={`Domain Expansion: ${currentConfig.label}. Click to switch theme.`}
       title="Ryōiki Tenkai — Click to switch domain"
-      style={{
-        cursor: 'pointer',
-        background: 'transparent',
-        border: 'none',
-        padding: 0,
-        textAlign: 'right',
-        userSelect: 'none',
-      }}
+      data-domain={activeThemeId}
+      data-transitioning={isTransitioning ? 'true' : 'false'}
     >
       <div className="domain-watermark__eyebrow">RYOIKI TENKAI</div>
       <div className="domain-watermark__name">{currentConfig.label}</div>
     </button>
   );
 }
-

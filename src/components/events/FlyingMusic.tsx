@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { randomOffscreenStart, planWanderHop } from '../../utils/flightPath';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
+import { unlockAchievement } from '../../features/achievements/achievementStore';
 
 const QUOTES = [
   "Şu an canım müzik dinlemek istemiyor. 🎧",
@@ -132,6 +133,7 @@ export default function FlyingMusic() {
   }, [isExpanded, minimizePanel]);
 
   const showSassyQuote = useCallback(() => {
+    unlockAchievement('music_rejected');
     const attempts = searchAttemptsRef.current;
 
     if (attempts < 3) {

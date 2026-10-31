@@ -10,21 +10,53 @@ import {
   shouldJab,
   type FlyerSpeakDetail,
 } from '../../utils/flyerDialogue';
+import { isCinematicActive } from '../../features/oyuk/oyukState';
+import { selectContextualMemoryLine } from '../../features/worldMemory/worldMemoryStore';
+import {
+  checkAndTriggerEncounter,
+  isEncounterActive,
+  registerEncounterActor,
+  type ActorFacing,
+} from '../../features/characterEncounters/encounterManager';
 
 /** Wise face — mostly proverbial lines; rarely jabs the beggar with a mapped reply */
 export default function FlyingSage() {
-  const { x, y, visible, dragging, onDragStart, onDragEnd } = useThrowableEdgeFlight({
+  const {
+    x,
+    y,
+    visible,
+    dragging,
+    onDragStart,
+    onDragEnd,
+    holdFlight,
+    resumeFlight,
+  } = useThrowableEdgeFlight({
     startDelay: 2500,
     durationMin: 18,
     durationMax: 28,
   });
   const [line, setLine] = useState('');
   const [showBubble, setShowBubble] = useState(false);
+  const [encounterFacing, setEncounterFacing] = useState<ActorFacing>(null);
+  const actorRef = useRef<HTMLDivElement | null>(null);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const replyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const busyRef = useRef(false);
 
+  const clearSpeechTimers = useCallback(() => {
+    if (hideRef.current) {
+      clearTimeout(hideRef.current);
+      hideRef.current = null;
+    }
+    if (replyRef.current) {
+      clearTimeout(replyRef.current);
+      replyRef.current = null;
+    }
+    busyRef.current = false;
+  }, []);
+
   const say = useCallback((text: string, holdMs = 5000) => {
+    if (isCinematicActive()) return;
     if (replyRef.current) {
       clearTimeout(replyRef.current);
       replyRef.current = null;
@@ -39,13 +71,56 @@ export default function FlyingSage() {
     }, holdMs);
   }, []);
 
+  // Register Sage actor with character encounter manager (§5)
+  useEffect(() => {
+    return registerEncounterActor('sage', {
+      getCenter: () => {
+        const el = actorRef.current;
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return {
+          x: rect.left + (rect.width || 54) * 0.5,
+          y: rect.top + (rect.height || 70) * 0.5,
+        };
+      },
+      isReady: () => visible && !isCinematicActive(),
+      hold: (facing) => {
+        clearSpeechTimers();
+        setShowBubble(false);
+        setEncounterFacing(facing);
+        holdFlight();
+      },
+      sayLine: (text, holdMs) => {
+        say(text, holdMs);
+      },
+      clearSpeech: () => {
+        clearSpeechTimers();
+        setShowBubble(false);
+      },
+      resume: () => {
+        setEncounterFacing(null);
+        resumeFlight(240);
+      },
+    });
+  }, [visible, clearSpeechTimers, holdFlight, say, resumeFlight]);
+
   useEffect(() => {
     const emit = (detail: FlyerSpeakDetail) => {
       window.dispatchEvent(new CustomEvent(FLYER_SPEAK, { detail }));
     };
 
     const speak = () => {
-      if (busyRef.current || document.hidden) return;
+      if (busyRef.current || isEncounterActive() || document.hidden || isCinematicActive()) {
+        return;
+      }
+
+      // Living Universe (§4.4): Occasionally acknowledge visitor's past discoveries
+      const memoryLine = selectContextualMemoryLine('sage');
+      if (memoryLine) {
+        say(memoryLine, 4800);
+        emit({ from: 'sage', kind: 'own', line: memoryLine });
+        return;
+      }
 
       if (shouldJab(0.15)) {
         const jab = pickRandom(SAGE_TO_BEGGAR);
@@ -63,6 +138,7 @@ export default function FlyingSage() {
     const loop = setInterval(speak, 12000 + Math.random() * 5000);
 
     const onFlyerSpeak = (e: Event) => {
+      if (isCinematicActive() || isEncounterActive()) return;
       const detail = (e as CustomEvent<FlyerSpeakDetail>).detail;
       if (!detail || detail.from !== 'beggar' || detail.kind !== 'jab') return;
 
@@ -82,16 +158,16 @@ export default function FlyingSage() {
     return () => {
       clearTimeout(first);
       clearInterval(loop);
-      if (hideRef.current) clearTimeout(hideRef.current);
-      if (replyRef.current) clearTimeout(replyRef.current);
+      clearSpeechTimers();
       window.removeEventListener(FLYER_SPEAK, onFlyerSpeak);
     };
-  }, [say]);
+  }, [say, clearSpeechTimers]);
 
   if (!visible) return null;
 
   return (
     <motion.div
+      ref={actorRef}
       style={{
         x,
         y,
@@ -110,8 +186,17 @@ export default function FlyingSage() {
       dragMomentum
       dragElastic={0.2}
       whileDrag={{ scale: 1.12, cursor: 'grabbing', zIndex: 200 }}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      onDragStart={() => {
+        setEncounterFacing(null);
+        onDragStart();
+      }}
+      onDrag={() => {
+        checkAndTriggerEncounter('sage', { wasDragged: true });
+      }}
+      onDragEnd={() => {
+        onDragEnd();
+        checkAndTriggerEncounter('sage', { wasDragged: true });
+      }}
       title="Bilge"
     >
       <div
@@ -169,6 +254,13 @@ export default function FlyingSage() {
           justifyContent: 'center',
           boxShadow: '0 0 14px var(--glow)',
           userSelect: 'none',
+          transform:
+            encounterFacing === 'right'
+              ? 'rotate(4deg) translateX(2px)'
+              : encounterFacing === 'left'
+                ? 'rotate(-4deg) translateX(-2px)'
+                : undefined,
+          transition: 'transform 0.28s ease',
         }}
         aria-hidden
       >

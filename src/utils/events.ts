@@ -14,6 +14,8 @@ export const APP_EVENTS = {
   UNIVERSE_COLLAPSE: 'universe-404-collapse',
   UNIVERSE_RESTORE: 'universe-404-restore',
   UNIVERSE_PAUSE: 'universe-404-pause',
+  SUDO_TERMINAL: 'sudo-terminal',
+  MEANING_42: 'meaning-42',
 } as const;
 
 export interface AppEventPayloads {
@@ -24,6 +26,8 @@ export interface AppEventPayloads {
   [APP_EVENTS.UNIVERSE_COLLAPSE]: undefined;
   [APP_EVENTS.UNIVERSE_RESTORE]: undefined;
   [APP_EVENTS.UNIVERSE_PAUSE]: undefined;
+  [APP_EVENTS.SUDO_TERMINAL]: undefined;
+  [APP_EVENTS.MEANING_42]: undefined;
 }
 
 export function dispatchAppEvent<K extends keyof AppEventPayloads>(

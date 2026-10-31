@@ -21,9 +21,10 @@ interface BeggarCoinProps {
 }
 
 /**
- * Isolated pointer-events-none visual layer that animates an antique-gold coin
- * from the click/interaction origin into the beggar's actual donation bowl,
- * followed by a restrained metallic glint upon impact (§1–§4, §7).
+ * High-Definition Golden Coin Animation Layer (§6 & §7).
+ * Uses crisp 64x64 vector geometry (no raster blur filters), rich metallic gold
+ * gradients (#FFF2A6 / #FFD43B / #D89B13 / #A96B08), upward pop trajectory,
+ * 3D vertical-axis coin spin, and live target tracking into the beggar's container.
  */
 export default function BeggarCoin({
   coinId,
@@ -56,7 +57,7 @@ export default function BeggarCoin({
       return getTargetRef.current() ?? fallbackTarget;
     };
 
-    // Reduced-motion path: skip long parabolic flight, show brief container glint & complete
+    // Reduced-motion path (§7 & §27): skip long parabolic flight, show brief container glint & complete
     if (reducedMotion) {
       const target = resolveTarget();
       impactFired = true;
@@ -74,8 +75,8 @@ export default function BeggarCoin({
       };
     }
 
-    const durationMs = isMobile ? 720 : 800;
-    const riseHeight = isMobile ? 48 : 60;
+    const durationMs = isMobile ? 760 : 830;
+    const riseHeight = isMobile ? 56 : 70;
     const startTime = performance.now();
 
     const step = (now: number) => {
@@ -93,12 +94,12 @@ export default function BeggarCoin({
 
       const el = coinNodeRef.current;
       if (el) {
-        el.style.transform = `translate3d(${frame.x.toFixed(1)}px, ${frame.y.toFixed(1)}px, 0) translate(-50%, -50%) rotate(${frame.rotateZ.toFixed(1)}deg) scale(${frame.scale.toFixed(3)}, ${(frame.scale * frame.scaleY).toFixed(3)})`;
+        el.style.transform = `translate3d(${frame.x.toFixed(1)}px, ${frame.y.toFixed(1)}px, 0) translate(-50%, -50%) rotate(${frame.rotateZ.toFixed(1)}deg) scale(${(frame.scale * frame.scaleX).toFixed(3)}, ${frame.scale.toFixed(3)})`;
         el.style.opacity = frame.opacity.toFixed(3);
       }
 
       if (sheenNodeRef.current) {
-        sheenNodeRef.current.style.opacity = (0.42 + frame.apexLight * 0.58).toFixed(2);
+        sheenNodeRef.current.style.opacity = (0.55 + frame.apexLight * 0.45).toFixed(2);
       }
 
       if (t < 1) {
@@ -118,7 +119,7 @@ export default function BeggarCoin({
           if (!cancelled) {
             onCompleteRef.current();
           }
-        }, 165);
+        }, 175);
       }
     };
 
@@ -131,9 +132,11 @@ export default function BeggarCoin({
     };
   }, [coinId, startPoint, fallbackTarget, reducedMotion, isMobile]);
 
-  const coinDiameter = isMobile ? 19 : 21;
-  const gradId = `beggar-coin-grad-${coinId}`;
-  const rimGradId = `beggar-coin-rim-${coinId}`;
+  const coinDiameter = isMobile ? 24 : 28;
+  const outerRimId = `hd-coin-rim-${coinId}`;
+  const bevelRingId = `hd-coin-bevel-${coinId}`;
+  const faceGradId = `hd-coin-face-${coinId}`;
+  const emblemGradId = `hd-coin-emblem-${coinId}`;
 
   return (
     <div className="beggar-coin-layer" aria-hidden="true">
@@ -150,76 +153,135 @@ export default function BeggarCoin({
           <svg
             width={coinDiameter}
             height={coinDiameter}
-            viewBox="0 0 24 24"
+            viewBox="0 0 64 64"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            shapeRendering="geometricPrecision"
           >
             <defs>
-              <linearGradient id={rimGradId} x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#c7a968" />
-                <stop offset="52%" stopColor="#8f6f32" />
-                <stop offset="100%" stopColor="#594319" />
+              {/* Outer dark-gold metallic edge */}
+              <linearGradient id={outerRimId} x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#FFE066" />
+                <stop offset="45%" stopColor="#D89B13" />
+                <stop offset="100%" stopColor="#7C4D05" />
               </linearGradient>
-              <radialGradient id={gradId} cx="34%" cy="30%" r="68%">
-                <stop offset="0%" stopColor="#e6cf94" />
-                <stop offset="48%" stopColor="#b5944f" />
-                <stop offset="100%" stopColor="#7a5e26" />
+
+              {/* Secondary bright-gold bevel border */}
+              <linearGradient id={bevelRingId} x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#FFF6B8" />
+                <stop offset="38%" stopColor="#FFD43B" />
+                <stop offset="78%" stopColor="#D89B13" />
+                <stop offset="100%" stopColor="#9E6207" />
+              </linearGradient>
+
+              {/* Main radial metallic gold face */}
+              <radialGradient id={faceGradId} cx="34%" cy="28%" r="70%">
+                <stop offset="0%" stopColor="#FFF7BF" />
+                <stop offset="34%" stopColor="#FFE055" />
+                <stop offset="72%" stopColor="#E0A115" />
+                <stop offset="100%" stopColor="#A96B08" />
               </radialGradient>
+
+              {/* Center vertical emblem gradient */}
+              <linearGradient id={emblemGradId} x1="27" y1="18" x2="37" y2="46" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#FFF9CF" />
+                <stop offset="48%" stopColor="#FFD43B" />
+                <stop offset="100%" stopColor="#B87609" />
+              </linearGradient>
             </defs>
 
-            {/* Outer antique-brass coin disc & dark rim */}
+            {/* Vector ambient halo (replaces blurry CSS drop-shadow filter for crisp 4K/Retina scaling) */}
+            <circle cx="32" cy="32" r="30" fill="rgba(255, 212, 59, 0.16)" />
+
+            {/* 1. Outer dark-gold circular rim */}
             <circle
-              cx="12"
-              cy="12"
-              r="10.4"
-              fill={`url(#${rimGradId})`}
-              stroke="#463412"
-              strokeWidth="1.15"
+              cx="32"
+              cy="32"
+              r="27"
+              fill={`url(#${outerRimId})`}
+              stroke="#5E3803"
+              strokeWidth="1.8"
             />
 
-            {/* Recessed face */}
+            {/* 2. Secondary bright-gold bevel border */}
             <circle
-              cx="12"
-              cy="12"
-              r="8.3"
-              fill={`url(#${gradId})`}
-              stroke="#5c451b"
-              strokeWidth="0.65"
+              cx="32"
+              cy="32"
+              r="24.2"
+              fill={`url(#${bevelRingId})`}
             />
 
-            {/* Engraved circular detail */}
+            {/* 3. Subtle recessed inner shadow */}
             <circle
-              cx="12"
-              cy="12"
-              r="6.2"
-              stroke="#dfca92"
-              strokeWidth="0.55"
-              strokeDasharray="1.7 1.15"
-              opacity="0.72"
+              cx="32"
+              cy="32"
+              r="20.4"
+              fill="#8C5506"
             />
 
-            {/* Stamped central mint mark */}
+            {/* 4. Main metallic gold face */}
+            <circle
+              cx="32"
+              cy="32"
+              r="19.3"
+              fill={`url(#${faceGradId})`}
+              stroke="#FFF2A6"
+              strokeWidth="0.9"
+              strokeOpacity="0.7"
+            />
+
+            {/* 5. Fine engraved inner ring */}
+            <circle
+              cx="32"
+              cy="32"
+              r="16.2"
+              stroke="#9C6007"
+              strokeWidth="0.9"
+              strokeDasharray="3.2 2"
+              opacity="0.6"
+            />
+
+            {/* 6. Classic crisp vertical faceted gold emblem in center */}
             <rect
-              x="10.45"
-              y="10.45"
-              width="3.1"
-              height="3.1"
-              rx="0.45"
-              transform="rotate(45 12 12)"
-              fill="rgba(236, 214, 160, 0.28)"
-              stroke="#533d16"
-              strokeWidth="0.75"
+              x="28.6"
+              y="19.6"
+              width="8.2"
+              height="26.2"
+              rx="2.6"
+              fill="#7A4904"
+              opacity="0.65"
+            />
+            <rect
+              x="27.8"
+              y="18.6"
+              width="8.2"
+              height="26.2"
+              rx="2.6"
+              fill={`url(#${emblemGradId})`}
+              stroke="#FFF8C9"
+              strokeWidth="1"
+            />
+            <line
+              x1="30.2"
+              y1="21.2"
+              x2="30.2"
+              y2="42.2"
+              stroke="#FFFFFF"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              opacity="0.85"
             />
 
-            {/* Subtle metallic highlight that catches light at apex */}
+            {/* 7. Specular reflective streak & top-left highlight */}
             <path
               ref={sheenNodeRef}
-              d="M 6.9 8.1 A 6.9 6.9 0 0 1 15.5 5.9"
-              stroke="#fbf1d4"
-              strokeWidth="1.15"
+              d="M 16.5 22.5 A 17.5 17.5 0 0 1 39.5 14.8"
+              stroke="#FFFDF2"
+              strokeWidth="2.4"
               strokeLinecap="round"
-              opacity="0.55"
+              opacity="0.78"
             />
+            <circle cx="19.5" cy="18.5" r="1.8" fill="#FFFFFF" opacity="0.88" />
           </svg>
         </div>
       )}
@@ -234,6 +296,7 @@ export default function BeggarCoin({
         >
           <span className="beggar-coin-impact__glint" />
           <span className="beggar-coin-impact__spark beggar-coin-impact__spark--left" />
+          <span className="beggar-coin-impact__spark beggar-coin-impact__spark--mid" />
           <span className="beggar-coin-impact__spark beggar-coin-impact__spark--right" />
         </div>
       )}

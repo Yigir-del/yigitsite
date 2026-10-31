@@ -14,6 +14,7 @@ import {
   DOMAIN_MAP,
   applyDomainCss,
 } from '../themes/domains';
+import { recordDomainThemeInteraction } from '../features/achievements/achievementStore';
 
 interface ThemeContextProps {
   theme: DomainId;
@@ -41,6 +42,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     applyDomainCss(DEFAULT_DOMAIN);
+    recordDomainThemeInteraction(DEFAULT_DOMAIN, false);
     return () => {
       if (swapTimerRef.current) clearTimeout(swapTimerRef.current);
       if (endTimerRef.current) clearTimeout(endTimerRef.current);
@@ -51,6 +53,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     (newTheme: DomainId) => {
       if (newTheme === theme || busyRef.current) return;
       if (!DOMAIN_MAP[newTheme]) return;
+
+      recordDomainThemeInteraction(newTheme, true);
 
       busyRef.current = true;
       setIsTransitioning(true);

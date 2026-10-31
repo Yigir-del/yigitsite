@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { APP_EVENTS, dispatchAppEvent } from '../../utils/events';
+import { unlockAchievement } from '../../features/achievements/achievementStore';
 
 const sentences = [
   "Şu an CSS biliyormuş gibi yapıyorum.",
@@ -31,6 +32,7 @@ export default function Footer() {
     else if (next === 8) setEndMessage("Hâlâ mı?");
     else if (next === 14) setEndMessage("Son uyarı.");
     else if (next >= FLIP_THRESHOLD) {
+      unlockAchievement('world_flip');
       dispatchAppEvent(APP_EVENTS.WORLD_FLIP);
       setEndMessage("...tamam.");
       clicksRef.current = 0;
@@ -74,6 +76,57 @@ export default function Footer() {
         >
           {endMessage}
         </span>
+      </div>
+
+      {/* Subtle bottom-of-void whispers so touch/mobile explorers can also reach terminal & 42 (§20.1) */}
+      <div
+        style={{
+          marginTop: '1.25rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '0.85rem',
+          opacity: 0.24,
+          fontSize: '0.62rem',
+          fontFamily: 'monospace',
+          letterSpacing: '0.14em',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => dispatchAppEvent(APP_EVENTS.SUDO_TERMINAL)}
+          aria-label="Gizli oda terminali"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--text-muted)',
+            fontFamily: 'inherit',
+            fontSize: 'inherit',
+            letterSpacing: 'inherit',
+            cursor: 'pointer',
+            padding: '0.2rem 0.35rem',
+          }}
+        >
+          root@oda:~#
+        </button>
+        <span aria-hidden="true">·</span>
+        <button
+          type="button"
+          onClick={() => dispatchAppEvent(APP_EVENTS.MEANING_42)}
+          aria-label="Evrenin cevabı 42"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--text-muted)',
+            fontFamily: 'inherit',
+            fontSize: 'inherit',
+            letterSpacing: 'inherit',
+            cursor: 'pointer',
+            padding: '0.2rem 0.35rem',
+          }}
+        >
+          42
+        </button>
       </div>
     </footer>
   );

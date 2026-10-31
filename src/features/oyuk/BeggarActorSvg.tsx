@@ -76,24 +76,24 @@ export default function BeggarActorSvg({
           >
             <path
               d="M22 52 H42 L40 58 H24 Z"
-              fill={cupImpact ? '#9e8b66' : '#8a7a60'}
-              stroke={cupImpact ? '#e6cf94' : '#c4b8a0'}
-              strokeWidth="1"
+              fill={cupImpact ? '#B8891E' : '#8a7a60'}
+              stroke={cupImpact ? '#FFF2A6' : '#c4b8a0'}
+              strokeWidth={cupImpact ? '1.35' : '1'}
             />
             <ellipse
               cx="32"
               cy="52"
               rx="10"
               ry="2.5"
-              fill={cupImpact ? '#cdb67e' : '#a89870'}
+              fill={cupImpact ? '#FFD43B' : '#a89870'}
             />
             {cupImpact && (
               <ellipse
                 cx="32"
                 cy="52"
-                rx="8.2"
-                ry="1.5"
-                fill="rgba(248, 232, 184, 0.65)"
+                rx="8.4"
+                ry="1.65"
+                fill="rgba(255, 242, 166, 0.9)"
               />
             )}
           </g>

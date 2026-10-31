@@ -380,8 +380,27 @@ html.world-flipped body {
   position: fixed;
   top: 1.75rem;
   left: 1.75rem;
-  z-index: 50;
-  pointer-events: none;
+  z-index: 205;
+  pointer-events: auto;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: right;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.domain-watermark:hover .domain-watermark__name,
+.domain-watermark:focus-visible .domain-watermark__name {
+  opacity: 1;
+  text-shadow: 0 0 12px var(--glow);
+}
+
+.domain-watermark:focus-visible {
+  outline: 1px dashed rgba(203, 213, 225, 0.45);
+  outline-offset: 6px;
 }
 
 .domain-watermark__eyebrow {

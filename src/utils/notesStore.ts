@@ -2,6 +2,11 @@ import { useEffect, useSyncExternalStore } from 'react';
 import type { Note } from '../data/notes';
 import { APP_EVENTS } from './events';
 import { publishNoteTraces } from './noteTraces';
+import {
+  pruneDeletedOwnedNotes,
+  recordOwnedNoteSaved,
+  removeOwnedNoteId,
+} from '../features/noteStars/noteStarsStore';
 
 export type PositionedNote = Note & {
   computedX: number;
@@ -170,6 +175,7 @@ export async function fetchNotes(force = false): Promise<void> {
       }
       const data: unknown = await res.json();
       const fetched = Array.isArray(data) ? (data as Note[]) : [];
+      pruneDeletedOwnedNotes(fetched);
       // Preserve any optimistic notes currently in flight
       const optimistic = state.notes.filter((n) => n.id.startsWith('optimistic-'));
       const fetchedIds = new Set(fetched.map((n) => n.id));
@@ -284,6 +290,7 @@ export async function submitNote(input: SubmitNoteInput): Promise<SubmitNoteResu
         ...state.notes.filter((n) => n.id !== optimisticId && n.id !== saved.id),
       ]),
     });
+    recordOwnedNoteSaved(saved);
     return { ok: true, note: saved };
   } catch {
     setState({
@@ -307,6 +314,7 @@ export async function deleteNoteById(id: string): Promise<boolean> {
       credentials: 'include',
     });
     if (!res.ok) throw new Error('delete failed');
+    removeOwnedNoteId(id);
     return true;
   } catch {
     setState({ notes: previous });

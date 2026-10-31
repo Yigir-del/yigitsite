@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   ALMS_KEY,
+  CINEMATIC_STEP_MS,
   OYUK_INTRO_SEEN_KEY,
   OYUK_UNLOCKED_KEY,
   advanceCinematicPhase,
   commitPendingOyukCinematic,
   computeCoinTrajectoryFrame,
+  computeOyukLightCoordinates,
   finishCinematicArrival,
   getOyukState,
   isCinematicActive,
@@ -27,7 +29,10 @@ import {
   toggleCoinSoundMuted,
 } from './useCoinSound';
 import { OYUK_DEEPER_SECRET, OYUK_INSCRIPTIONS } from './oyukStory';
-import { OYUK_OPENING_LINE, OYUK_THRESHOLD_LINE } from './OyukDirector';
+import {
+  OYUK_OPENING_LINE,
+  OYUK_THRESHOLD_LINE,
+} from './OyukDirector';
 import { PAGE_SEO } from '../../seo/config';
 
 // Ensure a standard Storage implementation is available in Node test environments
@@ -262,7 +267,7 @@ describe('OYUK donation & unlock state machine (§4 & §20.1)', () => {
     expect(launchFrame.y).toBeCloseTo(300, 1);
 
     const apexFrame = computeCoinTrajectoryFrame({
-      t: 0.44,
+      t: 0.42,
       startPoint,
       targetPoint,
       riseHeight,
@@ -283,6 +288,15 @@ describe('OYUK donation & unlock state machine (§4 & §20.1)', () => {
     expect(impactFrame.scale).toBeLessThan(1);
   });
 
+  it('defines deterministic per-phase cinematic step timings so invitation -> focus never stalls (§3.5)', () => {
+    expect(CINEMATIC_STEP_MS.invitation).toBeGreaterThan(0);
+    expect(CINEMATIC_STEP_MS.focus).toBeGreaterThan(0);
+    expect(CINEMATIC_STEP_MS.escort).toBeGreaterThan(0);
+    expect(CINEMATIC_STEP_MS.threshold).toBeGreaterThan(0);
+    expect(CINEMATIC_STEP_MS.entering).toBeGreaterThan(0);
+    expect(CINEMATIC_STEP_MS.arrived).toBeGreaterThan(0);
+  });
+
   it('supports independent coin sound muting and handles unavailable Web Audio gracefully (§5)', () => {
     setCoinSoundMuted(false);
     expect(isCoinSoundMuted()).toBe(false);
@@ -298,5 +312,27 @@ describe('OYUK donation & unlock state machine (§4 & §20.1)', () => {
 
     setCoinSoundMuted(false);
     expect(isCoinSoundMuted()).toBe(false);
+  });
+
+  it('keeps OYUK flashlight cave-mask coordinates locked to the viewport cursor across 0%–100% scroll depths (§5.3)', () => {
+    const vpX = 480;
+    const vpY = 320;
+    const caveHeight = 2000;
+    const scrollDepths = [0, 0.25, 0.5, 0.75, 1];
+
+    for (const ratio of scrollDepths) {
+      const scrollY = ratio * (caveHeight - 800);
+      // As the page scrolls down by scrollY, the cave section's bounding rect.top becomes -scrollY
+      const rect = { left: 0, top: -scrollY };
+      const coords = computeOyukLightCoordinates(vpX, vpY, rect);
+
+      expect(coords.vpX).toBe(vpX);
+      expect(coords.vpY).toBe(vpY);
+      expect(coords.localY).toBe(vpY + scrollY);
+
+      // The screen-space position of the cave mask center (rect.top + localY) must always equal vpY (0px drift)
+      expect(rect.left + coords.localX).toBe(vpX);
+      expect(rect.top + coords.localY).toBe(vpY);
+    }
   });
 });

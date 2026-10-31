@@ -16,13 +16,50 @@ import { getPrefersReducedMotion, usePrefersReducedMotion } from './hooks/usePre
 import { useAtmosphereStage } from './hooks/useAtmosphereStage';
 import PageTransition, { PageTransitionFallback } from './components/ui/PageTransition';
 import { trackPageView } from './utils/analytics';
-import { isKnownRoute, isOyukRoute } from './utils/routes';
+import { isAchievementsRoute, isKnownRoute, isOyukRoute } from './utils/routes';
 import { APP_EVENTS } from './utils/events';
 import { ensureGlobalNoteEventListener } from './utils/notesStore';
-import { isCinematicActive, useOyukState } from './features/oyuk/oyukState';
+import {
+  isCinematicActive,
+  setBeggarDonationsForDev,
+  triggerOyukCinematicForDev,
+  useOyukState,
+} from './features/oyuk/oyukState';
+import {
+  resetAchievementsForTests,
+  unlockAchievement,
+} from './features/achievements/achievementStore';
+import { REQUIRED_ACHIEVEMENT_IDS } from './features/achievements/definitions';
 
 if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
   window.history.scrollRestoration = 'manual';
+}
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  type MuryokushoDevWindow = Window & {
+    __MURYOKUSHO_DEV__?: {
+      unlockAllRequiredAchievements: () => void;
+      resetAchievements: () => void;
+      setBeggarDonations: (count: number) => void;
+      triggerOyukCinematic: () => void;
+    };
+  };
+  (window as MuryokushoDevWindow).__MURYOKUSHO_DEV__ = {
+    unlockAllRequiredAchievements: () => {
+      for (const id of REQUIRED_ACHIEVEMENT_IDS) {
+        unlockAchievement(id, { silent: true });
+      }
+    },
+    resetAchievements: () => {
+      resetAchievementsForTests();
+    },
+    setBeggarDonations: (count: number) => {
+      setBeggarDonationsForDev(count);
+    },
+    triggerOyukCinematic: () => {
+      triggerOyukCinematicForDev(window.location.pathname);
+    },
+  };
 }
 
 const WireframePyramid = lazy(() => import('./components/canvas/WireframePyramid'));
@@ -34,6 +71,9 @@ const Contact = lazy(() => import('./components/sections/Contact'));
 const Memorial = lazy(() => import('./components/sections/Memorial'));
 const OyukScene = lazy(() => import('./features/oyuk/OyukScene'));
 const OyukDirector = lazy(() => import('./features/oyuk/OyukDirector'));
+const AchievementsPage = lazy(() => import('./features/achievements/AchievementsPage'));
+const AchievementTrophy = lazy(() => import('./features/achievements/AchievementTrophy'));
+const AchievementToast = lazy(() => import('./features/achievements/AchievementToast'));
 const NotFound = lazy(() => import('./components/sections/NotFound'));
 
 const ChaosManager = lazy(() => import('./components/events/ChaosManager'));
@@ -45,6 +85,10 @@ const FlyingBeggar = lazy(() => import('./components/events/FlyingBeggar'));
 const FlyingSage = lazy(() => import('./components/events/FlyingSage'));
 const SocialDrifters = lazy(() => import('./components/events/SocialDrifters'));
 const CustomCursor = lazy(() => import('./components/ui/CustomCursor'));
+const WorldMemoryTrace = lazy(() => import('./features/worldMemory/WorldMemoryTrace'));
+const LunarSecretOverlay = lazy(() => import('./features/lunarSecret/LunarSecretOverlay'));
+const RealityAnomalyOverlay = lazy(() => import('./features/anomalies/RealityAnomalyOverlay'));
+const NoteStarsOverlay = lazy(() => import('./features/noteStars/NoteStarsOverlay'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -86,7 +130,7 @@ function Analytics() {
   const location = useLocation();
 
   useEffect(() => {
-    if (isOyukRoute(location.pathname)) return;
+    if (isOyukRoute(location.pathname) || isAchievementsRoute(location.pathname)) return;
     const send = () => trackPageView(location.pathname + location.search);
 
     if (typeof window.requestIdleCallback === 'function') {
@@ -161,6 +205,7 @@ function AnimatedRoutes() {
             <Route path="/miras" element={<Memorial />} />
             <Route path="/atam" element={<Memorial />} />
             <Route path="/oyuk" element={<OyukScene />} />
+            <Route path="/basarimlar" element={<AchievementsPage />} />
 
             {/* Yönlendirmeler (Redirects) */}
             <Route path="/portfolio" element={<Navigate to="/projeler" replace />} />
@@ -264,6 +309,14 @@ function AppShell() {
               <ChaosManager />
               <IdleWhispers />
               <EasterEggs />
+              <RealityAnomalyOverlay isNotFoundPage={is404Page} />
+            </Suspense>
+          )}
+          {!isQuiet && !isOyukPage && !is404Page && !oyukCinematicRunning && (
+            <Suspense fallback={null}>
+              <WorldMemoryTrace />
+              <LunarSecretOverlay isNotFoundPage={is404Page} />
+              <NoteStarsOverlay isNotFoundPage={is404Page} />
             </Suspense>
           )}
           {!isQuiet && !isOyukPage && !oyukCinematicRunning && <FakeMenu />}
@@ -309,6 +362,11 @@ function AppShell() {
           <OyukDirector />
         </Suspense>
       )}
+
+      <Suspense fallback={null}>
+        <AchievementTrophy />
+        <AchievementToast />
+      </Suspense>
 
       {!isMobilePerf &&
         !isQuiet &&

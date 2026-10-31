@@ -47,6 +47,9 @@ html.has-oyuk-cursor * {
 
 .beggar-alms {
   pointer-events: auto;
+  opacity: 0.78;
+  color: var(--accent-pale-gray);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
 }
 
 /* ─── Beggar Coin Flight & Container Impact Layer ─── */
@@ -65,7 +68,8 @@ html.has-oyuk-cursor * {
   top: 0;
   pointer-events: none;
   will-change: transform, opacity;
-  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.55));
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .beggar-cup {
@@ -82,7 +86,7 @@ html.has-oyuk-cursor * {
     transform: translateY(0) scale(1, 1);
   }
   38% {
-    transform: translateY(1.8px) scale(1.14, 0.84);
+    transform: translateY(1.8px) scale(1.16, 0.84);
   }
   74% {
     transform: translateY(-0.6px) scale(0.96, 1.05);
@@ -103,72 +107,87 @@ html.has-oyuk-cursor * {
   position: absolute;
   left: 0;
   top: 0;
-  width: 16px;
-  height: 5px;
+  width: 20px;
+  height: 6px;
   border-radius: 50%;
   background: radial-gradient(
     ellipse at center,
-    rgba(247, 232, 186, 0.92) 0%,
-    rgba(199, 169, 104, 0.55) 55%,
+    rgba(255, 246, 184, 0.96) 0%,
+    rgba(255, 212, 59, 0.72) 52%,
     transparent 100%
   );
   transform: translate(-50%, -50%) scale(0.5);
-  animation: beggarCoinGlint 0.165s ease-out forwards;
+  animation: beggarCoinGlint 0.175s ease-out forwards;
 }
 
 .beggar-coin-impact__spark {
   position: absolute;
   left: 0;
   top: 0;
-  width: 2.5px;
-  height: 2.5px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
-  background: #e6cf94;
-  box-shadow: 0 0 4px rgba(230, 207, 148, 0.75);
+  background: #ffd43b;
+  box-shadow: 0 0 5px rgba(255, 212, 59, 0.85);
 }
 
 .beggar-coin-impact__spark--left {
-  animation: beggarCoinSparkLeft 0.165s ease-out forwards;
+  animation: beggarCoinSparkLeft 0.175s ease-out forwards;
+}
+
+.beggar-coin-impact__spark--mid {
+  animation: beggarCoinSparkMid 0.175s ease-out forwards;
 }
 
 .beggar-coin-impact__spark--right {
-  animation: beggarCoinSparkRight 0.165s ease-out forwards;
+  animation: beggarCoinSparkRight 0.175s ease-out forwards;
 }
 
 @keyframes beggarCoinGlint {
   0% {
-    opacity: 0.95;
+    opacity: 0.98;
     transform: translate(-50%, -50%) scale(0.55);
   }
   55% {
-    opacity: 0.85;
-    transform: translate(-50%, -50%) scale(1.25);
+    opacity: 0.88;
+    transform: translate(-50%, -50%) scale(1.3);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.55);
+    transform: translate(-50%, -50%) scale(1.65);
   }
 }
 
 @keyframes beggarCoinSparkLeft {
   0% {
-    opacity: 0.9;
+    opacity: 0.95;
     transform: translate(-2px, -1px) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-8px, -7px) scale(0.4);
+    transform: translate(-10px, -9px) scale(0.35);
+  }
+}
+
+@keyframes beggarCoinSparkMid {
+  0% {
+    opacity: 0.95;
+    transform: translate(0, -2px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, -12px) scale(0.35);
   }
 }
 
 @keyframes beggarCoinSparkRight {
   0% {
-    opacity: 0.9;
+    opacity: 0.95;
     transform: translate(2px, -1px) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(7px, -8px) scale(0.4);
+    transform: translate(9px, -9px) scale(0.35);
   }
 }
 
@@ -235,9 +254,11 @@ html.has-oyuk-cursor * {
   );
 }
 
-.oyuk-director--entering .oyuk-director__backdrop {
+.oyuk-director--entering .oyuk-director__backdrop,
+.oyuk-director--exiting .oyuk-director__backdrop {
   opacity: 1;
   background: #020306;
+  transition: opacity 0.22s ease;
 }
 
 .oyuk-director--arrived {
@@ -293,6 +314,15 @@ html.has-oyuk-cursor * {
 .oyuk-director__ridge--near {
   background:
     radial-gradient(ellipse 38% 68% at 6% 54%, #010204 0%, rgba(2, 4, 8, 0.92) 55%, transparent 82%);
+}
+
+.oyuk-director__stone-arch {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 46% 32% at 22% 16%, rgba(8, 12, 20, 0.85), transparent 72%),
+    radial-gradient(ellipse 46% 32% at 22% 88%, rgba(8, 12, 20, 0.88), transparent 72%);
 }
 
 /* Subterranean cavern mouth emerging from left (Shot 4 & Shot 5) */
@@ -441,7 +471,23 @@ html.has-oyuk-cursor * {
   min-height: 195vh;
 }
 
-/* Top HUD: subtle exit + keyboard step control */
+/* Viewport-fixed overlay layer portaled directly to document.body (§5.3) */
+.oyuk-viewport-layer {
+  --vp-x: -9999px;
+  --vp-y: -9999px;
+  --beam-radius: 225px;
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-oyuk-hud);
+  pointer-events: none;
+  user-select: none;
+}
+
+.oyuk-viewport-layer.is-touch {
+  --beam-radius: 185px;
+}
+
+/* Top HUD: subtle exit + visually-hidden keyboard focus helper (§4.2 & §4.3) */
 .oyuk-hud {
   position: fixed;
   top: 1.25rem;
@@ -454,8 +500,7 @@ html.has-oyuk-cursor * {
   pointer-events: none;
 }
 
-.oyuk-exit-btn,
-.oyuk-StepLight-btn {
+.oyuk-exit-btn {
   pointer-events: auto;
   background: rgba(6, 9, 15, 0.55);
   border: 1px solid rgba(148, 163, 184, 0.16);
@@ -473,12 +518,42 @@ html.has-oyuk-cursor * {
 }
 
 .oyuk-exit-btn:hover,
-.oyuk-exit-btn:focus-visible,
-.oyuk-StepLight-btn:hover,
-.oyuk-StepLight-btn:focus-visible {
+.oyuk-exit-btn:focus-visible {
   color: var(--text-main);
   border-color: rgba(203, 213, 225, 0.38);
   background: rgba(13, 19, 31, 0.8);
+  outline: none;
+}
+
+/* Visually hidden at rest; appears only when focused via keyboard Tab (§4.3) */
+.oyuk-sr-step-btn {
+  pointer-events: auto;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.oyuk-sr-step-btn:focus-visible {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  background: rgba(13, 19, 31, 0.88);
+  border: 1px solid rgba(203, 213, 225, 0.42);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  padding: 0.42rem 0.85rem;
+  border-radius: 999px;
   outline: none;
 }
 
@@ -532,6 +607,17 @@ html.has-oyuk-cursor * {
   opacity: 1;
 }
 
+.oyuk-cave.is-exiting .oyuk-wall--illuminated {
+  opacity: 0;
+  transition: opacity 0.22s ease-out;
+}
+
+.oyuk-viewport-layer.is-exiting .oyuk-torch-halo,
+.oyuk-viewport-layer.is-exiting .oyuk-torch-orb {
+  opacity: 0 !important;
+  transition: opacity 0.2s ease-out !important;
+}
+
 /* Scattered Cave Writings (§13.1 & §13.2) */
 .oyuk-inscriptions {
   position: relative;
@@ -580,6 +666,43 @@ html.has-oyuk-cursor * {
 
 .oyuk-writing.is-weathered {
   opacity: 0.58;
+}
+
+.oyuk-writing.is-discovered {
+  opacity: 1;
+  color: #e2e8f0;
+}
+
+.oyuk-portal-whispers {
+  position: absolute;
+  left: 52%;
+  top: 93.5%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+  z-index: 5;
+}
+
+.oyuk-portal-link {
+  background: none;
+  border: none;
+  padding: 0.25rem 0.45rem;
+  font-family: var(--font-handwriting);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  color: rgba(148, 163, 184, 0.52);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.25s ease, opacity 0.25s ease;
+}
+
+.oyuk-portal-link:hover,
+.oyuk-portal-link:focus-visible {
+  color: #cbd5e1;
+  text-decoration: underline;
+  outline: none;
 }
 
 /* Optional Deeper Discovery Seal (§13.3) */
@@ -649,7 +772,8 @@ html.has-oyuk-cursor * {
   );
 }
 
-.oyuk-cave.is-awake .oyuk-torch-halo {
+.oyuk-cave.is-awake .oyuk-torch-halo,
+.oyuk-viewport-layer.is-awake .oyuk-torch-halo {
   opacity: 1;
 }
 
@@ -671,7 +795,8 @@ html.has-oyuk-cursor * {
   transition: opacity 0.45s ease;
 }
 
-.oyuk-cave.is-awake .oyuk-torch-orb {
+.oyuk-cave.is-awake .oyuk-torch-orb,
+.oyuk-viewport-layer.is-awake .oyuk-torch-orb {
   opacity: 0.9;
 }
 

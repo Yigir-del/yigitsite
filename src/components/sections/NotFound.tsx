@@ -5,6 +5,7 @@ import { Home, FolderGit2, RotateCcw } from 'lucide-react';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { APP_EVENTS, dispatchAppEvent } from '../../utils/events';
+import { unlockAchievement } from '../../features/achievements/achievementStore';
 import './NotFound.css';
 
 // ── CUSTOM EVENTS (signals to existing world components) ──
@@ -308,6 +309,11 @@ export default function NotFound() {
       clearInterval(id as number);
     });
     timersRef.current = [];
+  }, []);
+
+  // ── RECORD 404 ACHIEVEMENT ON MOUNT (§19.24) ──
+  useEffect(() => {
+    unlockAchievement('not_found_discovered');
   }, []);
 
   // ── DESKTOP SCRIPTED SEQUENCE ──

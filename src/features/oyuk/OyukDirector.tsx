@@ -6,6 +6,7 @@ import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 import BeggarActorSvg from './BeggarActorSvg';
 import {
   advanceCinematicPhase,
+  CINEMATIC_STEP_MS,
   finishCinematicArrival,
   isCinematicActive,
   resetCinematicToIdle,
@@ -20,9 +21,9 @@ export const OYUK_THRESHOLD_LINE =
   'Benden bir şey bekleme kral. Buradan sonrasını kendin bulacaksın.';
 
 /**
- * OYUK Cinematic Director (§6–§8, §16–§17).
- * Orchestrates the 6-shot camera-tracking illusion from the beggar's live screen
- * coordinates into the subterranean cave at `/oyuk`.
+ * OYUK Cinematic Director (§3, §9, §10).
+ * Orchestrates the deterministic 6-shot camera-tracking journey from the beggar's
+ * live screen coordinates into the subterranean cave at `/oyuk`.
  */
 export default function OyukDirector() {
   const oyuk = useOyukState();
@@ -30,26 +31,23 @@ export default function OyukDirector() {
   const location = useLocation();
   const reducedMotion = usePrefersReducedMotion();
   const isMobilePerf = useIsMobilePerf();
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const stepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [viewport, setViewport] = useState(() => ({
     w: typeof window !== 'undefined' ? window.innerWidth : 1280,
     h: typeof window !== 'undefined' ? window.innerHeight : 800,
   }));
 
-  const clearTimers = useCallback(() => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  }, []);
-
-  const schedule = useCallback((fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-    return id;
+  const clearStepTimer = useCallback(() => {
+    if (stepTimerRef.current !== null) {
+      clearTimeout(stepTimerRef.current);
+      stepTimerRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
     if (!isCinematicActive(oyuk.phase) && oyuk.phase !== 'arrived') return;
+    setViewport({ w: window.innerWidth, h: window.innerHeight });
     const onResize = () => {
       setViewport({ w: window.innerWidth, h: window.innerHeight });
     };
@@ -64,9 +62,10 @@ export default function OyukDirector() {
     }
   }, [oyuk.phase]);
 
-  // Lock body scroll during active cinematic and restore cleanly on exit/unmount (§16.4)
+  // Lock body scroll during active cinematic and restore cleanly on exit/unmount (§10.3)
   useEffect(() => {
-    if (!isCinematicActive(oyuk.phase)) return;
+    const active = isCinematicActive(oyuk.phase);
+    if (!active) return;
     const prevOverflow = document.body.style.overflow;
     const prevTouchAction = document.body.style.touchAction;
     document.body.style.overflow = 'hidden';
@@ -78,7 +77,7 @@ export default function OyukDirector() {
   }, [oyuk.phase]);
 
   const navigateToCave = useCallback(() => {
-    if (location.pathname !== '/oyuk') {
+    if (window.location.pathname !== '/oyuk') {
       navigate('/oyuk', {
         state: {
           fromOyukCinematic: true,
@@ -86,21 +85,21 @@ export default function OyukDirector() {
         },
       });
     }
-  }, [location.pathname, navigate, oyuk.returnPath]);
+  }, [navigate, oyuk.returnPath]);
 
   const skipToCave = useCallback(() => {
-    clearTimers();
+    clearStepTimer();
     advanceCinematicPhase('entering');
     navigateToCave();
-    schedule(() => {
+    stepTimerRef.current = setTimeout(() => {
       finishCinematicArrival();
-      schedule(() => {
+      stepTimerRef.current = setTimeout(() => {
         resetCinematicToIdle();
-      }, 380);
+      }, 320);
     }, 120);
-  }, [clearTimers, navigateToCave, schedule]);
+  }, [clearStepTimer, navigateToCave]);
 
-  // Keyboard Escape skip support (§17.1)
+  // Keyboard Escape skip support (§10.4)
   useEffect(() => {
     if (!isCinematicActive(oyuk.phase)) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -113,66 +112,112 @@ export default function OyukDirector() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [oyuk.phase, skipToCave]);
 
-  // Main finite-state timeline (§6.2 & §8)
+  // Deterministic per-phase state machine (§3.3 & §9)
+  // Each state schedules ONLY its immediate successor so phase changes never cancel future phases.
   useEffect(() => {
-    if (oyuk.phase !== 'invitation') return;
-    clearTimers();
+    clearStepTimer();
 
-    setViewport({ w: window.innerWidth, h: window.innerHeight });
+    switch (oyuk.phase) {
+      case 'invitation': {
+        const delay = reducedMotion
+          ? CINEMATIC_STEP_MS.invitationReduced
+          : CINEMATIC_STEP_MS.invitation;
+        stepTimerRef.current = setTimeout(() => {
+          advanceCinematicPhase(reducedMotion ? 'threshold' : 'focus');
+        }, delay);
+        break;
+      }
 
-    if (reducedMotion) {
-      // Reduced-motion path (§17.2): keep invitation dialogue, skip zoom/parallax, crossfade to cave
-      schedule(() => {
-        advanceCinematicPhase('threshold');
-      }, 1400);
-      schedule(() => {
-        advanceCinematicPhase('entering');
+      case 'focus': {
+        stepTimerRef.current = setTimeout(() => {
+          advanceCinematicPhase('escort');
+        }, CINEMATIC_STEP_MS.focus);
+        break;
+      }
+
+      case 'escort': {
+        stepTimerRef.current = setTimeout(() => {
+          advanceCinematicPhase('threshold');
+        }, CINEMATIC_STEP_MS.escort);
+        break;
+      }
+
+      case 'threshold': {
+        const delay = reducedMotion
+          ? CINEMATIC_STEP_MS.thresholdReduced
+          : CINEMATIC_STEP_MS.threshold;
+        stepTimerRef.current = setTimeout(() => {
+          advanceCinematicPhase('entering');
+        }, delay);
+        break;
+      }
+
+      case 'entering': {
         navigateToCave();
-      }, 2600);
-      schedule(() => {
-        finishCinematicArrival();
-      }, 2950);
-      schedule(() => {
-        resetCinematicToIdle();
-      }, 3400);
+        const delay = reducedMotion
+          ? CINEMATIC_STEP_MS.enteringReduced
+          : CINEMATIC_STEP_MS.entering;
+        stepTimerRef.current = setTimeout(() => {
+          finishCinematicArrival();
+        }, delay);
+        break;
+      }
 
-      return () => clearTimers();
+      case 'exiting': {
+        const target =
+          oyuk.returnPath && oyuk.returnPath !== '/oyuk' ? oyuk.returnPath : '/';
+        const delay = reducedMotion
+          ? CINEMATIC_STEP_MS.exitingReduced
+          : CINEMATIC_STEP_MS.exiting;
+        stepTimerRef.current = setTimeout(() => {
+          if (window.location.pathname === '/oyuk') {
+            navigate(target);
+          }
+          finishCinematicArrival();
+        }, delay);
+        break;
+      }
+
+      case 'arrived': {
+        stepTimerRef.current = setTimeout(() => {
+          resetCinematicToIdle();
+        }, CINEMATIC_STEP_MS.arrived);
+        break;
+      }
+
+      default:
+        break;
     }
 
-    // Standard 6-shot cinematic sequence (~5.7s total before cave interaction)
-    // Shot 1 (0ms - 950ms): Interruption at originRect with opening dialogue
-    // Shot 2 (950ms - 2200ms): Camera Lock & Focus zoom on beggar
-    schedule(() => {
-      advanceCinematicPhase('focus');
-    }, 950);
+    return () => clearStepTimer();
+  }, [oyuk.phase, oyuk.returnPath, reducedMotion, clearStepTimer, navigate, navigateToCave]);
 
-    // Shot 3 (2200ms - 4000ms): Walk Left with parallax camera tracking
-    schedule(() => {
-      advanceCinematicPhase('escort');
-    }, 2200);
-
-    // Shot 4 (4000ms - 5350ms): The Passage — dark cavern mouth & threshold line
-    schedule(() => {
-      advanceCinematicPhase('threshold');
-    }, 4000);
-
-    // Shot 5 (5350ms - 5950ms): The Threshold — beggar enters darkness + route handoff
-    schedule(() => {
-      advanceCinematicPhase('entering');
+  // Master failsafe watchdog (§3.4): guarantees the user can never remain trapped on a dark overlay
+  const cinematicActive = isCinematicActive(oyuk.phase);
+  useEffect(() => {
+    if (!cinematicActive) return;
+    const watchdog = setTimeout(() => {
       navigateToCave();
-    }, 5350);
-
-    // Shot 6 (5950ms - 6500ms): The Light Returns — curtain dissolves into OyukScene
-    schedule(() => {
       finishCinematicArrival();
-    }, 5950);
+      setTimeout(() => {
+        resetCinematicToIdle();
+      }, 280);
+    }, CINEMATIC_STEP_MS.failsafeMax);
 
-    schedule(() => {
-      resetCinematicToIdle();
-    }, 6500);
+    return () => clearTimeout(watchdog);
+  }, [cinematicActive, navigateToCave]);
 
-    return () => clearTimers();
-  }, [oyuk.phase, reducedMotion, clearTimers, schedule, navigateToCave]);
+  // If user navigated to /oyuk via browser history while director was mid-transition, finish cleanly
+  useEffect(() => {
+    if (
+      location.pathname === '/oyuk' &&
+      oyuk.phase !== 'entering' &&
+      oyuk.phase !== 'arrived' &&
+      oyuk.phase !== 'idle'
+    ) {
+      finishCinematicArrival();
+    }
+  }, [location.pathname, oyuk.phase]);
 
   const startPos = useMemo(() => {
     if (oyuk.originRect) {
@@ -201,30 +246,30 @@ export default function OyukDirector() {
         return {
           x: isMobilePerf ? w * 0.52 - 27 : w * 0.56 - 27,
           y: h * 0.52 - 32,
-          scale: isMobilePerf ? 1.18 : 1.32,
+          scale: isMobilePerf ? 1.2 : 1.36,
           opacity: 1,
         };
       case 'escort':
         return {
           x: isMobilePerf ? w * 0.34 - 27 : w * 0.36 - 27,
           y: h * 0.53 - 32,
-          scale: isMobilePerf ? 1.16 : 1.28,
+          scale: isMobilePerf ? 1.18 : 1.3,
           opacity: 1,
         };
       case 'threshold':
         return {
-          x: isMobilePerf ? w * 0.22 - 27 : w * 0.23 - 27,
+          x: isMobilePerf ? w * 0.21 - 27 : w * 0.22 - 27,
           y: h * 0.54 - 32,
-          scale: 1.14,
-          opacity: 0.92,
+          scale: 1.15,
+          opacity: 0.94,
         };
       case 'entering':
       case 'arrived':
       default:
         return {
-          x: w * 0.14 - 27,
+          x: w * 0.12 - 27,
           y: h * 0.55 - 32,
-          scale: 0.84,
+          scale: 0.82,
           opacity: 0,
         };
     }
@@ -269,6 +314,7 @@ export default function OyukDirector() {
           <div className="oyuk-director__drift-stars" />
           <div className="oyuk-director__ridge oyuk-director__ridge--far" />
           <div className="oyuk-director__ridge oyuk-director__ridge--near" />
+          <div className="oyuk-director__stone-arch" />
         </div>
       )}
 
@@ -281,7 +327,7 @@ export default function OyukDirector() {
       />
 
       {/* Guided Beggar Actor */}
-      {oyuk.phase !== 'arrived' && (
+      {oyuk.phase !== 'arrived' && oyuk.phase !== 'exiting' && (
         <motion.div
           className={`oyuk-director__actor${isWalking && !reducedMotion ? ' is-walking' : ''}`}
           initial={{
@@ -301,7 +347,7 @@ export default function OyukDirector() {
                     ? 1.65
                     : oyuk.phase === 'threshold'
                       ? 1.25
-                      : 0.55,
+                      : 0.48,
             ease: [0.22, 1, 0.36, 1],
           }}
         >
@@ -328,8 +374,8 @@ export default function OyukDirector() {
         </motion.div>
       )}
 
-      {/* Discreet keyboard-accessible skip control (§17.1) */}
-      {isCinematicActive(oyuk.phase) && (
+      {/* Discreet keyboard-accessible skip control (§10.4) */}
+      {isCinematicActive(oyuk.phase) && oyuk.phase !== 'exiting' && (
         <button
           type="button"
           className="oyuk-director__skip"

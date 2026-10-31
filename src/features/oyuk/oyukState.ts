@@ -22,8 +22,29 @@ export type CinematicPhase =
   | 'escort'
   | 'threshold'
   | 'entering'
+  | 'exiting'
   | 'arrived'
   | 'cancelled';
+
+/**
+ * Step durations (ms) for the deterministic OYUK state machine (§3.3 & §9).
+ * Each phase owns and cleans up only its own single transition timer,
+ * preventing phase updates from cancelling downstream steps.
+ */
+export const CINEMATIC_STEP_MS = {
+  invitation: 1450,
+  invitationReduced: 1250,
+  focus: 1300,
+  escort: 1800,
+  threshold: 1700,
+  thresholdReduced: 1300,
+  entering: 520,
+  enteringReduced: 300,
+  exiting: 240,
+  exitingReduced: 80,
+  arrived: 460,
+  failsafeMax: 9200,
+} as const;
 
 export interface ActorRect {
   left: number;
@@ -38,7 +59,36 @@ export interface CoinPoint {
 }
 
 /**
- * Compute parabolic trajectory and 3D flip state for normalized flight time t in [0, 1].
+ * Authoritative coordinate converter for the OYUK exploration light (§5.3).
+ * Maps viewport pointer coordinates `(vpX, vpY)` (`clientX`, `clientY`) and the
+ * cave container's live bounding client rect `(rect.left, rect.top)` into:
+ * - `vpX, vpY`: viewport-space coordinates for the fixed cursor orb & halo
+ * - `localX, localY`: cave-surface coordinates for the CSS `mask-image` radial gradient
+ *
+ * Because `rect.top` shifts by `-scrollY` as the document scrolls, `localY = vpY - rect.top`
+ * guarantees that `rect.top + localY === vpY` at all scroll depths (0%–100%).
+ */
+export function computeOyukLightCoordinates(
+  vpX: number,
+  vpY: number,
+  rect: { left: number; top: number },
+): {
+  vpX: number;
+  vpY: number;
+  localX: number;
+  localY: number;
+} {
+  return {
+    vpX,
+    vpY,
+    localX: vpX - rect.left,
+    localY: vpY - rect.top,
+  };
+}
+
+/**
+ * Compute upward-pop and curved return trajectory + 3D horizontal spin state
+ * for normalized flight time t in [0, 1] (§7.1–§7.4).
  */
 export function computeCoinTrajectoryFrame(params: {
   t: number;
@@ -49,47 +99,49 @@ export function computeCoinTrajectoryFrame(params: {
   const t = Math.max(0, Math.min(1, params.t));
   const { startPoint, targetPoint, riseHeight } = params;
 
-  // Apex occurs at 44% of the flight duration
-  const apexT = 0.44;
+  // Launch (0 -> 0.36), Apex hang (0.36 -> 0.46), Gravity fall (0.46 -> 1.0)
+  const apexT = 0.42;
   const apexY = Math.min(startPoint.y, targetPoint.y) - riseHeight;
 
-  // Horizontal drift eases smoothly into the container center
-  const easeX = 1 - Math.pow(1 - t, 2.15);
+  // Curved horizontal path from interaction point into container center
+  const easeX = 1 - Math.pow(1 - t, 2.1);
   const x = startPoint.x + (targetPoint.x - startPoint.x) * easeX;
 
-  // Vertical arc: decelerating launch up to apex, then gravity-accelerated fall into container
   let y: number;
   if (t <= apexT) {
     const u = t / apexT;
-    const riseEase = 1 - (1 - u) * (1 - u); // easeOutQuad
+    // Snappy upward pop deceleration
+    const riseEase = 1 - Math.pow(1 - u, 2.5);
     y = startPoint.y + (apexY - startPoint.y) * riseEase;
   } else {
     const v = (t - apexT) / (1 - apexT);
-    const fallEase = v * v; // easeInQuad (gravity acceleration)
+    // Gravity-accelerated return into the beggar's container
+    const fallEase = v * v;
     y = apexY + (targetPoint.y - apexY) * fallEase;
   }
 
-  // 3D tumbling illusion (2.5 flips across the arc)
-  const rawCos = Math.cos(t * Math.PI * 5);
+  // Crisp 3D horizontal Y-axis spin (classic gold coin spin around vertical axis)
+  const rawCos = Math.cos(t * Math.PI * 6);
   const sign = rawCos >= 0 ? 1 : -1;
-  const scaleY = sign * Math.max(0.2, Math.abs(rawCos));
+  const scaleX = sign * Math.max(0.26, Math.abs(rawCos));
 
   const dir = startPoint.x <= targetPoint.x ? 1 : -1;
-  const rotateZ = dir * (-12 + t * 34);
+  const rotateZ = dir * (-6 + t * 14);
 
-  // Brief specular light catch near the apex (t in [0.30, 0.58])
-  const apexLight = Math.max(0, 1 - Math.abs(t - apexT) / 0.14);
+  // Specular metallic reflection peak at the apex
+  const apexLight = Math.max(0, 1 - Math.abs(t - apexT) / 0.16);
 
-  // Tucks inside the container rim in the final 14% of the fall
-  const rimTuck = t > 0.86 ? (t - 0.86) / 0.14 : 0;
-  const scale = (1 + apexLight * 0.08) * (1 - rimTuck * 0.28);
-  const opacity = t < 0.06 ? t / 0.06 : 1 - rimTuck * 0.82;
+  // Tucks cleanly inside the container mouth in the final 12% of the fall
+  const rimTuck = t > 0.88 ? (t - 0.88) / 0.12 : 0;
+  const scale = (1 + apexLight * 0.12) * (1 - rimTuck * 0.26);
+  const opacity = t < 0.04 ? t / 0.04 : 1 - rimTuck * 0.78;
 
   return {
     x,
     y,
     scale,
-    scaleY,
+    scaleX,
+    scaleY: scaleX, // alias kept for backwards compatibility
     rotateZ,
     apexLight,
     opacity,
@@ -237,7 +289,8 @@ export function isCinematicActive(phase: CinematicPhase = state.phase): boolean 
     phase === 'focus' ||
     phase === 'escort' ||
     phase === 'threshold' ||
-    phase === 'entering'
+    phase === 'entering' ||
+    phase === 'exiting'
   );
 }
 
@@ -386,6 +439,24 @@ export function finishCinematicArrival(): void {
   setState({ phase: 'arrived', pendingCinematic: false });
 }
 
+/**
+ * Begins the smooth subterranean exit passage from `/oyuk` back to the cosmic surface (§11).
+ */
+export function startOyukExit(returnPath?: string): void {
+  const safeReturn =
+    returnPath && returnPath !== '/oyuk'
+      ? returnPath
+      : state.returnPath && state.returnPath !== '/oyuk'
+        ? state.returnPath
+        : '/';
+  setState({
+    phase: 'exiting',
+    pendingCinematic: false,
+    originRect: null,
+    returnPath: safeReturn,
+  });
+}
+
 export function resetCinematicToIdle(): void {
   if (state.phase !== 'idle' || state.originRect !== null || state.pendingCinematic) {
     setState({ phase: 'idle', originRect: null, pendingCinematic: false });
@@ -396,6 +467,31 @@ export function setOyukReturnPath(path: string): void {
   if (path && path !== '/oyuk') {
     setState({ returnPath: path });
   }
+}
+
+/** Dev/testing helper to set personal beggar donation count directly (§32) */
+export function setBeggarDonationsForDev(count: number): void {
+  const safeCount = Math.max(0, Math.min(Math.floor(count), 99999));
+  writeAlms(safeCount);
+  setState({ alms: safeCount });
+}
+
+/** Dev/testing helper to trigger the OYUK escort cinematic immediately (§32) */
+export function triggerOyukCinematicForDev(returnPath = '/'): void {
+  const nextAlms = Math.max(state.alms, OYUK_DONATION_THRESHOLD);
+  writeAlms(nextAlms);
+  writeOyukUnlocked(true);
+  writeOyukIntroSeen(true);
+  setState({
+    alms: nextAlms,
+    unlocked: true,
+    introSeen: true,
+    pendingCinematic: false,
+    phase: 'invitation',
+    originRect: null,
+    returnPath: returnPath !== '/oyuk' ? returnPath : '/',
+  });
+  dispatchOyukUnlockEvent(nextAlms);
 }
 
 /** Test-only helper to reset in-memory and storage state cleanly */

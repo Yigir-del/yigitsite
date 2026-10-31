@@ -215,6 +215,94 @@ export function playCoinImpactSound(): boolean {
   }
 }
 
+/**
+ * Synthesizes a subtle, solemn golden chime when the ultimate Golden Trophy ("Hiçliğin Kralı")
+ * is unlocked (§15.2). Respects the existing audio mute preference and safely no-ops if suspended.
+ */
+export function playGoldenTrophySound(): boolean {
+  if (mutedState) return false;
+  const ctx = getOrCreateAudioContext();
+  if (!ctx) return false;
+
+  try {
+    if (ctx.state === 'suspended') {
+      void ctx.resume().catch(() => {});
+    }
+
+    const now = ctx.currentTime;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(5200, now);
+    filter.Q.setValueAtTime(0.6, now);
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.0001, now);
+    masterGain.gain.linearRampToValueAtTime(0.09, now + 0.015);
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+
+    filter.connect(masterGain);
+    masterGain.connect(ctx.destination);
+
+    const chordNotes = [
+      { freq: 587.33, delay: 0, gain: 0.34, decay: 0.45 }, // D5
+      { freq: 880.0, delay: 0.07, gain: 0.38, decay: 0.48 }, // A5
+      { freq: 1174.66, delay: 0.14, gain: 0.42, decay: 0.52 }, // D6
+    ];
+
+    const activeOscillators: OscillatorNode[] = [];
+    const activeGains: GainNode[] = [];
+
+    for (const note of chordNotes) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      const startAt = now + note.delay;
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(note.freq, startAt);
+
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.setValueAtTime(0.0001, startAt);
+      g.gain.linearRampToValueAtTime(note.gain, startAt + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, startAt + note.decay);
+
+      osc.connect(g);
+      g.connect(filter);
+      osc.start(startAt);
+      osc.stop(startAt + note.decay + 0.02);
+
+      activeOscillators.push(osc);
+      activeGains.push(g);
+    }
+
+    setTimeout(() => {
+      for (const osc of activeOscillators) {
+        try {
+          osc.disconnect();
+        } catch {
+          /* ignore */
+        }
+      }
+      for (const g of activeGains) {
+        try {
+          g.disconnect();
+        } catch {
+          /* ignore */
+        }
+      }
+      try {
+        filter.disconnect();
+        masterGain.disconnect();
+      } catch {
+        /* ignore */
+      }
+    }, 750);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function useCoinSound() {
   const muted = useSyncExternalStore(subscribeMute, isCoinSoundMuted, isCoinSoundMuted);
 

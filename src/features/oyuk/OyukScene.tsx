@@ -1,15 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SEOHead from '../../seo/SEOHead';
 import { useIsMobilePerf } from '../../hooks/useIsMobilePerf';
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { OYUK_DEEPER_SECRET, OYUK_INSCRIPTIONS } from './oyukStory';
 import {
+  computeOyukLightCoordinates,
+  getOyukState,
   readOyukUnlocked,
   recordLastPointer,
-  resetCinematicToIdle,
+  startOyukExit,
   useOyukState,
 } from './oyukState';
+import {
+  recordCaveInscriptionDiscovered,
+  recordCaveSecretSymbolDiscovered,
+  recordOyukEntered,
+  recordOyukExited,
+  useAchievementState,
+} from '../achievements/achievementStore';
+import {
+  recordWorldMemoryOyukEntered,
+  recordWorldMemoryOyukExited,
+} from '../worldMemory/worldMemoryStore';
 import './oyuk.css';
 
 interface OyukLocationState {
@@ -22,6 +36,7 @@ interface OyukLocationState {
  */
 export default function OyukScene() {
   const oyuk = useOyukState();
+  const achievementState = useAchievementState();
   const isUnlocked = oyuk.unlocked || readOyukUnlocked();
   const isMobilePerf = useIsMobilePerf();
   const reducedMotion = usePrefersReducedMotion();
@@ -30,13 +45,17 @@ export default function OyukScene() {
   const routeState = (location.state as OyukLocationState | null) ?? null;
 
   const sceneRef = useRef<HTMLElement | null>(null);
+  const viewportLayerRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number>(0);
   const vpPosRef = useRef<{ x: number; y: number }>({ x: -9999, y: -9999 });
-  const initializedRef = useRef(false);
   const focusIndexRef = useRef(-1);
+  const exitedRecordedRef = useRef(false);
 
   const [lightAwake, setLightAwake] = useState(false);
   const [sealRevealed, setSealRevealed] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  const discoveredSet = new Set(achievementState.discoveredInscriptions);
 
   const returnTarget =
     routeState?.returnTo && routeState.returnTo !== '/oyuk'
@@ -46,25 +65,83 @@ export default function OyukScene() {
         : '/';
 
   const handleExitCave = useCallback(() => {
-    resetCinematicToIdle();
-    navigate(returnTarget);
-  }, [navigate, returnTarget]);
+    if (isExiting) return;
+    setIsExiting(true);
+    if (!exitedRecordedRef.current && isUnlocked) {
+      exitedRecordedRef.current = true;
+      recordOyukExited();
+      recordWorldMemoryOyukExited();
+    }
+    startOyukExit(returnTarget);
+    if (reducedMotion) {
+      navigate(returnTarget);
+    }
+  }, [isExiting, isUnlocked, navigate, reducedMotion, returnTarget]);
+
+  // Track OYUK entry & exit (§19.01 & Living Universe §4)
+  useEffect(() => {
+    if (!isUnlocked) return;
+    exitedRecordedRef.current = false;
+    recordOyukEntered();
+    recordWorldMemoryOyukEntered();
+    return () => {
+      if (!exitedRecordedRef.current) {
+        exitedRecordedRef.current = true;
+        recordOyukExited();
+        recordWorldMemoryOyukExited();
+      }
+    };
+  }, [isUnlocked]);
+
+  const checkBeamInscriptionOverlap = useCallback(
+    (localX: number, localY: number, wallWidth: number, wallHeight: number) => {
+      if (wallWidth <= 0 || wallHeight <= 0) return;
+      const hitRadius = isMobilePerf ? 145 : 165;
+      for (const item of OYUK_INSCRIPTIONS) {
+        const itemX = (item.x / 100) * wallWidth;
+        const itemY = (item.y / 100) * wallHeight;
+        const dist = Math.hypot(localX - itemX, localY - itemY);
+        if (dist <= hitRadius) {
+          recordCaveInscriptionDiscovered(item.id);
+        }
+      }
+    },
+    [isMobilePerf],
+  );
 
   const flushLightPosition = useCallback(() => {
     rafRef.current = 0;
     const el = sceneRef.current;
     if (!el) return;
+
     const rect = el.getBoundingClientRect();
-    const vx = vpPosRef.current.x;
-    const vy = vpPosRef.current.y;
-    const localX = vx - rect.left;
-    const localY = vy - rect.top;
+    const { vpX, vpY, localX, localY } = computeOyukLightCoordinates(
+      vpPosRef.current.x,
+      vpPosRef.current.y,
+      rect,
+    );
+
+    const vpXStr = `${vpX.toFixed(1)}px`;
+    const vpYStr = `${vpY.toFixed(1)}px`;
 
     el.style.setProperty('--light-x', `${localX.toFixed(1)}px`);
     el.style.setProperty('--light-y', `${localY.toFixed(1)}px`);
-    el.style.setProperty('--vp-x', `${vx.toFixed(1)}px`);
-    el.style.setProperty('--vp-y', `${vy.toFixed(1)}px`);
-  }, []);
+    el.style.setProperty('--vp-x', vpXStr);
+    el.style.setProperty('--vp-y', vpYStr);
+
+    const vpEl = viewportLayerRef.current;
+    if (vpEl) {
+      vpEl.style.setProperty('--vp-x', vpXStr);
+      vpEl.style.setProperty('--vp-y', vpYStr);
+    }
+
+    checkBeamInscriptionOverlap(
+      localX,
+      localY,
+      rect.width || window.innerWidth,
+      rect.height || window.innerHeight * 2,
+    );
+  }, [checkBeamInscriptionOverlap]);
 
   const scheduleLightUpdate = useCallback(
     (clientX: number, clientY: number) => {
@@ -87,19 +164,19 @@ export default function OyukScene() {
       root.classList.add('has-oyuk-cursor');
     }
 
-    // Initialize light at known pointer or intentional entrance coordinates (§11.5)
+    // Initialize light once from known pointer or intentional entrance coordinates (§11.5)
+    const initialPointer = getOyukState().lastPointer;
     const initX =
-      oyuk.lastPointer && oyuk.lastPointer.x > 0
-        ? oyuk.lastPointer.x
+      initialPointer && initialPointer.x > 0
+        ? initialPointer.x
         : Math.round(window.innerWidth * 0.36);
     const initY =
-      oyuk.lastPointer && oyuk.lastPointer.y > 0
-        ? oyuk.lastPointer.y
+      initialPointer && initialPointer.y > 0
+        ? initialPointer.y
         : Math.round(window.innerHeight * 0.26);
 
     vpPosRef.current = { x: initX, y: initY };
     flushLightPosition();
-    initializedRef.current = true;
 
     const wakeDelay = reducedMotion ? 60 : 320;
     const wakeTimer = window.setTimeout(() => {
@@ -123,10 +200,14 @@ export default function OyukScene() {
       scheduleLightUpdate(touch.clientX, touch.clientY);
     };
 
-    const onScroll = () => {
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(flushLightPosition);
+    // Synchronously update local cave coordinates (`clientY - rect.top`) on scroll & resize
+    // so the illuminated cave mask stays locked to the physical pointer at all scroll depths (§5.3)
+    const onScrollOrResize = () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
       }
+      flushLightPosition();
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -166,8 +247,8 @@ export default function OyukScene() {
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
     window.addEventListener('keydown', onKeyDown);
 
     return () => {
@@ -177,15 +258,14 @@ export default function OyukScene() {
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [
     isUnlocked,
     isMobilePerf,
     reducedMotion,
-    oyuk.lastPointer,
     flushLightPosition,
     scheduleLightUpdate,
     handleExitCave,
@@ -202,6 +282,8 @@ export default function OyukScene() {
     const targetDocY = (item.y / 100) * wallHeight;
     const targetDocX = (item.x / 100) * wallWidth;
 
+    recordCaveInscriptionDiscovered(item.id);
+
     const desiredScrollY = Math.max(0, targetDocY - window.innerHeight * 0.45);
     window.scrollTo({
       top: desiredScrollY,
@@ -212,6 +294,14 @@ export default function OyukScene() {
       const rect = el.getBoundingClientRect();
       scheduleLightUpdate(rect.left + targetDocX, rect.top + targetDocY);
     }, reducedMotion ? 10 : 220);
+  };
+
+  const handleToggleSeal = () => {
+    setSealRevealed((prev) => {
+      const next = !prev;
+      recordCaveSecretSymbolDiscovered();
+      return next;
+    });
   };
 
   // Locked state for direct URL visitors who haven't discovered OYUK yet (§9.3)
@@ -236,17 +326,14 @@ export default function OyukScene() {
     );
   }
 
-  return (
-    <section
-      ref={sceneRef}
-      className={`oyuk-cave${lightAwake ? ' is-awake' : ''}${
-        isMobilePerf ? ' is-touch' : ''
-      }`}
-      aria-label="Oyuk — Karanlık mağara"
+  const viewportOverlay = (
+    <div
+      ref={viewportLayerRef}
+      className={`oyuk-viewport-layer${lightAwake ? ' is-awake' : ''}${
+        isExiting ? ' is-exiting' : ''
+      }${isMobilePerf ? ' is-touch' : ''}`}
     >
-      <SEOHead page="oyuk" />
-
-      {/* Subtle persistent top-left exit and keyboard light stepper (§11.6 & §15) */}
+      {/* Subtle persistent top-left exit + keyboard/screen-reader-only focus helper (§4.2 & §4.3) */}
       <header className="oyuk-hud">
         <button
           type="button"
@@ -259,13 +346,29 @@ export default function OyukScene() {
 
         <button
           type="button"
-          className="oyuk-StepLight-btn"
+          className="oyuk-sr-step-btn"
           onClick={stepToNextInscription}
-          title="Işığı sıradaki ize taşı (Ok tuşlarını da kullanabilirsin)"
+          aria-label="Sonraki duvar izine odaklan"
         >
-          ışığı ize taşı ⌕
+          Sonraki duvar izine odaklan
         </button>
       </header>
+
+      {/* Localized Torch Halo & Cursor Orb following true viewport coordinates */}
+      <div className="oyuk-torch-halo" aria-hidden />
+      {!isMobilePerf && <div className="oyuk-torch-orb" aria-hidden />}
+    </div>
+  );
+
+  return (
+    <section
+      ref={sceneRef}
+      className={`oyuk-cave${lightAwake ? ' is-awake' : ''}${
+        isExiting ? ' is-exiting' : ''
+      }${isMobilePerf ? ' is-touch' : ''}`}
+      aria-label="Oyuk — Karanlık mağara"
+    >
+      <SEOHead page="oyuk" />
 
       {/* Layer 1: Pitch-dark subterranean stone silhouette (barely visible before beam hits) */}
       <div className="oyuk-wall oyuk-wall--ambient" aria-hidden>
@@ -290,7 +393,10 @@ export default function OyukScene() {
       </div>
 
       {/* Layer 2: Flashlight-masked cave surface — reveals rock cracks, engravings & writings (§11.3) */}
-      <div className="oyuk-wall oyuk-wall--illuminated">
+      <div
+        className="oyuk-wall oyuk-wall--illuminated"
+        data-discovered-count={discoveredSet.size}
+      >
         {/* Carved geological fissures & stone reliefs */}
         <svg
           className="oyuk-wall__fissures"
@@ -354,23 +460,27 @@ export default function OyukScene() {
 
         {/* Scattered Cave Writings (§13.1 & §13.2) */}
         <div className="oyuk-inscriptions">
-          {OYUK_INSCRIPTIONS.map((item) => (
-            <p
-              key={item.id}
-              className={`oyuk-writing oyuk-writing--${item.kind}${
-                item.weathered ? ' is-weathered' : ''
-              }`}
-              style={{
-                left: `${item.x}%`,
-                top: `${item.y}%`,
-                transform: `rotate(${item.rotate}deg)`,
-              }}
-            >
-              {item.text}
-            </p>
-          ))}
+          {OYUK_INSCRIPTIONS.map((item) => {
+            const isDiscovered = discoveredSet.has(item.id);
+            return (
+              <p
+                key={item.id}
+                data-inscription-id={item.id}
+                className={`oyuk-writing oyuk-writing--${item.kind}${
+                  item.weathered ? ' is-weathered' : ''
+                }${isDiscovered ? ' is-discovered' : ''}`}
+                style={{
+                  left: `${item.x}%`,
+                  top: `${item.y}%`,
+                  transform: `rotate(${item.rotate}deg)`,
+                }}
+              >
+                {item.text}
+              </p>
+            );
+          })}
 
-          {/* Optional Secondary Deeper Discovery (§13.3) */}
+          {/* Secondary Deeper Discovery (§13.3 & §19.03) */}
           <div
             className="oyuk-secret-node"
             style={{
@@ -381,7 +491,7 @@ export default function OyukScene() {
             <button
               type="button"
               className={`oyuk-seal-btn${sealRevealed ? ' is-revealed' : ''}`}
-              onClick={() => setSealRevealed((v) => !v)}
+              onClick={handleToggleSeal}
               aria-expanded={sealRevealed}
               aria-label={OYUK_DEEPER_SECRET.symbolLabel}
               title="Taşa kazınmış mühür"
@@ -419,12 +529,29 @@ export default function OyukScene() {
               </p>
             )}
           </div>
+
+          {/* Deep cave floor carved route whispers — fair in-world clues for hidden routes */}
+          <nav
+            className="oyuk-portal-whispers"
+            aria-label="Mağara tabanına kazınmış gizli geçitler"
+          >
+            <Link to="/dusunceler" className="oyuk-portal-whisper">
+              · düşünceler defteri ↗
+            </Link>
+            <Link to="/studyom" className="oyuk-portal-whisper">
+              · sessiz stüdyo ↗
+            </Link>
+            <Link to="/kayip-iz" className="oyuk-portal-whisper">
+              · silinmiş geçit (404) ↗
+            </Link>
+          </nav>
         </div>
       </div>
 
-      {/* Layer 3: Localized Torch Halo & Cursor Orb following viewport coordinates */}
-      <div className="oyuk-torch-halo" aria-hidden />
-      {!isMobilePerf && <div className="oyuk-torch-orb" aria-hidden />}
+      {/* Portaled to document.body so no ancestor transform can ever offset fixed viewport coordinates */}
+      {typeof document !== 'undefined'
+        ? createPortal(viewportOverlay, document.body)
+        : viewportOverlay}
     </section>
   );
 }

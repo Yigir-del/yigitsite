@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { istanbulDayKey } from '../../utils/samsunTime';
+import { unlockAchievement } from '../../features/achievements/achievementStore';
 
 const STORAGE_DAY_KEY = 'yigit_wreath_day';
 
@@ -117,13 +118,20 @@ export default function WreathOffering() {
   useEffect(() => {
     let cancelled = false;
 
+    if (readLocalLeftToday()) {
+      unlockAchievement('wreath_offered', { silent: true });
+    }
+
     (async () => {
       try {
         const res = await fetch('/api/wreaths');
         if (!res.ok) throw new Error('fetch failed');
         const data = (await res.json()) as { count: number; alreadyLeft: boolean };
         if (cancelled) return;
-        if (data.alreadyLeft) markLocalLeftToday();
+        if (data.alreadyLeft) {
+          markLocalLeftToday();
+          unlockAchievement('wreath_offered', { silent: true });
+        }
         setState((s) => ({
           ...s,
           count: data.count,
@@ -165,6 +173,7 @@ export default function WreathOffering() {
 
       if (res.status === 409 || data.alreadyLeft) {
         markLocalLeftToday();
+        unlockAchievement('wreath_offered', { silent: true });
         setState((s) => ({
           ...s,
           count: typeof data.count === 'number' ? data.count : s.count,
@@ -179,6 +188,7 @@ export default function WreathOffering() {
       }
 
       markLocalLeftToday();
+      unlockAchievement('wreath_offered', { silent: true });
       setJustLeft(true);
       setState((s) => ({
         ...s,

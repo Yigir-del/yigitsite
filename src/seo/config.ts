@@ -46,6 +46,7 @@ export type PageKey =
   | 'contact'
   | 'memorial'
   | 'oyuk'
+  | 'achievements'
   | 'notFound';
 
 export interface PageSEO {
@@ -147,6 +148,11 @@ export const PAGE_SEO: Record<PageKey, PageSEO> = {
     title: 'Oyuk',
     description: 'Her şey görünmek için yapılmadı.',
     canonical: `${SITE.url}/oyuk`,
+  },
+  achievements: {
+    title: 'İzlerin',
+    description: 'Bazılarını bıraktın. Bazılarını buldun.',
+    canonical: `${SITE.url}/basarimlar`,
   },
   notFound: {
     title: 'Sayfa Bulunamadı (404)',
